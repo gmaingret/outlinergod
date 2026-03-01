@@ -3,16 +3,14 @@
  * then starts listening. This file is NOT imported by tests — use
  * buildApp() from index.ts instead.
  */
-import Database from 'better-sqlite3'
 import { buildApp } from './index.js'
 import { migrate } from './db/migrate.js'
+import { createConnection } from './db/connection.js'
 
 const PORT = parseInt(process.env.PORT ?? '3000', 10)
 const DB_PATH = process.env.DATABASE_PATH ?? '/data/outlinergod.db'
 
-const sqlite = new Database(DB_PATH)
-sqlite.pragma('journal_mode = WAL')
-sqlite.pragma('foreign_keys = ON')
+const sqlite = createConnection(DB_PATH)
 
 migrate(sqlite)
 
