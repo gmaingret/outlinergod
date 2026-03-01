@@ -8,6 +8,13 @@
       "when": 1772365364158,
       "tag": "0000_fantastic_solo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1772367364315,
+      "tag": "0001_futuristic_mongoose",
+      "breakpoints": true
     }
   ]
 }
