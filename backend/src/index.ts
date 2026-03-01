@@ -1,3 +1,4 @@
+import { mkdirSync } from 'node:fs'
 import Fastify from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import Database from 'better-sqlite3'
@@ -78,6 +79,12 @@ export function buildApp(
  * @param dbPath  - SQLite file path (default /data/outlinergod.db).
  */
 export async function startServer(port: number, dbPath: string): Promise<void> {
+  // Ensure the uploads directory exists inside the Docker volume.
+  // The Dockerfile creates it at image build time, but a pre-existing named
+  // volume shadows that layer, so we create it here at every startup.
+  const uploadsPath = process.env.UPLOADS_PATH ?? '/data/uploads'
+  mkdirSync(uploadsPath, { recursive: true })
+
   const sqlite = createConnection(dbPath)
 
   try {
