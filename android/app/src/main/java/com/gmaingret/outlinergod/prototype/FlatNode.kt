@@ -1,4 +1,4 @@
-package com.outlinegod.prototype
+package com.gmaingret.outlinergod.prototype
 
 /**
  * A single node in the flattened tree representation.

@@ -1,4 +1,4 @@
-package com.outlinegod.prototype
+package com.gmaingret.outlinergod.prototype
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString

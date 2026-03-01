@@ -29,7 +29,7 @@ The API contract lives in `API.md` — create this file first in planning, befor
 
 - **Git repository**: `https://github.com/gmaingret/outlinergod` — push and maintain code here autonomously
 - **Docker server**: `greg@192.168.1.50` — deploy Docker containers to `/root/outlinergod`
-- **Google OAuth SHA-1 fingerprint**: `D8:B0:6D:19:92:71:D4:DA:60:EF:A7:0A:93:A4:5C:29:B7:A3:D5:C4` — register this in Google Cloud Console for the Android app credential (package `com.outlinegod.app`)
+- **Google OAuth SHA-1 fingerprint**: `D8:B0:6D:19:92:71:D4:DA:60:EF:A7:0A:93:A4:5C:29:B7:A3:D5:C4` — register this in Google Cloud Console for the Android app credential (package `com.gmaingret.outlinergod`)
 
 ### Git workflow (applies to every phase)
 - P1-1 must `git init` at the project root, create `.gitignore`, and `git remote add origin https://github.com/gmaingret/outlinergod.git`

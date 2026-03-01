@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.outlinegod.app"
+    namespace = "com.gmaingret.outlinergod"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.outlinegod.app"
+        applicationId = "com.gmaingret.outlinergod"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

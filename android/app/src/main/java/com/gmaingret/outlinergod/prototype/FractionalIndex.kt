@@ -1,4 +1,4 @@
-package com.outlinegod.prototype
+package com.gmaingret.outlinergod.prototype
 
 /**
  * Pure-Kotlin fractional-indexing implementation (Rocicorp-compatible algorithm).

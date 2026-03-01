@@ -1,4 +1,4 @@
-package com.outlinegod.prototype
+package com.gmaingret.outlinergod.prototype
 
 import org.junit.Assert.*
 import org.junit.Test

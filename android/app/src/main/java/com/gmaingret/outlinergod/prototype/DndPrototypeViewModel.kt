@@ -1,4 +1,4 @@
-package com.outlinegod.prototype
+package com.gmaingret.outlinergod.prototype
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -1,4 +1,4 @@
-package com.outlinegod.app
+package com.gmaingret.outlinergod
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
