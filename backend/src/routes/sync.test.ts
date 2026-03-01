@@ -17,9 +17,9 @@ import type { FastifyInstance } from 'fastify'
 // Test helpers
 // ---------------------------------------------------------------------------
 
-function makeNode(overrides: Partial<NodeSyncRecord> & { id: string }): NodeSyncRecord {
+function makeNode({ id, ...rest }: Partial<NodeSyncRecord> & { id: string }): NodeSyncRecord {
   return {
-    id: overrides.id,
+    id,
     document_id: 'doc-1',
     content: 'hello',
     content_hlc: '',
@@ -38,7 +38,7 @@ function makeNode(overrides: Partial<NodeSyncRecord> & { id: string }): NodeSync
     deleted_at: null,
     deleted_hlc: '',
     device_id: 'device-a',
-    ...overrides,
+    ...rest,
   }
 }
 

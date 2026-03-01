@@ -1,9 +1,8 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { buildApp } from './index.js'
-import type { FastifyInstance } from 'fastify'
 
 describe('buildApp', () => {
-  let apps: FastifyInstance[] = []
+  let apps: ReturnType<typeof buildApp>[] = []
 
   afterEach(async () => {
     await Promise.all(apps.map((a) => a.close()))
