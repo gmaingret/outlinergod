@@ -29,6 +29,9 @@ COPY --from=builder /app/node_modules ./node_modules
 # Migration SQL files must be present at runtime (migrate.ts resolves ../../drizzle from dist/db/)
 COPY drizzle ./drizzle
 
+# Create /data dir owned by node so the named volume is writable by USER node
+RUN mkdir -p /data && chown node:node /data
+
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
