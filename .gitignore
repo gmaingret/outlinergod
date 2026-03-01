@@ -25,6 +25,7 @@ android/keystore/
 backend/node_modules/
 backend/dist/
 backend/.env
+*.db
 
 # IDE
 .idea/
