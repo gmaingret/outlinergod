@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(java:*)",
+      "Bash(cmd:*)",
+      "Bash(\"/c/Program Files/Android/Android Studio/jbr/bin/java\":*)",
+      "Bash(cmd.exe:*)",
+      "Bash(\"$JAVA_HOME/bin/java\":*)",
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:search.maven.org)",
+      "WebFetch(domain:maven.google.com)",
+      "Bash(export:*)",
+      "Bash(\"$ANDROID_HOME/platform-tools/adb\" logcat:*)",
+      "Bash(\"$ADB\" logcat:*)",
+      "Bash(\"/c/Users/gmain/AppData/Local/Android/Sdk/platform-tools/adb.exe\" logcat:*)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ANDROID_HOME=\"/c/Users/gmain/AppData/Local/Android/Sdk\" ./gradlew assembleDebug:*)",
+      "Bash(\"/c/Users/gmain/AppData/Local/Android/Sdk/platform-tools/adb.exe\" install:*)",
+      "Bash(\"/c/Users/gmain/AppData/Local/Android/Sdk/platform-tools/adb.exe\":*)",
+      "Bash(node:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm:*)",
+      "Bash(node-gyp rebuild:*)",
+      "Bash(npx node-gyp:*)",
+      "Bash(done)",
+      "Bash(xargs grep:*)",
+      "Bash(git:*)",
+      "Bash(node_modules/.bin/drizzle-kit:*)",
+      "Bash(/c/Users/gmain/Dev/OutlinerGod/backend/drizzle/meta/_journal.json:*)",
+      "Bash(npx tsc:*)",
+      "Bash(cat:*)",
+      "Bash(sqlite3:*)",
+      "Bash(docker compose:*)",
+      "Bash(echo:*)",
+      "Bash(printenv PATH:*)",
+      "Bash(ssh:*)",
+      "Bash(scp:*)"
+    ]
+  }
+}

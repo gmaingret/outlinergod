@@ -6,7 +6,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "build": "tsc",
-    "migrate:generate": "drizzle-kit generate",
+    "migrate:generate": "node --require tsx/cjs node_modules/drizzle-kit/bin.cjs generate",
     "migrate:run": "drizzle-kit migrate",
     "dev": "tsx watch src/server.ts"
   },
