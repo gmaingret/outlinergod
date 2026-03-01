@@ -1,197 +1,159 @@
 /**
- * P0-3 Backend sync tests — 10 cases required by PLAN_PHASE0.md
+ * P2-15 / P2-16: Sync route tests (full Phase 2)
  *
- * HLC & merge tests (1–6) operate on the modules directly.
- * Route tests (7–10) use Fastify inject (no real HTTP port needed).
+ * Replaces P0-3 prototype tests (10 cases) with 20 proper tests:
+ *   - P2-15: GET /api/sync/changes (11 cases)
+ *   - P2-16: POST /api/sync/changes (9 cases)
  *
- * DB: in-memory SQLite (:memory:) — never touches the real /data database.
+ * Uses createTestDb() for in-memory SQLite, @fastify/inject for HTTP,
+ * and real JWT auth via jose.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { randomUUID } from 'node:crypto'
 import Database from 'better-sqlite3'
-import { HlcClock } from '../hlc.js'
-import { mergeNodes, type NodeSyncRecord } from '../merge.js'
-import { buildApp } from './sync.js'
+import { SignJWT } from 'jose'
+import { buildApp } from '../index.js'
+import { createTestDb } from '../test-helpers/createTestDb.js'
 import type { FastifyInstance } from 'fastify'
+import { resetHlcForTesting } from '../hlc/hlc.js'
 
 // ---------------------------------------------------------------------------
-// Test helpers
+// JWT helper
 // ---------------------------------------------------------------------------
 
-function makeNode({ id, ...rest }: Partial<NodeSyncRecord> & { id: string }): NodeSyncRecord {
-  return {
-    id,
-    document_id: 'doc-1',
-    content: 'hello',
-    content_hlc: '',
-    note: '',
-    note_hlc: '',
-    parent_id: null,
-    parent_id_hlc: '',
-    sort_order: 'a0',
-    sort_order_hlc: '',
-    completed: 0,
-    completed_hlc: '',
-    color: 0,
-    color_hlc: '',
-    collapsed: 0,
-    collapsed_hlc: '',
-    deleted_at: null,
-    deleted_hlc: '',
-    device_id: 'device-a',
-    ...rest,
-  }
+const TEST_SECRET = 'test-jwt-secret-for-sync-route-tests-must-be-long!!'
+
+async function signTestJwt(userId: string): Promise<string> {
+  const secret = new TextEncoder().encode(TEST_SECRET)
+  return new SignJWT({ email: 'test@example.com', name: 'Test', picture: '' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(userId)
+    .setIssuedAt()
+    .setExpirationTime('1h')
+    .sign(secret)
 }
 
 // ---------------------------------------------------------------------------
-// 1 & 2: HLC clock tests
+// Seed helpers
 // ---------------------------------------------------------------------------
 
-describe('HLC clock', () => {
-  it('hlc_generate_isMonotonicallyIncreasing', () => {
-    const clock = new HlcClock()
-    const h1 = clock.generate('dev-1')
-    const h2 = clock.generate('dev-1')
-    // Lexicographic comparison: h2 must be strictly greater than h1
-    expect(h2 > h1).toBe(true)
-  })
+function seedUser(sqlite: InstanceType<typeof Database>, id: string): void {
+  const now = Date.now()
+  sqlite
+    .prepare(
+      'INSERT INTO users (id, google_sub, email, name, picture, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    )
+    .run(id, `gsub-${id}`, `${id}@example.com`, 'User', '', now, now)
+}
 
-  it('hlc_receive_advancesClockPastIncoming', () => {
-    const clock = new HlcClock()
-    const futureWall = Date.now() + 100
-    // Construct an HLC whose wall component is 100 ms in the future
-    const incomingHlc = HlcClock.format(futureWall, 0, 'remote-device')
-    const result = clock.receive(incomingHlc, 'local-device')
-    const { wallMs } = HlcClock.parse(result)
-    // The returned clock wall must be at least the incoming future wall
-    expect(wallMs).toBeGreaterThanOrEqual(futureWall)
-  })
-})
+function seedDocument(
+  sqlite: InstanceType<typeof Database>,
+  id: string,
+  userId: string,
+): void {
+  const now = Date.now()
+  sqlite
+    .prepare(
+      `INSERT INTO documents (id, user_id, title, title_hlc, type, parent_id, parent_id_hlc, sort_order, sort_order_hlc, collapsed, collapsed_hlc, deleted_at, deleted_hlc, device_id, created_at, updated_at)
+       VALUES (?, ?, 'Test Doc', '', 'document', NULL, '', 'a', '', 0, '', NULL, '', '', ?, ?)`,
+    )
+    .run(id, userId, now, now)
+}
 
-// ---------------------------------------------------------------------------
-// 3–6: LWW merge tests
-// ---------------------------------------------------------------------------
+function seedNode(
+  sqlite: InstanceType<typeof Database>,
+  overrides: {
+    id: string
+    document_id: string
+    user_id: string
+    content?: string
+    content_hlc?: string
+    note_hlc?: string
+    parent_id_hlc?: string
+    sort_order_hlc?: string
+    completed_hlc?: string
+    color_hlc?: string
+    collapsed_hlc?: string
+    deleted_at?: number | null
+    deleted_hlc?: string
+    device_id?: string
+  },
+): void {
+  const now = Date.now()
+  sqlite
+    .prepare(
+      `INSERT INTO nodes (id, document_id, user_id, content, content_hlc, note, note_hlc, parent_id, parent_id_hlc, sort_order, sort_order_hlc, completed, completed_hlc, color, color_hlc, collapsed, collapsed_hlc, deleted_at, deleted_hlc, device_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, '', ?, NULL, ?, 'a0', ?, 0, ?, 0, ?, 0, ?, ?, ?, ?, ?, ?)`,
+    )
+    .run(
+      overrides.id,
+      overrides.document_id,
+      overrides.user_id,
+      overrides.content ?? 'hello',
+      overrides.content_hlc ?? '',
+      overrides.note_hlc ?? '',
+      overrides.parent_id_hlc ?? '',
+      overrides.sort_order_hlc ?? '',
+      overrides.completed_hlc ?? '',
+      overrides.color_hlc ?? '',
+      overrides.collapsed_hlc ?? '',
+      overrides.deleted_at ?? null,
+      overrides.deleted_hlc ?? '',
+      overrides.device_id ?? 'deviceA',
+      now,
+      now,
+    )
+}
 
-describe('LWW merge', () => {
-  it('lww_merge_higherHlcWins', () => {
-    const lowHlc = '0000017b05a3a1be-0000-device-a'
-    const highHlc = '0000017b05a3a1be-0001-device-b'
-
-    const a = makeNode({ id: 'n1', content: 'old content', content_hlc: lowHlc })
-    const b = makeNode({ id: 'n1', content: 'new content', content_hlc: highHlc })
-
-    const merged = mergeNodes(a, b)
-    expect(merged.content).toBe('new content')
-    expect(merged.content_hlc).toBe(highHlc)
-  })
-
-  it('lww_merge_idempotent', () => {
-    const hlcA = '0000017b05a3a1be-0001-device-a'
-    const hlcB = '0000017b05a3a1be-0000-device-b'
-
-    const a = makeNode({ id: 'n1', content: 'A content', content_hlc: hlcA, note: 'A note', note_hlc: hlcA })
-    const b = makeNode({ id: 'n1', content: 'B content', content_hlc: hlcB, note: 'B note', note_hlc: hlcB })
-
-    const mergeAB = mergeNodes(a, b)
-    const mergeA_AB = mergeNodes(a, mergeAB)
-
-    // merge(A, merge(A, B)) must equal merge(A, B) field-by-field
-    expect(mergeA_AB.content).toBe(mergeAB.content)
-    expect(mergeA_AB.content_hlc).toBe(mergeAB.content_hlc)
-    expect(mergeA_AB.note).toBe(mergeAB.note)
-    expect(mergeA_AB.note_hlc).toBe(mergeAB.note_hlc)
-    expect(mergeA_AB.deleted_at).toBe(mergeAB.deleted_at)
-    expect(mergeA_AB.deleted_hlc).toBe(mergeAB.deleted_hlc)
-    expect(mergeA_AB.device_id).toBe(mergeAB.device_id)
-  })
-
-  it('lww_merge_commutative', () => {
-    const hlcA = '0000017b05a3a1be-0002-device-a'
-    const hlcB = '0000017b05a3a1be-0001-device-b'
-    const hlcC = '0000017b05a3a1be-0003-device-c'
-
-    // Record A wins on content; Record B wins on note; Record A wins on sort_order
-    const a = makeNode({
-      id: 'n1',
-      content: 'A content',
-      content_hlc: hlcA,
-      note: 'A note',
-      note_hlc: hlcB, // A has the lower note HLC
-      sort_order: 'a2',
-      sort_order_hlc: hlcC,
-      device_id: 'device-a',
-    })
-    const b = makeNode({
-      id: 'n1',
-      content: 'B content',
-      content_hlc: hlcB, // B has lower content HLC
-      note: 'B note',
-      note_hlc: hlcC, // B has higher note HLC
-      sort_order: 'a1',
-      sort_order_hlc: hlcA,
-      device_id: 'device-b',
-    })
-
-    const ab = mergeNodes(a, b)
-    const ba = mergeNodes(b, a)
-
-    // Every field must be equal
-    expect(ab.content).toBe(ba.content)
-    expect(ab.content_hlc).toBe(ba.content_hlc)
-    expect(ab.note).toBe(ba.note)
-    expect(ab.note_hlc).toBe(ba.note_hlc)
-    expect(ab.sort_order).toBe(ba.sort_order)
-    expect(ab.sort_order_hlc).toBe(ba.sort_order_hlc)
-    expect(ab.deleted_at).toBe(ba.deleted_at)
-    expect(ab.deleted_hlc).toBe(ba.deleted_hlc)
-    expect(ab.device_id).toBe(ba.device_id)
-  })
-
-  it('lww_merge_deleteWins', () => {
-    // B deletes the node with a very high deleted_hlc — must win over A's edits
-    const editHlc = '0000017b05a3a1be-0001-device-a'
-    const deleteHlc = 'ffffffffffffffff-ffff-device-b' // lexicographically higher than any edit
-
-    const a = makeNode({
-      id: 'n1',
-      content: 'edited by A',
-      content_hlc: editHlc,
-      deleted_at: null,
-      deleted_hlc: editHlc, // A has not deleted — lower deleted_hlc
-      device_id: 'device-a',
-    })
-    const b = makeNode({
-      id: 'n1',
-      content: 'B original',
-      content_hlc: '0000017b05a3a1be-0000-device-b', // B has older content
-      deleted_at: Date.now(),
-      deleted_hlc: deleteHlc, // B deleted with highest possible HLC
-      device_id: 'device-b',
-    })
-
-    const merged = mergeNodes(a, b)
-
-    // deleted_hlc of B wins → deleted_at must be set
-    expect(merged.deleted_at).not.toBeNull()
-    expect(merged.deleted_hlc).toBe(deleteHlc)
-    // A's content edit still wins for the content field (content_hlc A > B)
-    expect(merged.content).toBe('edited by A')
-  })
-})
+function seedSettings(
+  sqlite: InstanceType<typeof Database>,
+  overrides: {
+    id: string
+    user_id: string
+    theme?: string
+    theme_hlc?: string
+    font_size?: number
+    font_size_hlc?: string
+    device_id?: string
+  },
+): void {
+  const now = Date.now()
+  sqlite
+    .prepare(
+      `INSERT INTO settings (id, user_id, theme, theme_hlc, font_size, font_size_hlc, device_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .run(
+      overrides.id,
+      overrides.user_id,
+      overrides.theme ?? 'system',
+      overrides.theme_hlc ?? '',
+      overrides.font_size ?? 14,
+      overrides.font_size_hlc ?? '',
+      overrides.device_id ?? 'deviceA',
+      now,
+      now,
+    )
+}
 
 // ---------------------------------------------------------------------------
-// 7–10: Sync route tests (Fastify inject, in-memory SQLite)
+// Test suite
 // ---------------------------------------------------------------------------
 
-describe('Sync routes', () => {
+describe('GET /api/sync/changes', () => {
   let sqlite: InstanceType<typeof Database>
-  let app: FastifyInstance
+  let app: ReturnType<typeof buildApp>
+  const USER_ID = 'sync-test-user'
 
-  const DEVICE_A = 'aaaaaaaa-0000-0000-0000-000000000001'
-  const DEVICE_B = 'bbbbbbbb-0000-0000-0000-000000000002'
-
-  beforeEach(() => {
-    sqlite = new Database(':memory:')
+  beforeEach(async () => {
+    process.env.JWT_SECRET = TEST_SECRET
+    resetHlcForTesting()
+    const testDb = createTestDb()
+    sqlite = testDb.sqlite
     app = buildApp(sqlite)
+    await app.ready()
+    seedUser(sqlite, USER_ID)
+    seedDocument(sqlite, 'doc-1', USER_ID)
   })
 
   afterEach(async () => {
@@ -199,188 +161,676 @@ describe('Sync routes', () => {
     sqlite.close()
   })
 
-  it('POST /sync/changes — push single node, accepted and retrievable via GET', async () => {
-    const clock = new HlcClock()
-    const hlc = clock.generate(DEVICE_A)
-
-    const node = makeNode({
-      id: 'node-push-test',
-      content: 'pushed content',
-      content_hlc: hlc,
-      note_hlc: hlc,
-      parent_id_hlc: hlc,
-      sort_order_hlc: hlc,
-      completed_hlc: hlc,
-      color_hlc: hlc,
-      collapsed_hlc: hlc,
-      deleted_hlc: hlc,
-      device_id: DEVICE_A,
-    })
-
-    const postRes = await app.inject({
-      method: 'POST',
-      url: '/api/sync/changes',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer stub' },
-      body: JSON.stringify({ device_id: DEVICE_A, nodes: [node] }),
-    })
-    expect(postRes.statusCode).toBe(200)
-    const postBody = postRes.json()
-    expect(postBody.accepted_node_ids).toContain('node-push-test')
-
-    // Verify retrievable via GET from a different device
-    const getRes = await app.inject({
-      method: 'GET',
-      url: `/api/sync/changes?since=0&device_id=${DEVICE_B}`,
-      headers: { authorization: 'Bearer stub' },
-    })
-    expect(getRes.statusCode).toBe(200)
-    const getBody = getRes.json()
-    const ids = (getBody.nodes as NodeSyncRecord[]).map((n) => n.id)
-    expect(ids).toContain('node-push-test')
-  })
-
-  it('GET /sync/changes — node pushed by A appears when B pulls', async () => {
-    const clock = new HlcClock()
-    const hlc = clock.generate(DEVICE_A)
-
-    const node = makeNode({
-      id: 'echo-node',
-      content_hlc: hlc,
-      note_hlc: hlc,
-      parent_id_hlc: hlc,
-      sort_order_hlc: hlc,
-      completed_hlc: hlc,
-      color_hlc: hlc,
-      collapsed_hlc: hlc,
-      deleted_hlc: hlc,
-      device_id: DEVICE_A,
-    })
-
-    await app.inject({
-      method: 'POST',
-      url: '/api/sync/changes',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer stub' },
-      body: JSON.stringify({ device_id: DEVICE_A, nodes: [node] }),
-    })
-
+  it('returns200_withAllEntityArrays', async () => {
+    const jwt = await signTestJwt(USER_ID)
     const res = await app.inject({
       method: 'GET',
-      url: `/api/sync/changes?since=0&device_id=${DEVICE_B}`,
-      headers: { authorization: 'Bearer stub' },
+      url: '/api/sync/changes?since=0&device_id=deviceB',
+      headers: { authorization: `Bearer ${jwt}` },
     })
+
     expect(res.statusCode).toBe(200)
     const body = res.json()
-    const ids = (body.nodes as NodeSyncRecord[]).map((n) => n.id)
-    expect(ids).toContain('echo-node')
+    expect(body).toHaveProperty('server_hlc')
+    expect(body).toHaveProperty('nodes')
+    expect(body).toHaveProperty('documents')
+    expect(body).toHaveProperty('settings')
+    expect(body).toHaveProperty('bookmarks')
+    expect(Array.isArray(body.nodes)).toBe(true)
+    expect(Array.isArray(body.documents)).toBe(true)
+    expect(Array.isArray(body.bookmarks)).toBe(true)
   })
 
-  it('GET /sync/changes — echo suppression: node pushed by A NOT returned when A pulls', async () => {
-    const clock = new HlcClock()
-    const hlc = clock.generate(DEVICE_A)
-
-    const node = makeNode({
-      id: 'suppressed-node',
-      content_hlc: hlc,
-      note_hlc: hlc,
-      parent_id_hlc: hlc,
-      sort_order_hlc: hlc,
-      completed_hlc: hlc,
-      color_hlc: hlc,
-      collapsed_hlc: hlc,
-      deleted_hlc: hlc,
-      device_id: DEVICE_A,
+  it('returns_nodes_changedAfterSince', async () => {
+    seedNode(sqlite, {
+      id: 'node-changed',
+      document_id: 'doc-1',
+      user_id: USER_ID,
+      content_hlc: 'AAAA',
+      note_hlc: '0',
+      parent_id_hlc: '0',
+      sort_order_hlc: '0',
+      completed_hlc: '0',
+      color_hlc: '0',
+      collapsed_hlc: '0',
+      deleted_hlc: '0',
+      device_id: 'deviceA',
     })
 
-    await app.inject({
-      method: 'POST',
-      url: '/api/sync/changes',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer stub' },
-      body: JSON.stringify({ device_id: DEVICE_A, nodes: [node] }),
-    })
-
-    // A pulls its own changes — should be suppressed
+    const jwt = await signTestJwt(USER_ID)
     const res = await app.inject({
       method: 'GET',
-      url: `/api/sync/changes?since=0&device_id=${DEVICE_A}`,
-      headers: { authorization: 'Bearer stub' },
+      url: '/api/sync/changes?since=0&device_id=deviceB',
+      headers: { authorization: `Bearer ${jwt}` },
     })
+
     expect(res.statusCode).toBe(200)
     const body = res.json()
-    const ids = (body.nodes as NodeSyncRecord[]).map((n) => n.id)
-    expect(ids).not.toContain('suppressed-node')
+    const ids = body.nodes.map((n: { id: string }) => n.id)
+    expect(ids).toContain('node-changed')
   })
 
-  it('conflict_serverVersionWins — B pushes older HLC; conflicts array contains A version', async () => {
-    const clockA = new HlcClock()
-    const clockB = new HlcClock()
-
-    // A pushes first with a higher HLC (simulate A's edit happened later)
-    const hlcA = clockA.generate(DEVICE_A)
-    // B generates an HLC but it will be lower than A's because A already advanced
-    const hlcB = clockB.generate(DEVICE_B)
-
-    // Ensure hlcA > hlcB by making A's timestamp a bit later
-    const futureWallA = Date.now() + 50
-    const highHlcA = HlcClock.format(futureWallA, 0, DEVICE_A)
-    const lowHlcB = HlcClock.format(Date.now(), 0, DEVICE_B)
-
-    const nodeA = makeNode({
-      id: 'conflict-node',
-      content: 'A version',
-      content_hlc: highHlcA,
-      note_hlc: highHlcA,
-      parent_id_hlc: highHlcA,
-      sort_order_hlc: highHlcA,
-      completed_hlc: highHlcA,
-      color_hlc: highHlcA,
-      collapsed_hlc: highHlcA,
-      deleted_hlc: highHlcA,
-      device_id: DEVICE_A,
+  it('excludes_nodes_fromSameDevice', async () => {
+    seedNode(sqlite, {
+      id: 'node-echo',
+      document_id: 'doc-1',
+      user_id: USER_ID,
+      content_hlc: 'AAAA',
+      note_hlc: '0',
+      parent_id_hlc: '0',
+      sort_order_hlc: '0',
+      completed_hlc: '0',
+      color_hlc: '0',
+      collapsed_hlc: '0',
+      deleted_hlc: '0',
+      device_id: 'deviceA',
     })
 
-    // A pushes first
-    const pushA = await app.inject({
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/sync/changes?since=0&device_id=deviceA',
+      headers: { authorization: `Bearer ${jwt}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    const ids = body.nodes.map((n: { id: string }) => n.id)
+    expect(ids).not.toContain('node-echo')
+  })
+
+  it('excludes_nodes_notChangedAfterSince', async () => {
+    seedNode(sqlite, {
+      id: 'node-old',
+      document_id: 'doc-1',
+      user_id: USER_ID,
+      content_hlc: '0001',
+      note_hlc: '0001',
+      parent_id_hlc: '0001',
+      sort_order_hlc: '0001',
+      completed_hlc: '0001',
+      color_hlc: '0001',
+      collapsed_hlc: '0001',
+      deleted_hlc: '0001',
+      device_id: 'deviceA',
+    })
+
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/sync/changes?since=0002&device_id=deviceB',
+      headers: { authorization: `Bearer ${jwt}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.nodes).toHaveLength(0)
+  })
+
+  it('returns_tombstones_forDeletedNodes', async () => {
+    seedNode(sqlite, {
+      id: 'node-deleted',
+      document_id: 'doc-1',
+      user_id: USER_ID,
+      content_hlc: '0001',
+      note_hlc: '0001',
+      parent_id_hlc: '0001',
+      sort_order_hlc: '0001',
+      completed_hlc: '0001',
+      color_hlc: '0001',
+      collapsed_hlc: '0001',
+      deleted_at: Date.now(),
+      deleted_hlc: 'ZZZZ',
+      device_id: 'deviceA',
+    })
+
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/sync/changes?since=0&device_id=deviceB',
+      headers: { authorization: `Bearer ${jwt}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    const node = body.nodes.find((n: { id: string }) => n.id === 'node-deleted')
+    expect(node).toBeDefined()
+    expect(node.deleted_at).not.toBeNull()
+  })
+
+  it('returns_settings_whenChanged', async () => {
+    seedSettings(sqlite, {
+      id: 'settings-1',
+      user_id: USER_ID,
+      theme: 'dark',
+      theme_hlc: 'AAAA',
+      font_size_hlc: '0',
+      device_id: 'deviceA',
+    })
+
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/sync/changes?since=0&device_id=deviceB',
+      headers: { authorization: `Bearer ${jwt}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.settings).not.toBeNull()
+    expect(body.settings.theme).toBe('dark')
+  })
+
+  it('settings_isNull_whenNoneExist', async () => {
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/sync/changes?since=0&device_id=deviceB',
+      headers: { authorization: `Bearer ${jwt}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.settings).toBeNull()
+  })
+
+  it('returns400_whenSinceMissing', async () => {
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/sync/changes?device_id=deviceB',
+      headers: { authorization: `Bearer ${jwt}` },
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns400_whenDeviceIdMissing', async () => {
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/sync/changes?since=0',
+      headers: { authorization: `Bearer ${jwt}` },
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns401_withNoAuthHeader', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/sync/changes?since=0&device_id=deviceB',
+    })
+
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('server_hlc_isLexicographicallyValid', async () => {
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/sync/changes?since=0&device_id=deviceB',
+      headers: { authorization: `Bearer ${jwt}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    // HLC format: 13-digit-ms-zero-padded-5-digit-counter-nodeId
+    // The module-level hlc uses decimal padding, so: XXXXXXXXXXXXX-XXXXX-server
+    expect(body.server_hlc).toMatch(/^\d{13}-\d{5}-server$/)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// POST /api/sync/changes
+// ---------------------------------------------------------------------------
+
+describe('POST /api/sync/changes', () => {
+  let sqlite: InstanceType<typeof Database>
+  let app: ReturnType<typeof buildApp>
+  const USER_ID = 'sync-post-user'
+
+  beforeEach(async () => {
+    process.env.JWT_SECRET = TEST_SECRET
+    resetHlcForTesting()
+    const testDb = createTestDb()
+    sqlite = testDb.sqlite
+    app = buildApp(sqlite)
+    await app.ready()
+    seedUser(sqlite, USER_ID)
+    seedDocument(sqlite, 'doc-1', USER_ID)
+  })
+
+  afterEach(async () => {
+    await app.close()
+    sqlite.close()
+  })
+
+  it('returns200_acceptsNewNode', async () => {
+    const jwt = await signTestJwt(USER_ID)
+    const nodeId = randomUUID()
+
+    const res = await app.inject({
       method: 'POST',
       url: '/api/sync/changes',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer stub' },
-      body: JSON.stringify({ device_id: DEVICE_A, nodes: [nodeA] }),
+      headers: {
+        authorization: `Bearer ${jwt}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        device_id: 'deviceA',
+        nodes: [
+          {
+            id: nodeId,
+            document_id: 'doc-1',
+            content: 'new node',
+            content_hlc: 'AAA',
+            note: '',
+            note_hlc: 'AAA',
+            parent_id: null,
+            parent_id_hlc: 'AAA',
+            sort_order: 'a0',
+            sort_order_hlc: 'AAA',
+            completed: 0,
+            completed_hlc: 'AAA',
+            color: 0,
+            color_hlc: 'AAA',
+            collapsed: 0,
+            collapsed_hlc: 'AAA',
+            deleted_at: null,
+            deleted_hlc: 'AAA',
+            device_id: 'deviceA',
+          },
+        ],
+      }),
     })
-    expect(pushA.statusCode).toBe(200)
-    expect(pushA.json().accepted_node_ids).toContain('conflict-node')
 
-    // B pushes the same node with an OLDER HLC — server version should win
-    const nodeB = makeNode({
-      id: 'conflict-node',
-      content: 'B version',
-      content_hlc: lowHlcB,
-      note_hlc: lowHlcB,
-      parent_id_hlc: lowHlcB,
-      sort_order_hlc: lowHlcB,
-      completed_hlc: lowHlcB,
-      color_hlc: lowHlcB,
-      collapsed_hlc: lowHlcB,
-      deleted_hlc: lowHlcB,
-      device_id: DEVICE_B,
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.accepted_node_ids).toContain(nodeId)
+
+    // Verify in DB
+    const row = sqlite.prepare('SELECT * FROM nodes WHERE id = ?').get(nodeId) as { id: string; user_id: string } | undefined
+    expect(row).toBeDefined()
+    expect(row!.user_id).toBe(USER_ID)
+  })
+
+  it('returns200_incomingContentWins_whenHigherHlc', async () => {
+    const nodeId = 'node-content-wins'
+    seedNode(sqlite, {
+      id: nodeId,
+      document_id: 'doc-1',
+      user_id: USER_ID,
+      content: 'old',
+      content_hlc: 'AAA',
+      note_hlc: 'AAA',
+      parent_id_hlc: 'AAA',
+      sort_order_hlc: 'AAA',
+      completed_hlc: 'AAA',
+      color_hlc: 'AAA',
+      collapsed_hlc: 'AAA',
+      deleted_hlc: 'AAA',
+      device_id: 'deviceA',
     })
 
-    const pushB = await app.inject({
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
       method: 'POST',
       url: '/api/sync/changes',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer stub' },
-      body: JSON.stringify({ device_id: DEVICE_B, nodes: [nodeB] }),
+      headers: {
+        authorization: `Bearer ${jwt}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        device_id: 'deviceB',
+        nodes: [
+          {
+            id: nodeId,
+            document_id: 'doc-1',
+            content: 'new',
+            content_hlc: 'ZZZ',
+            note: '',
+            note_hlc: 'ZZZ',
+            parent_id: null,
+            parent_id_hlc: 'ZZZ',
+            sort_order: 'a0',
+            sort_order_hlc: 'ZZZ',
+            completed: 0,
+            completed_hlc: 'ZZZ',
+            color: 0,
+            color_hlc: 'ZZZ',
+            collapsed: 0,
+            collapsed_hlc: 'ZZZ',
+            deleted_at: null,
+            deleted_hlc: 'ZZZ',
+            device_id: 'deviceB',
+          },
+        ],
+      }),
     })
-    expect(pushB.statusCode).toBe(200)
-    const bBody = pushB.json()
 
-    // B's node must NOT be in accepted_node_ids (A's version won)
-    expect(bBody.accepted_node_ids).not.toContain('conflict-node')
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.accepted_node_ids).toContain(nodeId)
 
-    // The conflict response must contain 'conflict-node' with A's winning content
-    const conflictNode = (bBody.conflicts.nodes as NodeSyncRecord[]).find(
-      (n) => n.id === 'conflict-node',
-    )
+    // Verify DB has new content
+    const row = sqlite.prepare('SELECT content FROM nodes WHERE id = ?').get(nodeId) as { content: string }
+    expect(row.content).toBe('new')
+  })
+
+  it('serverVersionWins_returnsConflict', async () => {
+    const nodeId = 'node-server-wins'
+    seedNode(sqlite, {
+      id: nodeId,
+      document_id: 'doc-1',
+      user_id: USER_ID,
+      content: 'server version',
+      content_hlc: 'ZZZ',
+      note_hlc: 'ZZZ',
+      parent_id_hlc: 'ZZZ',
+      sort_order_hlc: 'ZZZ',
+      completed_hlc: 'ZZZ',
+      color_hlc: 'ZZZ',
+      collapsed_hlc: 'ZZZ',
+      deleted_hlc: 'ZZZ',
+      device_id: 'deviceA',
+    })
+
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sync/changes',
+      headers: {
+        authorization: `Bearer ${jwt}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        device_id: 'deviceB',
+        nodes: [
+          {
+            id: nodeId,
+            document_id: 'doc-1',
+            content: 'client version',
+            content_hlc: 'AAA',
+            note: '',
+            note_hlc: 'AAA',
+            parent_id: null,
+            parent_id_hlc: 'AAA',
+            sort_order: 'a0',
+            sort_order_hlc: 'AAA',
+            completed: 0,
+            completed_hlc: 'AAA',
+            color: 0,
+            color_hlc: 'AAA',
+            collapsed: 0,
+            collapsed_hlc: 'AAA',
+            deleted_at: null,
+            deleted_hlc: 'AAA',
+            device_id: 'deviceB',
+          },
+        ],
+      }),
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.accepted_node_ids).not.toContain(nodeId)
+    const conflictNode = body.conflicts.nodes.find((n: { id: string }) => n.id === nodeId)
     expect(conflictNode).toBeDefined()
-    expect(conflictNode!.content).toBe('A version')
-    expect(conflictNode!.content_hlc).toBe(highHlcA)
+    expect(conflictNode.content).toBe('server version')
+  })
+
+  it('deleteWins_overConcurrentEdits', async () => {
+    const nodeId = 'node-delete-wins'
+    seedNode(sqlite, {
+      id: nodeId,
+      document_id: 'doc-1',
+      user_id: USER_ID,
+      content: 'original',
+      content_hlc: 'BBB',
+      note_hlc: 'BBB',
+      parent_id_hlc: 'BBB',
+      sort_order_hlc: 'BBB',
+      completed_hlc: 'BBB',
+      color_hlc: 'BBB',
+      collapsed_hlc: 'BBB',
+      deleted_at: null,
+      deleted_hlc: 'BBB',
+      device_id: 'deviceA',
+    })
+
+    const jwt = await signTestJwt(USER_ID)
+    const deletedAt = Date.now()
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sync/changes',
+      headers: {
+        authorization: `Bearer ${jwt}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        device_id: 'deviceB',
+        nodes: [
+          {
+            id: nodeId,
+            document_id: 'doc-1',
+            content: 'edited',
+            content_hlc: 'AAA', // lower than stored BBB
+            note: '',
+            note_hlc: 'AAA',
+            parent_id: null,
+            parent_id_hlc: 'AAA',
+            sort_order: 'a0',
+            sort_order_hlc: 'AAA',
+            completed: 0,
+            completed_hlc: 'AAA',
+            color: 0,
+            color_hlc: 'AAA',
+            collapsed: 0,
+            collapsed_hlc: 'AAA',
+            deleted_at: deletedAt,
+            deleted_hlc: 'ZZZ', // higher — delete wins
+            device_id: 'deviceB',
+          },
+        ],
+      }),
+    })
+
+    expect(res.statusCode).toBe(200)
+
+    // Verify DB has deleted_at set
+    const row = sqlite.prepare('SELECT deleted_at FROM nodes WHERE id = ?').get(nodeId) as { deleted_at: number | null }
+    expect(row.deleted_at).not.toBeNull()
+  })
+
+  it('settings_mergedPerField', async () => {
+    seedSettings(sqlite, {
+      id: 'settings-merge-test',
+      user_id: USER_ID,
+      theme: 'dark',
+      theme_hlc: 'ZZZ',
+      font_size: 14,
+      font_size_hlc: 'AAA',
+      device_id: 'deviceA',
+    })
+
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sync/changes',
+      headers: {
+        authorization: `Bearer ${jwt}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        device_id: 'deviceB',
+        settings: {
+          id: 'settings-merge-test',
+          user_id: USER_ID,
+          theme: 'light',
+          theme_hlc: 'AAA', // lower — stored 'dark' wins
+          font_size: 16,
+          font_size_hlc: 'AAA', // same as stored — tiebreaker
+          device_id: 'deviceB',
+          created_at: Date.now(),
+          updated_at: Date.now(),
+        },
+      }),
+    })
+
+    expect(res.statusCode).toBe(200)
+
+    // Verify DB still has theme = 'dark' (stored ZZZ > incoming AAA)
+    const row = sqlite.prepare('SELECT theme FROM settings WHERE user_id = ?').get(USER_ID) as { theme: string }
+    expect(row.theme).toBe('dark')
+  })
+
+  it('returns400_whenDeviceIdMissing', async () => {
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sync/changes',
+      headers: {
+        authorization: `Bearer ${jwt}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ nodes: [] }),
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns413_whenPayloadTooLarge', async () => {
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sync/changes',
+      headers: {
+        authorization: `Bearer ${jwt}`,
+        'content-type': 'application/json',
+        'content-length': String(6 * 1024 * 1024), // 6 MB > 5 MB limit
+      },
+      body: JSON.stringify({ device_id: 'deviceA', nodes: [] }),
+    })
+
+    expect(res.statusCode).toBe(413)
+  })
+
+  it('returns401_withNoAuthHeader', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sync/changes',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ device_id: 'deviceA', nodes: [] }),
+    })
+
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('accepted_and_conflict_areMutuallyExclusive', async () => {
+    // Node A: incoming wins (higher HLC)
+    const nodeAId = 'node-wins'
+    seedNode(sqlite, {
+      id: nodeAId,
+      document_id: 'doc-1',
+      user_id: USER_ID,
+      content: 'old A',
+      content_hlc: 'AAA',
+      note_hlc: 'AAA',
+      parent_id_hlc: 'AAA',
+      sort_order_hlc: 'AAA',
+      completed_hlc: 'AAA',
+      color_hlc: 'AAA',
+      collapsed_hlc: 'AAA',
+      deleted_hlc: 'AAA',
+      device_id: 'deviceA',
+    })
+
+    // Node B: stored wins (higher HLC on server)
+    const nodeBId = 'node-loses'
+    seedNode(sqlite, {
+      id: nodeBId,
+      document_id: 'doc-1',
+      user_id: USER_ID,
+      content: 'server B',
+      content_hlc: 'ZZZ',
+      note_hlc: 'ZZZ',
+      parent_id_hlc: 'ZZZ',
+      sort_order_hlc: 'ZZZ',
+      completed_hlc: 'ZZZ',
+      color_hlc: 'ZZZ',
+      collapsed_hlc: 'ZZZ',
+      deleted_hlc: 'ZZZ',
+      device_id: 'deviceA',
+    })
+
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sync/changes',
+      headers: {
+        authorization: `Bearer ${jwt}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        device_id: 'deviceB',
+        nodes: [
+          {
+            id: nodeAId,
+            document_id: 'doc-1',
+            content: 'new A',
+            content_hlc: 'ZZZ',
+            note: '',
+            note_hlc: 'ZZZ',
+            parent_id: null,
+            parent_id_hlc: 'ZZZ',
+            sort_order: 'a0',
+            sort_order_hlc: 'ZZZ',
+            completed: 0,
+            completed_hlc: 'ZZZ',
+            color: 0,
+            color_hlc: 'ZZZ',
+            collapsed: 0,
+            collapsed_hlc: 'ZZZ',
+            deleted_at: null,
+            deleted_hlc: 'ZZZ',
+            device_id: 'deviceB',
+          },
+          {
+            id: nodeBId,
+            document_id: 'doc-1',
+            content: 'client B',
+            content_hlc: 'AAA',
+            note: '',
+            note_hlc: 'AAA',
+            parent_id: null,
+            parent_id_hlc: 'AAA',
+            sort_order: 'a0',
+            sort_order_hlc: 'AAA',
+            completed: 0,
+            completed_hlc: 'AAA',
+            color: 0,
+            color_hlc: 'AAA',
+            collapsed: 0,
+            collapsed_hlc: 'AAA',
+            deleted_at: null,
+            deleted_hlc: 'AAA',
+            device_id: 'deviceB',
+          },
+        ],
+      }),
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+
+    // Node A should be accepted, Node B should be in conflicts
+    expect(body.accepted_node_ids).toContain(nodeAId)
+    expect(body.accepted_node_ids).not.toContain(nodeBId)
+
+    const conflictIds = body.conflicts.nodes.map((n: { id: string }) => n.id)
+    expect(conflictIds).toContain(nodeBId)
+    expect(conflictIds).not.toContain(nodeAId)
   })
 })

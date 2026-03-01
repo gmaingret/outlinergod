@@ -1,72 +1,66 @@
 /**
- * P0-3 Prototype: Sync routes
+ * P2-15 / P2-16: Sync routes (full Phase 2 implementation)
  *
  * GET  /api/sync/changes  — pull changes since a given HLC
- * POST /api/sync/changes  — push locally pending changes (LWW merge)
+ * POST /api/sync/changes  — push locally pending changes (per-field LWW merge)
  *
- * Auth: stub middleware accepts any Authorization header (no JWT verification
- * in this prototype — real auth is Phase 1).
+ * Replaces P0-3 prototype with real auth, user_id scoping, and all entity types.
  */
-import Fastify, { type FastifyInstance } from 'fastify'
-import Database from 'better-sqlite3'
-import { HlcClock } from '../hlc.js'
-import { mergeNodes, type NodeSyncRecord } from '../merge.js'
+import type { FastifyInstance } from 'fastify'
+import type Database from 'better-sqlite3'
+import { requireAuth } from '../middleware/auth.js'
+import {
+  mergeNodes,
+  mergeDocuments,
+  mergeBookmarks,
+  type NodeSyncRecord,
+  type DocumentSyncRecord,
+  type BookmarkSyncRecord,
+} from '../merge.js'
+import { hlcGenerate, hlcReceive } from '../hlc/hlc.js'
 
 // ---------------------------------------------------------------------------
-// Schema
+// Settings sync record (no mergeSettings in merge.ts — handled inline)
 // ---------------------------------------------------------------------------
 
-const CREATE_NODES_TABLE = `
-  CREATE TABLE IF NOT EXISTS nodes (
-    id             TEXT PRIMARY KEY,
-    document_id    TEXT NOT NULL DEFAULT 'default',
-    content        TEXT NOT NULL DEFAULT '',
-    content_hlc    TEXT NOT NULL DEFAULT '',
-    note           TEXT NOT NULL DEFAULT '',
-    note_hlc       TEXT NOT NULL DEFAULT '',
-    parent_id      TEXT,
-    parent_id_hlc  TEXT NOT NULL DEFAULT '',
-    sort_order     TEXT NOT NULL DEFAULT '',
-    sort_order_hlc TEXT NOT NULL DEFAULT '',
-    completed      INTEGER NOT NULL DEFAULT 0,
-    completed_hlc  TEXT NOT NULL DEFAULT '',
-    color          INTEGER NOT NULL DEFAULT 0,
-    color_hlc      TEXT NOT NULL DEFAULT '',
-    collapsed      INTEGER NOT NULL DEFAULT 0,
-    collapsed_hlc  TEXT NOT NULL DEFAULT '',
-    deleted_at     INTEGER,
-    deleted_hlc    TEXT NOT NULL DEFAULT '',
-    device_id      TEXT NOT NULL DEFAULT ''
-  )
-`
-
-function initSchema(sqlite: InstanceType<typeof Database>): void {
-  sqlite.pragma('journal_mode = WAL')
-  sqlite.pragma('foreign_keys = ON')
-  sqlite.exec(CREATE_NODES_TABLE)
+export interface SettingsSyncRecord {
+  id: string
+  user_id: string
+  theme: string
+  theme_hlc: string
+  font_size: number
+  font_size_hlc: string
+  device_id: string
+  created_at: number
+  updated_at: number
 }
 
 // ---------------------------------------------------------------------------
-// DB helpers
+// Helpers
 // ---------------------------------------------------------------------------
 
-function rowToRecord(row: Record<string, unknown>): NodeSyncRecord {
-  return row as unknown as NodeSyncRecord
-}
+const SERVER_DEVICE_ID = 'server'
+const BODY_LIMIT = 5 * 1024 * 1024 // 5 MB
 
-function upsertNode(sqlite: InstanceType<typeof Database>, rec: NodeSyncRecord): void {
+// ---------------------------------------------------------------------------
+// Node DB helpers
+// ---------------------------------------------------------------------------
+
+function upsertNode(sqlite: InstanceType<typeof Database>, rec: NodeSyncRecord & { user_id: string }): void {
   sqlite
     .prepare(
       `INSERT INTO nodes (
-        id, document_id, content, content_hlc, note, note_hlc,
+        id, document_id, user_id, content, content_hlc, note, note_hlc,
         parent_id, parent_id_hlc, sort_order, sort_order_hlc,
         completed, completed_hlc, color, color_hlc,
-        collapsed, collapsed_hlc, deleted_at, deleted_hlc, device_id
+        collapsed, collapsed_hlc, deleted_at, deleted_hlc, device_id,
+        created_at, updated_at
       ) VALUES (
-        @id, @document_id, @content, @content_hlc, @note, @note_hlc,
+        @id, @document_id, @user_id, @content, @content_hlc, @note, @note_hlc,
         @parent_id, @parent_id_hlc, @sort_order, @sort_order_hlc,
         @completed, @completed_hlc, @color, @color_hlc,
-        @collapsed, @collapsed_hlc, @deleted_at, @deleted_hlc, @device_id
+        @collapsed, @collapsed_hlc, @deleted_at, @deleted_hlc, @device_id,
+        @created_at, @updated_at
       )
       ON CONFLICT(id) DO UPDATE SET
         document_id    = excluded.document_id,
@@ -86,128 +80,391 @@ function upsertNode(sqlite: InstanceType<typeof Database>, rec: NodeSyncRecord):
         collapsed_hlc  = excluded.collapsed_hlc,
         deleted_at     = excluded.deleted_at,
         deleted_hlc    = excluded.deleted_hlc,
-        device_id      = excluded.device_id`,
+        device_id      = excluded.device_id,
+        updated_at     = excluded.updated_at`,
+    )
+    .run(rec)
+}
+
+function upsertDocument(sqlite: InstanceType<typeof Database>, rec: DocumentSyncRecord): void {
+  sqlite
+    .prepare(
+      `INSERT INTO documents (
+        id, user_id, title, title_hlc, type, parent_id, parent_id_hlc,
+        sort_order, sort_order_hlc, collapsed, collapsed_hlc,
+        deleted_at, deleted_hlc, device_id, created_at, updated_at
+      ) VALUES (
+        @id, @user_id, @title, @title_hlc, @type, @parent_id, @parent_id_hlc,
+        @sort_order, @sort_order_hlc, @collapsed, @collapsed_hlc,
+        @deleted_at, @deleted_hlc, @device_id, @created_at, @updated_at
+      )
+      ON CONFLICT(id) DO UPDATE SET
+        title          = excluded.title,
+        title_hlc      = excluded.title_hlc,
+        parent_id      = excluded.parent_id,
+        parent_id_hlc  = excluded.parent_id_hlc,
+        sort_order     = excluded.sort_order,
+        sort_order_hlc = excluded.sort_order_hlc,
+        collapsed      = excluded.collapsed,
+        collapsed_hlc  = excluded.collapsed_hlc,
+        deleted_at     = excluded.deleted_at,
+        deleted_hlc    = excluded.deleted_hlc,
+        device_id      = excluded.device_id,
+        updated_at     = excluded.updated_at`,
+    )
+    .run(rec)
+}
+
+function upsertBookmark(sqlite: InstanceType<typeof Database>, rec: BookmarkSyncRecord): void {
+  sqlite
+    .prepare(
+      `INSERT INTO bookmarks (
+        id, user_id, node_id, document_id, sort_order, sort_order_hlc,
+        deleted_at, deleted_hlc, device_id, created_at, updated_at
+      ) VALUES (
+        @id, @user_id, @node_id, @document_id, @sort_order, @sort_order_hlc,
+        @deleted_at, @deleted_hlc, @device_id, @created_at, @updated_at
+      )
+      ON CONFLICT(id) DO UPDATE SET
+        sort_order     = excluded.sort_order,
+        sort_order_hlc = excluded.sort_order_hlc,
+        deleted_at     = excluded.deleted_at,
+        deleted_hlc    = excluded.deleted_hlc,
+        device_id      = excluded.device_id,
+        updated_at     = excluded.updated_at`,
+    )
+    .run(rec)
+}
+
+function upsertSettings(sqlite: InstanceType<typeof Database>, rec: SettingsSyncRecord): void {
+  sqlite
+    .prepare(
+      `INSERT INTO settings (
+        id, user_id, theme, theme_hlc, font_size, font_size_hlc,
+        device_id, created_at, updated_at
+      ) VALUES (
+        @id, @user_id, @theme, @theme_hlc, @font_size, @font_size_hlc,
+        @device_id, @created_at, @updated_at
+      )
+      ON CONFLICT(id) DO UPDATE SET
+        theme          = excluded.theme,
+        theme_hlc      = excluded.theme_hlc,
+        font_size      = excluded.font_size,
+        font_size_hlc  = excluded.font_size_hlc,
+        device_id      = excluded.device_id,
+        updated_at     = excluded.updated_at`,
     )
     .run(rec)
 }
 
 // ---------------------------------------------------------------------------
-// App factory
+// Per-field LWW merge for settings (inline — no mergeSettings in merge.ts)
 // ---------------------------------------------------------------------------
 
-export function buildApp(sqlite: InstanceType<typeof Database>): FastifyInstance {
-  initSchema(sqlite)
-  const clock = new HlcClock()
-  const app = Fastify({ logger: false })
+function mergeSettings(stored: SettingsSyncRecord, incoming: SettingsSyncRecord): SettingsSyncRecord {
+  const theme = stored.theme_hlc >= incoming.theme_hlc ? stored.theme : incoming.theme
+  const theme_hlc = stored.theme_hlc >= incoming.theme_hlc ? stored.theme_hlc : incoming.theme_hlc
 
-  // Stub auth: accept any request (prototype only)
-  app.addHook('preHandler', async (_request, _reply) => {
-    // No-op: production will verify JWT here
-  })
+  const font_size = stored.font_size_hlc >= incoming.font_size_hlc ? stored.font_size : incoming.font_size
+  const font_size_hlc =
+    stored.font_size_hlc >= incoming.font_size_hlc ? stored.font_size_hlc : incoming.font_size_hlc
 
-  // -------------------------------------------------------------------------
-  // GET /api/sync/changes
-  // Pull all records with any HLC field > since, excluding caller's own echoes.
-  // -------------------------------------------------------------------------
-  app.get('/api/sync/changes', async (request, reply) => {
-    const query = request.query as Record<string, string>
-    const since = query.since
-    const device_id = query.device_id
+  // device_id: whichever record has the higher max HLC
+  const maxStored = stored.theme_hlc >= stored.font_size_hlc ? stored.theme_hlc : stored.font_size_hlc
+  const maxIncoming = incoming.theme_hlc >= incoming.font_size_hlc ? incoming.theme_hlc : incoming.font_size_hlc
+  const device_id = maxIncoming > maxStored ? incoming.device_id : stored.device_id
 
-    if (!since || !device_id) {
-      return reply.status(400).send({ error: 'Missing required query params: since, device_id' })
-    }
+  return {
+    id: stored.id,
+    user_id: stored.user_id,
+    theme,
+    theme_hlc,
+    font_size,
+    font_size_hlc,
+    device_id,
+    created_at: Math.min(stored.created_at, incoming.created_at),
+    updated_at: Math.max(stored.updated_at, incoming.updated_at),
+  }
+}
 
-    // Return nodes where at least one HLC field was updated after `since`,
-    // excluding records whose device_id matches the requester (echo suppression).
-    const rows = sqlite
-      .prepare(
-        `SELECT * FROM nodes
-         WHERE MAX(content_hlc, note_hlc, parent_id_hlc, sort_order_hlc,
-                   completed_hlc, color_hlc, collapsed_hlc, deleted_hlc) > ?
+/**
+ * Check if incoming won every field against stored (fully accepted).
+ */
+function isNodeFullyAccepted(incoming: NodeSyncRecord, stored: NodeSyncRecord): boolean {
+  return (
+    incoming.content_hlc >= stored.content_hlc &&
+    incoming.note_hlc >= stored.note_hlc &&
+    incoming.parent_id_hlc >= stored.parent_id_hlc &&
+    incoming.sort_order_hlc >= stored.sort_order_hlc &&
+    incoming.completed_hlc >= stored.completed_hlc &&
+    incoming.color_hlc >= stored.color_hlc &&
+    incoming.collapsed_hlc >= stored.collapsed_hlc &&
+    incoming.deleted_hlc >= stored.deleted_hlc
+  )
+}
+
+function isDocumentFullyAccepted(incoming: DocumentSyncRecord, stored: DocumentSyncRecord): boolean {
+  return (
+    incoming.title_hlc >= stored.title_hlc &&
+    incoming.parent_id_hlc >= stored.parent_id_hlc &&
+    incoming.sort_order_hlc >= stored.sort_order_hlc &&
+    incoming.collapsed_hlc >= stored.collapsed_hlc &&
+    incoming.deleted_hlc >= stored.deleted_hlc
+  )
+}
+
+function isBookmarkFullyAccepted(incoming: BookmarkSyncRecord, stored: BookmarkSyncRecord): boolean {
+  return (
+    incoming.sort_order_hlc >= stored.sort_order_hlc &&
+    incoming.deleted_hlc >= stored.deleted_hlc
+  )
+}
+
+function isSettingsFullyAccepted(incoming: SettingsSyncRecord, stored: SettingsSyncRecord): boolean {
+  return (
+    incoming.theme_hlc >= stored.theme_hlc &&
+    incoming.font_size_hlc >= stored.font_size_hlc
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Route plugin
+// ---------------------------------------------------------------------------
+
+export function createSyncRoutes(sqlite: InstanceType<typeof Database>) {
+  return async function syncRoutes(fastify: FastifyInstance) {
+    // -----------------------------------------------------------------------
+    // GET /sync/changes — pull changes since a given HLC
+    // -----------------------------------------------------------------------
+    fastify.get('/sync/changes', { preHandler: requireAuth }, async (req, reply) => {
+      const query = req.query as Record<string, string>
+      const since = query.since
+      const deviceId = query.device_id
+
+      if (!since || !deviceId) {
+        return reply.status(400).send({ error: 'Missing required parameters' })
+      }
+
+      const userId = req.user!.id
+
+      // Nodes: any HLC column > since AND device_id != requester
+      const nodes = sqlite
+        .prepare(
+          `SELECT * FROM nodes
+           WHERE user_id = ?
+           AND (content_hlc > ? OR note_hlc > ? OR parent_id_hlc > ? OR sort_order_hlc > ?
+                OR completed_hlc > ? OR color_hlc > ? OR collapsed_hlc > ? OR deleted_hlc > ?)
            AND device_id != ?`,
-      )
-      .all(since, device_id) as NodeSyncRecord[]
+        )
+        .all(userId, since, since, since, since, since, since, since, since, deviceId) as NodeSyncRecord[]
 
-    const server_hlc = clock.generate('server')
+      // Documents: any HLC column > since AND device_id != requester
+      const documents = sqlite
+        .prepare(
+          `SELECT * FROM documents
+           WHERE user_id = ?
+           AND (title_hlc > ? OR parent_id_hlc > ? OR sort_order_hlc > ?
+                OR collapsed_hlc > ? OR deleted_hlc > ?)
+           AND device_id != ?`,
+        )
+        .all(userId, since, since, since, since, since, deviceId) as DocumentSyncRecord[]
 
-    return {
-      server_hlc,
-      nodes: rows,
-      documents: [],
-      settings: null,
-      bookmarks: [],
-    }
-  })
+      // Settings: single row, null if none or no changes
+      const settingsRow = sqlite
+        .prepare(
+          `SELECT * FROM settings
+           WHERE user_id = ?
+           AND (theme_hlc > ? OR font_size_hlc > ?)
+           AND device_id != ?`,
+        )
+        .get(userId, since, since, deviceId) as SettingsSyncRecord | undefined
 
-  // -------------------------------------------------------------------------
-  // POST /api/sync/changes
-  // Push pending changes. Server applies per-field LWW merge.
-  // -------------------------------------------------------------------------
-  app.post('/api/sync/changes', async (request, reply) => {
-    const body = request.body as {
-      device_id?: string
-      nodes?: NodeSyncRecord[]
-    }
+      // Bookmarks: any HLC column > since AND device_id != requester
+      const bookmarks = sqlite
+        .prepare(
+          `SELECT * FROM bookmarks
+           WHERE user_id = ?
+           AND (sort_order_hlc > ? OR deleted_hlc > ?)
+           AND device_id != ?`,
+        )
+        .all(userId, since, since, deviceId) as BookmarkSyncRecord[]
 
-    if (!body.device_id) {
-      return reply.status(400).send({ error: 'Missing device_id' })
-    }
+      const server_hlc = hlcGenerate(SERVER_DEVICE_ID)
 
-    const incomingNodes = body.nodes ?? []
-    const acceptedNodeIds: string[] = []
-    const conflictNodes: NodeSyncRecord[] = []
+      return {
+        server_hlc,
+        nodes,
+        documents,
+        settings: settingsRow ?? null,
+        bookmarks,
+      }
+    })
 
-    for (const incoming of incomingNodes) {
-      const existing = sqlite
-        .prepare('SELECT * FROM nodes WHERE id = ?')
-        .get(incoming.id) as NodeSyncRecord | undefined
+    // -----------------------------------------------------------------------
+    // POST /sync/changes — push locally pending changes (per-field LWW merge)
+    // -----------------------------------------------------------------------
+    fastify.post('/sync/changes', { preHandler: requireAuth }, async (req, reply) => {
+      // Check payload size via content-length header
+      const contentLength = parseInt(req.headers['content-length'] ?? '0')
+      if (contentLength > BODY_LIMIT) {
+        return reply.status(413).send({ error: 'Payload too large' })
+      }
 
-      if (!existing) {
-        // New node: insert as-is
-        upsertNode(sqlite, incoming)
-        acceptedNodeIds.push(incoming.id)
-      } else {
-        // Existing node: per-field LWW merge
-        const merged = mergeNodes(existing, incoming)
+      const body = req.body as {
+        device_id?: string
+        nodes?: NodeSyncRecord[]
+        documents?: DocumentSyncRecord[]
+        bookmarks?: BookmarkSyncRecord[]
+        settings?: SettingsSyncRecord | null
+      }
 
-        // "Fully accepted" means incoming won or tied on every field
-        const fullyAccepted =
-          incoming.content_hlc >= existing.content_hlc &&
-          incoming.note_hlc >= existing.note_hlc &&
-          incoming.parent_id_hlc >= existing.parent_id_hlc &&
-          incoming.sort_order_hlc >= existing.sort_order_hlc &&
-          incoming.completed_hlc >= existing.completed_hlc &&
-          incoming.color_hlc >= existing.color_hlc &&
-          incoming.collapsed_hlc >= existing.collapsed_hlc &&
-          incoming.deleted_hlc >= existing.deleted_hlc
+      if (!body.device_id) {
+        return reply.status(400).send({ error: 'Missing device_id' })
+      }
 
-        upsertNode(sqlite, merged)
+      const userId = req.user!.id
+      const now = Date.now()
+      const incomingHlcs: string[] = []
 
-        if (fullyAccepted) {
+      // --- Nodes ---
+      const acceptedNodeIds: string[] = []
+      const conflictNodes: NodeSyncRecord[] = []
+
+      for (const incoming of body.nodes ?? []) {
+        // Collect HLCs for receive()
+        incomingHlcs.push(
+          incoming.content_hlc, incoming.note_hlc, incoming.parent_id_hlc,
+          incoming.sort_order_hlc, incoming.completed_hlc, incoming.color_hlc,
+          incoming.collapsed_hlc, incoming.deleted_hlc,
+        )
+
+        const stored = sqlite
+          .prepare('SELECT * FROM nodes WHERE id = ? AND user_id = ?')
+          .get(incoming.id, userId) as (NodeSyncRecord & { user_id: string; created_at: number; updated_at: number }) | undefined
+
+        if (!stored) {
+          // New node: insert with user_id
+          upsertNode(sqlite, {
+            ...incoming,
+            user_id: userId,
+            created_at: (incoming as unknown as { created_at?: number }).created_at ?? now,
+            updated_at: now,
+          } as NodeSyncRecord & { user_id: string })
           acceptedNodeIds.push(incoming.id)
         } else {
-          // Return the server's winning version so the client can apply it
-          conflictNodes.push(merged)
+          const merged = mergeNodes(stored as unknown as NodeSyncRecord, incoming)
+          upsertNode(sqlite, { ...merged, user_id: userId, created_at: stored.created_at, updated_at: now } as NodeSyncRecord & { user_id: string })
+
+          if (isNodeFullyAccepted(incoming, stored as unknown as NodeSyncRecord)) {
+            acceptedNodeIds.push(incoming.id)
+          } else {
+            conflictNodes.push(merged)
+          }
         }
       }
-    }
 
-    const server_hlc = clock.generate('server')
+      // --- Documents ---
+      const acceptedDocumentIds: string[] = []
+      const conflictDocuments: DocumentSyncRecord[] = []
 
-    return {
-      server_hlc,
-      accepted_node_ids: acceptedNodeIds,
-      accepted_document_ids: [],
-      accepted_bookmark_ids: [],
-      conflicts: {
-        nodes: conflictNodes,
-        documents: [],
-        bookmarks: [],
-        settings: null,
-      },
-    }
-  })
+      for (const incoming of body.documents ?? []) {
+        incomingHlcs.push(
+          incoming.title_hlc, incoming.parent_id_hlc, incoming.sort_order_hlc,
+          incoming.collapsed_hlc, incoming.deleted_hlc,
+        )
 
-  return app
+        const stored = sqlite
+          .prepare('SELECT * FROM documents WHERE id = ? AND user_id = ?')
+          .get(incoming.id, userId) as DocumentSyncRecord | undefined
+
+        if (!stored) {
+          upsertDocument(sqlite, { ...incoming, user_id: userId, created_at: incoming.created_at ?? now, updated_at: now })
+          acceptedDocumentIds.push(incoming.id)
+        } else {
+          const merged = mergeDocuments(stored, incoming)
+          upsertDocument(sqlite, { ...merged, user_id: userId, updated_at: now })
+
+          if (isDocumentFullyAccepted(incoming, stored)) {
+            acceptedDocumentIds.push(incoming.id)
+          } else {
+            conflictDocuments.push(merged)
+          }
+        }
+      }
+
+      // --- Bookmarks ---
+      const acceptedBookmarkIds: string[] = []
+      const conflictBookmarks: BookmarkSyncRecord[] = []
+
+      for (const incoming of body.bookmarks ?? []) {
+        incomingHlcs.push(incoming.sort_order_hlc, incoming.deleted_hlc)
+
+        const stored = sqlite
+          .prepare('SELECT * FROM bookmarks WHERE id = ? AND user_id = ?')
+          .get(incoming.id, userId) as BookmarkSyncRecord | undefined
+
+        if (!stored) {
+          upsertBookmark(sqlite, { ...incoming, user_id: userId, created_at: incoming.created_at ?? now, updated_at: now })
+          acceptedBookmarkIds.push(incoming.id)
+        } else {
+          const merged = mergeBookmarks(stored, incoming)
+          upsertBookmark(sqlite, { ...merged, user_id: userId, updated_at: now })
+
+          if (isBookmarkFullyAccepted(incoming, stored)) {
+            acceptedBookmarkIds.push(incoming.id)
+          } else {
+            conflictBookmarks.push(merged)
+          }
+        }
+      }
+
+      // --- Settings ---
+      let conflictSettings: SettingsSyncRecord | null = null
+
+      if (body.settings) {
+        const incoming = body.settings
+        incomingHlcs.push(incoming.theme_hlc, incoming.font_size_hlc)
+
+        const stored = sqlite
+          .prepare('SELECT * FROM settings WHERE user_id = ?')
+          .get(userId) as SettingsSyncRecord | undefined
+
+        if (!stored) {
+          upsertSettings(sqlite, {
+            ...incoming,
+            user_id: userId,
+            created_at: incoming.created_at ?? now,
+            updated_at: now,
+          })
+        } else {
+          const merged = mergeSettings(stored, incoming)
+          upsertSettings(sqlite, { ...merged, updated_at: now })
+
+          if (!isSettingsFullyAccepted(incoming, stored)) {
+            conflictSettings = merged
+          }
+        }
+      }
+
+      // Advance server HLC past all incoming HLCs
+      for (const hlc of incomingHlcs) {
+        if (hlc) hlcReceive(hlc, SERVER_DEVICE_ID)
+      }
+
+      const server_hlc = hlcGenerate(SERVER_DEVICE_ID)
+
+      return {
+        server_hlc,
+        accepted_node_ids: acceptedNodeIds,
+        accepted_document_ids: acceptedDocumentIds,
+        accepted_bookmark_ids: acceptedBookmarkIds,
+        conflicts: {
+          nodes: conflictNodes,
+          documents: conflictDocuments,
+          bookmarks: conflictBookmarks,
+          settings: conflictSettings,
+        },
+      }
+    })
+  }
 }
