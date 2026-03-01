@@ -26,6 +26,7 @@ WORKDIR /app
 # Copy compiled output and dependencies from builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
 # Migration SQL files must be present at runtime (migrate.ts resolves ../../drizzle from dist/db/)
 COPY drizzle ./drizzle
 
