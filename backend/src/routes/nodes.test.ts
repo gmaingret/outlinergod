@@ -2,6 +2,12 @@
  * P2-10 through P2-13: Nodes route tests
  *
  * Uses createTestDb() for in-memory SQLite and @fastify/inject for HTTP.
+ *
+ * Route paths (registered under /api/nodes prefix):
+ *   GET  /api/nodes?document_id=<id>
+ *   POST /api/nodes/batch          (body: { document_id, nodes })
+ *   DELETE /api/nodes/:id
+ *   POST /api/nodes/:id/convert
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { randomUUID } from 'node:crypto'
@@ -137,9 +143,9 @@ describe('Node routes', () => {
   })
 
   // =========================================================================
-  // GET /api/documents/:id/nodes
+  // GET /api/nodes?document_id=<id>
   // =========================================================================
-  describe('GET /api/documents/:id/nodes', () => {
+  describe('GET /api/nodes', () => {
     it('returns200_withNodes_forValidDocument', async () => {
       const docId = seedDocument(sqlite, { user_id: 'user-a' })
       seedNode(sqlite, { document_id: docId, user_id: 'user-a', content: 'Node 1' })
@@ -148,7 +154,7 @@ describe('Node routes', () => {
 
       const res = await app.inject({
         method: 'GET',
-        url: `/api/documents/${docId}/nodes`,
+        url: `/api/nodes?document_id=${docId}`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -169,7 +175,7 @@ describe('Node routes', () => {
 
       const res = await app.inject({
         method: 'GET',
-        url: `/api/documents/${docId}/nodes`,
+        url: `/api/nodes?document_id=${docId}`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -182,7 +188,7 @@ describe('Node routes', () => {
 
       const res = await app.inject({
         method: 'GET',
-        url: `/api/documents/${docId}/nodes`,
+        url: `/api/nodes?document_id=${docId}`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -196,7 +202,7 @@ describe('Node routes', () => {
 
       const res = await app.inject({
         method: 'GET',
-        url: `/api/documents/${docId}/nodes`,
+        url: `/api/nodes?document_id=${docId}`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -210,7 +216,7 @@ describe('Node routes', () => {
 
       const res = await app.inject({
         method: 'GET',
-        url: `/api/documents/${docId}/nodes`,
+        url: `/api/nodes?document_id=${docId}`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -218,10 +224,21 @@ describe('Node routes', () => {
       expect(res.json().nodes[0].collapsed).toBe(true)
     })
 
+    it('returns400_whenDocumentIdMissing', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/nodes',
+        headers: { authorization: `Bearer ${tokenA}` },
+      })
+
+      expect(res.statusCode).toBe(400)
+      expect(res.json()).toEqual({ error: 'document_id query param required' })
+    })
+
     it('returns404_whenDocumentNotFound', async () => {
       const res = await app.inject({
         method: 'GET',
-        url: `/api/documents/${randomUUID()}/nodes`,
+        url: `/api/nodes?document_id=${randomUUID()}`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -234,7 +251,7 @@ describe('Node routes', () => {
 
       const res = await app.inject({
         method: 'GET',
-        url: `/api/documents/${docId}/nodes`,
+        url: `/api/nodes?document_id=${docId}`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -245,7 +262,7 @@ describe('Node routes', () => {
     it('returns401_withNoAuthHeader', async () => {
       const res = await app.inject({
         method: 'GET',
-        url: `/api/documents/${randomUUID()}/nodes`,
+        url: '/api/nodes',
       })
 
       expect(res.statusCode).toBe(401)
@@ -254,9 +271,9 @@ describe('Node routes', () => {
   })
 
   // =========================================================================
-  // POST /api/documents/:id/nodes/batch
+  // POST /api/nodes/batch
   // =========================================================================
-  describe('POST /api/documents/:id/nodes/batch', () => {
+  describe('POST /api/nodes/batch', () => {
     function makeValidNode(overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
       return {
         id: randomUUID(),
@@ -277,9 +294,9 @@ describe('Node routes', () => {
 
       const res = await app.inject({
         method: 'POST',
-        url: `/api/documents/${docId}/nodes/batch`,
+        url: '/api/nodes/batch',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
-        body: JSON.stringify({ nodes }),
+        body: JSON.stringify({ document_id: docId, nodes }),
       })
 
       expect(res.statusCode).toBe(200)
@@ -288,7 +305,7 @@ describe('Node routes', () => {
       // Verify nodes are readable via GET
       const getRes = await app.inject({
         method: 'GET',
-        url: `/api/documents/${docId}/nodes`,
+        url: `/api/nodes?document_id=${docId}`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -302,17 +319,17 @@ describe('Node routes', () => {
       // Insert first
       await app.inject({
         method: 'POST',
-        url: `/api/documents/${docId}/nodes/batch`,
+        url: '/api/nodes/batch',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
-        body: JSON.stringify({ nodes: [makeValidNode({ id: nodeId, content: 'Original' })] }),
+        body: JSON.stringify({ document_id: docId, nodes: [makeValidNode({ id: nodeId, content: 'Original' })] }),
       })
 
       // Upsert with same id but different content
       const res = await app.inject({
         method: 'POST',
-        url: `/api/documents/${docId}/nodes/batch`,
+        url: '/api/nodes/batch',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
-        body: JSON.stringify({ nodes: [makeValidNode({ id: nodeId, content: 'Updated' })] }),
+        body: JSON.stringify({ document_id: docId, nodes: [makeValidNode({ id: nodeId, content: 'Updated' })] }),
       })
 
       expect(res.statusCode).toBe(200)
@@ -320,7 +337,7 @@ describe('Node routes', () => {
       // Verify content was updated
       const getRes = await app.inject({
         method: 'GET',
-        url: `/api/documents/${docId}/nodes`,
+        url: `/api/nodes?document_id=${docId}`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -329,14 +346,26 @@ describe('Node routes', () => {
       expect(nodes[0].content).toBe('Updated')
     })
 
+    it('returns400_whenDocumentIdMissing', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/nodes/batch',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({ nodes: [makeValidNode()] }),
+      })
+
+      expect(res.statusCode).toBe(400)
+      expect(res.json()).toEqual({ error: 'document_id required' })
+    })
+
     it('returns400_whenNodesMissing', async () => {
       const docId = seedDocument(sqlite, { user_id: 'user-a' })
 
       const res = await app.inject({
         method: 'POST',
-        url: `/api/documents/${docId}/nodes/batch`,
+        url: '/api/nodes/batch',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ document_id: docId }),
       })
 
       expect(res.statusCode).toBe(400)
@@ -349,9 +378,9 @@ describe('Node routes', () => {
 
       const res = await app.inject({
         method: 'POST',
-        url: `/api/documents/${docId}/nodes/batch`,
+        url: '/api/nodes/batch',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
-        body: JSON.stringify({ nodes }),
+        body: JSON.stringify({ document_id: docId, nodes }),
       })
 
       expect(res.statusCode).toBe(400)
@@ -367,9 +396,9 @@ describe('Node routes', () => {
 
       const res = await app.inject({
         method: 'POST',
-        url: `/api/documents/${docId}/nodes/batch`,
+        url: '/api/nodes/batch',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
-        body: JSON.stringify({ nodes }),
+        body: JSON.stringify({ document_id: docId, nodes }),
       })
 
       expect(res.statusCode).toBe(400)
@@ -382,9 +411,9 @@ describe('Node routes', () => {
 
       const res = await app.inject({
         method: 'POST',
-        url: `/api/documents/${docId}/nodes/batch`,
+        url: '/api/nodes/batch',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
-        body: JSON.stringify({ nodes }),
+        body: JSON.stringify({ document_id: docId, nodes }),
       })
 
       expect(res.statusCode).toBe(400)
@@ -393,9 +422,9 @@ describe('Node routes', () => {
     it('returns404_whenDocumentNotFound', async () => {
       const res = await app.inject({
         method: 'POST',
-        url: `/api/documents/${randomUUID()}/nodes/batch`,
+        url: '/api/nodes/batch',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
-        body: JSON.stringify({ nodes: [makeValidNode()] }),
+        body: JSON.stringify({ document_id: randomUUID(), nodes: [makeValidNode()] }),
       })
 
       expect(res.statusCode).toBe(404)
@@ -405,9 +434,9 @@ describe('Node routes', () => {
     it('returns401_withNoAuthHeader', async () => {
       const res = await app.inject({
         method: 'POST',
-        url: `/api/documents/${randomUUID()}/nodes/batch`,
+        url: '/api/nodes/batch',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ nodes: [makeValidNode()] }),
+        body: JSON.stringify({ document_id: randomUUID(), nodes: [makeValidNode()] }),
       })
 
       expect(res.statusCode).toBe(401)
@@ -415,9 +444,9 @@ describe('Node routes', () => {
   })
 
   // =========================================================================
-  // DELETE /api/nodes/:nodeId
+  // DELETE /api/nodes/:id
   // =========================================================================
-  describe('DELETE /api/nodes/:nodeId', () => {
+  describe('DELETE /api/nodes/:id', () => {
     it('returns200_withDeletedIds_forLeafNode', async () => {
       const docId = seedDocument(sqlite, { user_id: 'user-a' })
       const nodeId = seedNode(sqlite, { document_id: docId, user_id: 'user-a', content: 'Leaf' })
@@ -500,16 +529,16 @@ describe('Node routes', () => {
   })
 
   // =========================================================================
-  // POST /api/nodes/:nodeId/convert-to-document
+  // POST /api/nodes/:id/convert
   // =========================================================================
-  describe('POST /api/nodes/:nodeId/convert-to-document', () => {
+  describe('POST /api/nodes/:id/convert', () => {
     it('returns200_withNewDocument', async () => {
       const docId = seedDocument(sqlite, { user_id: 'user-a' })
       const nodeId = seedNode(sqlite, { document_id: docId, user_id: 'user-a', content: 'My Note', sort_order: 'b' })
 
       const res = await app.inject({
         method: 'POST',
-        url: `/api/nodes/${nodeId}/convert-to-document`,
+        url: `/api/nodes/${nodeId}/convert`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -529,7 +558,7 @@ describe('Node routes', () => {
 
       const res = await app.inject({
         method: 'POST',
-        url: `/api/nodes/${parentId}/convert-to-document`,
+        url: `/api/nodes/${parentId}/convert`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -542,7 +571,6 @@ describe('Node routes', () => {
 
       expect(child1Row.document_id).toBe(newDocId)
       expect(child2Row.document_id).toBe(newDocId)
-      // Direct children should have parent_id set to NULL (they become roots of the new doc)
       expect(child1Row.parent_id).toBeNull()
       expect(child2Row.parent_id).toBeNull()
     })
@@ -553,7 +581,7 @@ describe('Node routes', () => {
 
       await app.inject({
         method: 'POST',
-        url: `/api/nodes/${nodeId}/convert-to-document`,
+        url: `/api/nodes/${nodeId}/convert`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -567,7 +595,7 @@ describe('Node routes', () => {
 
       const res = await app.inject({
         method: 'POST',
-        url: `/api/nodes/${nodeId}/convert-to-document`,
+        url: `/api/nodes/${nodeId}/convert`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -578,7 +606,7 @@ describe('Node routes', () => {
     it('returns404_whenNodeNotFound', async () => {
       const res = await app.inject({
         method: 'POST',
-        url: `/api/nodes/${randomUUID()}/convert-to-document`,
+        url: `/api/nodes/${randomUUID()}/convert`,
         headers: { authorization: `Bearer ${tokenA}` },
       })
 
@@ -589,7 +617,7 @@ describe('Node routes', () => {
     it('returns401_withNoAuthHeader', async () => {
       const res = await app.inject({
         method: 'POST',
-        url: `/api/nodes/${randomUUID()}/convert-to-document`,
+        url: `/api/nodes/${randomUUID()}/convert`,
       })
 
       expect(res.statusCode).toBe(401)

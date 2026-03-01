@@ -32,6 +32,23 @@ export function buildApp(
   const app = Fastify({ logger: true }).withTypeProvider<TypeBoxTypeProvider>()
   const sqliteInstance = sqlite ?? new Database(':memory:')
 
+  // Override the built-in JSON body parser so that empty bodies (e.g. DELETE
+  // requests sent with Content-Type: application/json but no payload) are
+  // treated as undefined rather than causing a 400 parse error.  This ensures
+  // requireAuth preHandlers can fire and return 401 for unauthenticated calls.
+  app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body, done) => {
+    const str = body as string
+    if (!str || str.trim() === '') {
+      done(null, undefined)
+      return
+    }
+    try {
+      done(null, JSON.parse(str))
+    } catch (err) {
+      done(err as Error, undefined)
+    }
+  })
+
   // Global JWT middleware — sets req.user on every request.
   void app.register(authPlugin)
 
@@ -44,8 +61,8 @@ export function buildApp(
   // Document routes at /api/documents/*
   void app.register(createDocumentRoutes(sqliteInstance), { prefix: '/api' })
 
-  // Node routes at /api/documents/:id/nodes/* and /api/nodes/*
-  void app.register(createNodeRoutes(sqliteInstance), { prefix: '/api' })
+  // Node routes at /api/nodes/*
+  void app.register(createNodeRoutes(sqliteInstance), { prefix: '/api/nodes' })
 
   // Sync routes at /api/sync/*
   void app.register(createSyncRoutes(sqliteInstance), { prefix: '/api' })

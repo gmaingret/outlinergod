@@ -137,6 +137,79 @@ export function createFileRoutes(sqlite: InstanceType<typeof Database>) {
     })
 
     // -----------------------------------------------------------------------
+    // POST /files/upload — alias for POST /files (used by Android client)
+    // -----------------------------------------------------------------------
+    fastify.post('/files/upload', { preHandler: requireAuth }, async (req, reply) => {
+      const uploadsPath = process.env.UPLOADS_PATH ?? '/tmp/uploads'
+
+      let file
+      try {
+        file = await req.file()
+      } catch {
+        return reply.status(400).send({ error: 'Missing file' })
+      }
+
+      if (!file) {
+        return reply.status(400).send({ error: 'Missing file' })
+      }
+
+      let buffer: Buffer
+      try {
+        buffer = await file.toBuffer()
+      } catch {
+        return reply.status(413).send({ error: 'File too large' })
+      }
+
+      const maxBytes = Number(process.env.MAX_UPLOAD_BYTES ?? 52428800)
+      if (buffer.length > maxBytes) {
+        return reply.status(413).send({ error: 'File too large' })
+      }
+
+      let ext = extname(file.filename).toLowerCase().replace('.', '')
+      if (!ext && file.mimetype) {
+        ext = CONTENT_TYPE_EXT[file.mimetype] ?? ''
+      }
+      if (!ext) {
+        ext = 'bin'
+      }
+
+      const uuid = randomUUID()
+      const storedFilename = `${uuid}.${ext}`
+
+      if (!FILENAME_PATTERN.test(storedFilename)) {
+        return reply.status(400).send({ error: 'Invalid filename' })
+      }
+
+      const fullPath = join(uploadsPath, storedFilename)
+      await writeFile(fullPath, buffer)
+
+      const mimeType = file.mimetype || getMimeType(storedFilename)
+      const now = Date.now()
+
+      let nodeId: string | null = null
+      if (file.fields) {
+        const nodeIdField = file.fields['node_id']
+        if (nodeIdField && 'value' in nodeIdField && typeof nodeIdField.value === 'string') {
+          nodeId = nodeIdField.value
+        }
+      }
+
+      sqlite
+        .prepare(
+          'INSERT INTO files (filename, user_id, node_id, mime_type, size, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+        )
+        .run(storedFilename, req.user!.id, nodeId, mimeType, buffer.length, now)
+
+      return reply.status(201).send({
+        url: `/api/files/${storedFilename}`,
+        uuid,
+        filename: storedFilename,
+        size: buffer.length,
+        mime_type: mimeType,
+      })
+    })
+
+    // -----------------------------------------------------------------------
     // GET /files/:filename — serve a stored file
     // -----------------------------------------------------------------------
     fastify.get('/files/:filename', { preHandler: requireAuth }, async (req, reply) => {

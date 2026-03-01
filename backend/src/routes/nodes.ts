@@ -81,15 +81,20 @@ function toDocumentResponse(row: DocumentRow) {
 export function createNodeRoutes(sqlite: InstanceType<typeof Database>) {
   return async function nodeRoutes(fastify: FastifyInstance) {
     // -----------------------------------------------------------------------
-    // GET /documents/:id/nodes — list all active nodes for a document
+    // GET / — list all active nodes for a document
+    // Registered at: GET /api/nodes?document_id=<id>
     // -----------------------------------------------------------------------
-    fastify.get('/documents/:id/nodes', { preHandler: requireAuth }, async (req, reply) => {
-      const { id } = req.params as { id: string }
+    fastify.get('/', { preHandler: requireAuth }, async (req, reply) => {
+      const { document_id } = req.query as { document_id?: string }
+
+      if (!document_id) {
+        return reply.status(400).send({ error: 'document_id query param required' })
+      }
 
       // Verify document exists, belongs to user, and is not deleted
       const doc = sqlite
         .prepare('SELECT id FROM documents WHERE id = ? AND user_id = ? AND deleted_at IS NULL')
-        .get(id, req.user!.id) as { id: string } | undefined
+        .get(document_id, req.user!.id) as { id: string } | undefined
 
       if (!doc) {
         return reply.status(404).send({ error: 'Document not found' })
@@ -97,27 +102,32 @@ export function createNodeRoutes(sqlite: InstanceType<typeof Database>) {
 
       const rows = sqlite
         .prepare('SELECT * FROM nodes WHERE document_id = ? AND deleted_at IS NULL')
-        .all(id) as NodeRow[]
+        .all(document_id) as NodeRow[]
 
       return { nodes: rows.map(toNodeResponse) }
     })
 
     // -----------------------------------------------------------------------
-    // POST /documents/:id/nodes/batch — batch upsert up to 500 nodes
+    // POST /batch — batch upsert up to 500 nodes
+    // Registered at: POST /api/nodes/batch
     // -----------------------------------------------------------------------
-    fastify.post('/documents/:id/nodes/batch', { preHandler: requireAuth }, async (req, reply) => {
-      const { id } = req.params as { id: string }
+    fastify.post('/batch', { preHandler: requireAuth }, async (req, reply) => {
+      const body = req.body as { document_id?: string; nodes?: unknown }
+
+      if (!body?.document_id || typeof body.document_id !== 'string') {
+        return reply.status(400).send({ error: 'document_id required' })
+      }
+
+      const { document_id } = body
 
       // Verify document exists, belongs to user, and is not deleted
       const doc = sqlite
         .prepare('SELECT id FROM documents WHERE id = ? AND user_id = ? AND deleted_at IS NULL')
-        .get(id, req.user!.id) as { id: string } | undefined
+        .get(document_id, req.user!.id) as { id: string } | undefined
 
       if (!doc) {
         return reply.status(404).send({ error: 'Document not found' })
       }
-
-      const body = req.body as { nodes?: unknown }
 
       if (!body?.nodes || !Array.isArray(body.nodes) || body.nodes.length === 0) {
         return reply.status(400).send({ error: 'nodes must be a non-empty array' })
@@ -160,7 +170,7 @@ export function createNodeRoutes(sqlite: InstanceType<typeof Database>) {
         for (const n of body.nodes as Array<Record<string, unknown>>) {
           upsertStmt.run(
             n.id,
-            id,
+            document_id,
             req.user!.id,
             n.content,
             (n.content_hlc as string) ?? '',
@@ -188,22 +198,23 @@ export function createNodeRoutes(sqlite: InstanceType<typeof Database>) {
     })
 
     // -----------------------------------------------------------------------
-    // DELETE /nodes/:nodeId — soft-delete a node and all its descendants
+    // DELETE /:id — soft-delete a node and all its descendants
+    // Registered at: DELETE /api/nodes/:id
     // -----------------------------------------------------------------------
-    fastify.delete('/nodes/:nodeId', { preHandler: requireAuth }, async (req, reply) => {
-      const { nodeId } = req.params as { nodeId: string }
+    fastify.delete('/:id', { preHandler: requireAuth }, async (req, reply) => {
+      const { id } = req.params as { id: string }
 
       const node = sqlite
         .prepare('SELECT * FROM nodes WHERE id = ? AND user_id = ?')
-        .get(nodeId, req.user!.id) as NodeRow | undefined
+        .get(id, req.user!.id) as NodeRow | undefined
 
       if (!node || node.deleted_at != null) {
         return reply.status(404).send({ error: 'Node not found' })
       }
 
       // BFS to collect all descendant node IDs within the same document
-      const deletedIds: string[] = [nodeId]
-      const queue: string[] = [nodeId]
+      const deletedIds: string[] = [id]
+      const queue: string[] = [id]
 
       while (queue.length > 0) {
         const current = queue.shift()!
@@ -227,14 +238,15 @@ export function createNodeRoutes(sqlite: InstanceType<typeof Database>) {
     })
 
     // -----------------------------------------------------------------------
-    // POST /nodes/:nodeId/convert-to-document — promote a node to a document
+    // POST /:id/convert — promote a node to a document
+    // Registered at: POST /api/nodes/:id/convert
     // -----------------------------------------------------------------------
-    fastify.post('/nodes/:nodeId/convert-to-document', { preHandler: requireAuth }, async (req, reply) => {
-      const { nodeId } = req.params as { nodeId: string }
+    fastify.post('/:id/convert', { preHandler: requireAuth }, async (req, reply) => {
+      const { id } = req.params as { id: string }
 
       const node = sqlite
         .prepare('SELECT * FROM nodes WHERE id = ? AND user_id = ?')
-        .get(nodeId, req.user!.id) as NodeRow | undefined
+        .get(id, req.user!.id) as NodeRow | undefined
 
       if (!node || node.deleted_at != null) {
         return reply.status(404).send({ error: 'Node not found' })
@@ -259,7 +271,7 @@ export function createNodeRoutes(sqlite: InstanceType<typeof Database>) {
         // 2. Move direct children: update parent_id and document_id
         const directChildren = sqlite
           .prepare('SELECT id FROM nodes WHERE document_id = ? AND parent_id = ? AND deleted_at IS NULL')
-          .all(node.document_id, nodeId) as { id: string }[]
+          .all(node.document_id, id) as { id: string }[]
 
         if (directChildren.length > 0) {
           const childIds = directChildren.map((c) => c.id)
@@ -293,7 +305,7 @@ export function createNodeRoutes(sqlite: InstanceType<typeof Database>) {
         // 4. Soft-delete the original node
         sqlite
           .prepare('UPDATE nodes SET deleted_at = ? WHERE id = ?')
-          .run(now, nodeId)
+          .run(now, id)
       })
 
       transaction()

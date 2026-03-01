@@ -39,15 +39,16 @@ describe('Route registration', () => {
       { method: 'DELETE' as const, url: '/api/documents/00000000-0000-0000-0000-000000000001' },
       { method: 'POST' as const, url: '/api/documents/00000000-0000-0000-0000-000000000001/convert-to-node' },
       // Node routes
-      { method: 'GET' as const, url: '/api/documents/00000000-0000-0000-0000-000000000001/nodes' },
-      { method: 'POST' as const, url: '/api/documents/00000000-0000-0000-0000-000000000001/nodes/batch' },
+      { method: 'GET' as const, url: '/api/nodes' },
+      { method: 'POST' as const, url: '/api/nodes/batch' },
       { method: 'DELETE' as const, url: '/api/nodes/00000000-0000-0000-0000-000000000001' },
-      { method: 'POST' as const, url: '/api/nodes/00000000-0000-0000-0000-000000000001/convert-to-document' },
+      { method: 'POST' as const, url: '/api/nodes/00000000-0000-0000-0000-000000000001/convert' },
       // Sync routes
       { method: 'GET' as const, url: '/api/sync/changes' },
       { method: 'POST' as const, url: '/api/sync/changes' },
       // File routes
       { method: 'POST' as const, url: '/api/files' },
+      { method: 'POST' as const, url: '/api/files/upload' },
       { method: 'GET' as const, url: '/api/files/test.png' },
       { method: 'DELETE' as const, url: '/api/files/test.png' },
       // Settings routes
