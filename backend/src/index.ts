@@ -9,6 +9,7 @@ import { createSyncRoutes } from './routes/sync.js'
 import { createFileRoutes } from './routes/files.js'
 import { createSettingsRoutes } from './routes/settings.js'
 import { createBookmarkRoutes } from './routes/bookmarks.js'
+import { createExportRoutes } from './routes/export.js'
 import { createHealthRoute } from './routes/health.js'
 import { runMigrations } from './db/migrate.js'
 import { createConnection } from './db/connection.js'
@@ -56,6 +57,9 @@ export function buildApp(
 
   // Bookmark routes at /api/bookmarks/*
   void app.register(createBookmarkRoutes(sqliteInstance), { prefix: '/api' })
+
+  // Export route at /api/export
+  void app.register(createExportRoutes(sqliteInstance), { prefix: '/api' })
 
   // Placeholder root route
   app.get('/', async (_req, reply) => {
