@@ -19,8 +19,6 @@ RUN pnpm run build
 # Stage 2: runner — lean production image
 FROM node:20-alpine AS runner
 
-RUN apk add --no-cache curl
-
 WORKDIR /app
 
 # Copy compiled output and dependencies from builder
@@ -36,7 +34,7 @@ RUN mkdir -p /data/uploads && chown -R node:node /data
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
+  CMD node -e "require('http').get('http://localhost:3000/health',(r)=>process.exit(r.statusCode===200?0:1))"
 
 USER node
 
