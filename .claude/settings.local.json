@@ -34,7 +34,8 @@
       "Bash(echo:*)",
       "Bash(printenv PATH:*)",
       "Bash(ssh:*)",
-      "Bash(scp:*)"
+      "Bash(scp:*)",
+      "Bash(rm:*)"
     ]
   }
 }

@@ -165,3 +165,140 @@ export function mergeNodes(a: NodeSyncRecord, b: NodeSyncRecord): NodeSyncRecord
     device_id,
   }
 }
+
+// ---------------------------------------------------------------------------
+// Document record
+// ---------------------------------------------------------------------------
+
+export interface DocumentSyncRecord {
+  id: string
+  user_id: string
+  title: string
+  title_hlc: string
+  type: string // 'document' | 'folder' — immutable after creation
+  parent_id: string | null
+  parent_id_hlc: string
+  sort_order: string
+  sort_order_hlc: string
+  collapsed: number
+  collapsed_hlc: string
+  deleted_at: number | null
+  deleted_hlc: string
+  device_id: string
+  created_at: number
+  updated_at: number
+}
+
+/**
+ * Merge two DocumentSyncRecords using per-field LWW.
+ * `a` and `b` must share the same `id`.
+ */
+export function mergeDocuments(
+  a: DocumentSyncRecord,
+  b: DocumentSyncRecord,
+): DocumentSyncRecord {
+  const title = lwwStr(a.title, a.title_hlc, b.title, b.title_hlc)
+  const title_hlc = maxStr(a.title_hlc, b.title_hlc)
+
+  const rawParentId = lwwStr(
+    a.parent_id ?? '',
+    a.parent_id_hlc,
+    b.parent_id ?? '',
+    b.parent_id_hlc,
+  )
+  const parent_id: string | null = rawParentId === '' ? null : rawParentId
+  const parent_id_hlc = maxStr(a.parent_id_hlc, b.parent_id_hlc)
+
+  const sort_order = lwwStr(a.sort_order, a.sort_order_hlc, b.sort_order, b.sort_order_hlc)
+  const sort_order_hlc = maxStr(a.sort_order_hlc, b.sort_order_hlc)
+
+  const collapsed = lwwInt(a.collapsed, a.collapsed_hlc, b.collapsed, b.collapsed_hlc)
+  const collapsed_hlc = maxStr(a.collapsed_hlc, b.collapsed_hlc)
+
+  const deleted_at = lwwNullableInt(a.deleted_at, a.deleted_hlc, b.deleted_at, b.deleted_hlc)
+  const deleted_hlc = maxStr(a.deleted_hlc, b.deleted_hlc)
+
+  const allHlcsA = [a.title_hlc, a.parent_id_hlc, a.sort_order_hlc, a.collapsed_hlc, a.deleted_hlc]
+  const allHlcsB = [b.title_hlc, b.parent_id_hlc, b.sort_order_hlc, b.collapsed_hlc, b.deleted_hlc]
+  const maxA = allHlcsA.reduce((m, v) => (v > m ? v : m), '')
+  const maxB = allHlcsB.reduce((m, v) => (v > m ? v : m), '')
+  const device_id =
+    maxB > maxA ? b.device_id
+    : maxA > maxB ? a.device_id
+    : a.device_id >= b.device_id ? a.device_id : b.device_id
+
+  return {
+    id: a.id,
+    user_id: a.user_id,
+    title,
+    title_hlc,
+    type: a.type, // immutable — take from local
+    parent_id,
+    parent_id_hlc,
+    sort_order,
+    sort_order_hlc,
+    collapsed,
+    collapsed_hlc,
+    deleted_at,
+    deleted_hlc,
+    device_id,
+    created_at: Math.min(a.created_at, b.created_at),
+    updated_at: Math.max(a.updated_at, b.updated_at),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Bookmark record
+// ---------------------------------------------------------------------------
+
+export interface BookmarkSyncRecord {
+  id: string
+  user_id: string
+  node_id: string
+  document_id: string
+  sort_order: string
+  sort_order_hlc: string
+  deleted_at: number | null
+  deleted_hlc: string
+  device_id: string
+  created_at: number
+  updated_at: number
+}
+
+/**
+ * Merge two BookmarkSyncRecords using per-field LWW.
+ * `a` and `b` must share the same `id`.
+ */
+export function mergeBookmarks(
+  a: BookmarkSyncRecord,
+  b: BookmarkSyncRecord,
+): BookmarkSyncRecord {
+  const sort_order = lwwStr(a.sort_order, a.sort_order_hlc, b.sort_order, b.sort_order_hlc)
+  const sort_order_hlc = maxStr(a.sort_order_hlc, b.sort_order_hlc)
+
+  const deleted_at = lwwNullableInt(a.deleted_at, a.deleted_hlc, b.deleted_at, b.deleted_hlc)
+  const deleted_hlc = maxStr(a.deleted_hlc, b.deleted_hlc)
+
+  const allHlcsA = [a.sort_order_hlc, a.deleted_hlc]
+  const allHlcsB = [b.sort_order_hlc, b.deleted_hlc]
+  const maxA = allHlcsA.reduce((m, v) => (v > m ? v : m), '')
+  const maxB = allHlcsB.reduce((m, v) => (v > m ? v : m), '')
+  const device_id =
+    maxB > maxA ? b.device_id
+    : maxA > maxB ? a.device_id
+    : a.device_id >= b.device_id ? a.device_id : b.device_id
+
+  return {
+    id: a.id,
+    user_id: a.user_id,
+    node_id: a.node_id,
+    document_id: a.document_id,
+    sort_order,
+    sort_order_hlc,
+    deleted_at,
+    deleted_hlc,
+    device_id,
+    created_at: Math.min(a.created_at, b.created_at),
+    updated_at: Math.max(a.updated_at, b.updated_at),
+  }
+}
