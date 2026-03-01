@@ -392,6 +392,108 @@ describe('GET /api/sync/changes', () => {
 })
 
 // ---------------------------------------------------------------------------
+// POST /api/sync/push
+// ---------------------------------------------------------------------------
+
+describe('POST /api/sync/push', () => {
+  let sqlite: InstanceType<typeof Database>
+  let app: ReturnType<typeof buildApp>
+  const USER_ID = 'sync-push-user'
+
+  beforeEach(async () => {
+    process.env.JWT_SECRET = TEST_SECRET
+    resetHlcForTesting()
+    const testDb = createTestDb()
+    sqlite = testDb.sqlite
+    app = buildApp(sqlite)
+    await app.ready()
+    seedUser(sqlite, USER_ID)
+    seedDocument(sqlite, 'doc-push-1', USER_ID)
+  })
+
+  afterEach(async () => {
+    await app.close()
+    sqlite.close()
+  })
+
+  it('returns401_withNoAuthHeader', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sync/push',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ device_id: 'deviceA', nodes: [] }),
+    })
+
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('returns200_acceptsNewNode', async () => {
+    const jwt = await signTestJwt(USER_ID)
+    const nodeId = randomUUID()
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sync/push',
+      headers: {
+        authorization: `Bearer ${jwt}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        device_id: 'deviceA',
+        nodes: [
+          {
+            id: nodeId,
+            document_id: 'doc-push-1',
+            content: 'pushed node',
+            content_hlc: 'AAA',
+            note: '',
+            note_hlc: 'AAA',
+            parent_id: null,
+            parent_id_hlc: 'AAA',
+            sort_order: 'a0',
+            sort_order_hlc: 'AAA',
+            completed: 0,
+            completed_hlc: 'AAA',
+            color: 0,
+            color_hlc: 'AAA',
+            collapsed: 0,
+            collapsed_hlc: 'AAA',
+            deleted_at: null,
+            deleted_hlc: 'AAA',
+            device_id: 'deviceA',
+          },
+        ],
+      }),
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.accepted_node_ids).toContain(nodeId)
+    expect(body).toHaveProperty('server_hlc')
+    expect(body).toHaveProperty('conflicts')
+
+    const row = sqlite.prepare('SELECT * FROM nodes WHERE id = ?').get(nodeId) as { id: string; user_id: string } | undefined
+    expect(row).toBeDefined()
+    expect(row!.user_id).toBe(USER_ID)
+  })
+
+  it('returns400_whenDeviceIdMissing', async () => {
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sync/push',
+      headers: {
+        authorization: `Bearer ${jwt}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ nodes: [] }),
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+})
+
+// ---------------------------------------------------------------------------
 // POST /api/sync/changes
 // ---------------------------------------------------------------------------
 

@@ -39,6 +39,24 @@ export function createFileRoutes(sqlite: InstanceType<typeof Database>) {
     })
 
     // -----------------------------------------------------------------------
+    // GET /files — list all file attachments for the authenticated user
+    // -----------------------------------------------------------------------
+    fastify.get('/files', { preHandler: requireAuth }, async (req, reply) => {
+      const rows = sqlite
+        .prepare(
+          'SELECT filename, mime_type, size, created_at, node_id FROM files WHERE user_id = ? ORDER BY created_at DESC',
+        )
+        .all(req.user!.id) as {
+          filename: string
+          mime_type: string
+          size: number
+          created_at: number
+          node_id: string | null
+        }[]
+      return { files: rows }
+    })
+
+    // -----------------------------------------------------------------------
     // POST /files — upload a file attachment
     // -----------------------------------------------------------------------
     fastify.post('/files', { preHandler: requireAuth }, async (req, reply) => {

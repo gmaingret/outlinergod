@@ -112,6 +112,55 @@ describe('Files routes', () => {
   })
 
   // =========================================================================
+  // GET /api/files
+  // =========================================================================
+  describe('GET /api/files', () => {
+    it('returns200_withFileList_forAuthenticatedUser', async () => {
+      const filename = '3fa85f64-5717-4562-b3fc-2c963f66afa6.jpg'
+      seedFileRow(sqlite, filename, 'user-a')
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/files',
+        headers: { authorization: `Bearer ${tokenA}` },
+      })
+
+      expect(res.statusCode).toBe(200)
+      const json = res.json()
+      expect(Array.isArray(json.files)).toBe(true)
+      expect(json.files).toHaveLength(1)
+      expect(json.files[0].filename).toBe(filename)
+      expect(json.files[0].mime_type).toBe('image/jpeg')
+    })
+
+    it('returns_only_files_for_authenticated_user', async () => {
+      seedFileRow(sqlite, '3fa85f64-5717-4562-b3fc-2c963f66afa6.jpg', 'user-a')
+      seedFileRow(sqlite, '00000000-0000-0000-0000-000000000001.png', 'user-b')
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/files',
+        headers: { authorization: `Bearer ${tokenA}` },
+      })
+
+      expect(res.statusCode).toBe(200)
+      const json = res.json()
+      expect(json.files).toHaveLength(1)
+      expect(json.files[0].filename).toBe('3fa85f64-5717-4562-b3fc-2c963f66afa6.jpg')
+    })
+
+    it('returns401_withNoAuthHeader', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/files',
+      })
+
+      expect(res.statusCode).toBe(401)
+      expect(res.json()).toEqual({ error: 'Unauthorized' })
+    })
+  })
+
+  // =========================================================================
   // POST /api/files
   // =========================================================================
   describe('POST /api/files', () => {
