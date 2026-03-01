@@ -1,0 +1,33 @@
+# Secrets
+.env
+*.keystore
+local.properties
+
+# Build outputs
+node_modules/
+dist/
+.gradle/
+build/
+*.class
+*.apk
+*.aab
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/captures/
+android/.navigation/
+android/keystore/
+
+# Backend
+backend/node_modules/
+backend/dist/
+backend/.env
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
