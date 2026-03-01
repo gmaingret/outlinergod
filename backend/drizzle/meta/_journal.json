@@ -8,6 +8,13 @@
       "when": 1772373698518,
       "tag": "0000_greedy_doomsday",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1772378872628,
+      "tag": "0001_woozy_wither",
+      "breakpoints": true
     }
   ]
 }
