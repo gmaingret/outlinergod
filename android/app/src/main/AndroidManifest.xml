@@ -23,6 +23,12 @@
             android:exported="true"
             android:label="DnD Prototype" />
 
+        <!-- class is com.outlinegod.prototype.WysiwygPrototypeActivity; exported for ADB testing -->
+        <activity
+            android:name="com.outlinegod.prototype.WysiwygPrototypeActivity"
+            android:exported="true"
+            android:label="WYSIWYG Prototype" />
+
     </application>
 
 </manifest>
