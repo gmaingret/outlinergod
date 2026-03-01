@@ -4,6 +4,7 @@ import Database from 'better-sqlite3'
 import authPlugin from './middleware/auth.js'
 import { createAuthRoutes, type GooglePayload } from './routes/auth.js'
 import { createDocumentRoutes } from './routes/documents.js'
+import { createNodeRoutes } from './routes/nodes.js'
 import { createHealthRoute } from './routes/health.js'
 import { runMigrations } from './db/migrate.js'
 import { createConnection } from './db/connection.js'
@@ -36,6 +37,9 @@ export function buildApp(
 
   // Document routes at /api/documents/*
   void app.register(createDocumentRoutes(sqliteInstance), { prefix: '/api' })
+
+  // Node routes at /api/documents/:id/nodes/* and /api/nodes/*
+  void app.register(createNodeRoutes(sqliteInstance), { prefix: '/api' })
 
   // Placeholder root route
   app.get('/', async (_req, reply) => {
