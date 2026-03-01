@@ -123,19 +123,33 @@ function upsertBookmark(sqlite: InstanceType<typeof Database>, rec: BookmarkSync
   sqlite
     .prepare(
       `INSERT INTO bookmarks (
-        id, user_id, node_id, document_id, sort_order, sort_order_hlc,
+        id, user_id, title, title_hlc, target_type, target_type_hlc,
+        target_document_id, target_document_id_hlc, target_node_id, target_node_id_hlc,
+        query, query_hlc, sort_order, sort_order_hlc,
         deleted_at, deleted_hlc, device_id, created_at, updated_at
       ) VALUES (
-        @id, @user_id, @node_id, @document_id, @sort_order, @sort_order_hlc,
+        @id, @user_id, @title, @title_hlc, @target_type, @target_type_hlc,
+        @target_document_id, @target_document_id_hlc, @target_node_id, @target_node_id_hlc,
+        @query, @query_hlc, @sort_order, @sort_order_hlc,
         @deleted_at, @deleted_hlc, @device_id, @created_at, @updated_at
       )
       ON CONFLICT(id) DO UPDATE SET
-        sort_order     = excluded.sort_order,
-        sort_order_hlc = excluded.sort_order_hlc,
-        deleted_at     = excluded.deleted_at,
-        deleted_hlc    = excluded.deleted_hlc,
-        device_id      = excluded.device_id,
-        updated_at     = excluded.updated_at`,
+        title                  = excluded.title,
+        title_hlc              = excluded.title_hlc,
+        target_type            = excluded.target_type,
+        target_type_hlc        = excluded.target_type_hlc,
+        target_document_id     = excluded.target_document_id,
+        target_document_id_hlc = excluded.target_document_id_hlc,
+        target_node_id         = excluded.target_node_id,
+        target_node_id_hlc     = excluded.target_node_id_hlc,
+        query                  = excluded.query,
+        query_hlc              = excluded.query_hlc,
+        sort_order             = excluded.sort_order,
+        sort_order_hlc         = excluded.sort_order_hlc,
+        deleted_at             = excluded.deleted_at,
+        deleted_hlc            = excluded.deleted_hlc,
+        device_id              = excluded.device_id,
+        updated_at             = excluded.updated_at`,
     )
     .run(rec)
 }
@@ -236,6 +250,11 @@ function isDocumentFullyAccepted(incoming: DocumentSyncRecord, stored: DocumentS
 
 function isBookmarkFullyAccepted(incoming: BookmarkSyncRecord, stored: BookmarkSyncRecord): boolean {
   return (
+    incoming.title_hlc >= stored.title_hlc &&
+    incoming.target_type_hlc >= stored.target_type_hlc &&
+    incoming.target_document_id_hlc >= stored.target_document_id_hlc &&
+    incoming.target_node_id_hlc >= stored.target_node_id_hlc &&
+    incoming.query_hlc >= stored.query_hlc &&
     incoming.sort_order_hlc >= stored.sort_order_hlc &&
     incoming.deleted_hlc >= stored.deleted_hlc
   )
@@ -307,10 +326,11 @@ export function createSyncRoutes(sqlite: InstanceType<typeof Database>) {
         .prepare(
           `SELECT * FROM bookmarks
            WHERE user_id = ?
-           AND (sort_order_hlc > ? OR deleted_hlc > ?)
+           AND (title_hlc > ? OR target_type_hlc > ? OR target_document_id_hlc > ?
+                OR target_node_id_hlc > ? OR query_hlc > ? OR sort_order_hlc > ? OR deleted_hlc > ?)
            AND device_id != ?`,
         )
-        .all(userId, since, since, deviceId) as BookmarkSyncRecord[]
+        .all(userId, since, since, since, since, since, since, since, deviceId) as BookmarkSyncRecord[]
 
       const server_hlc = hlcGenerate(SERVER_DEVICE_ID)
 
@@ -420,7 +440,11 @@ export function createSyncRoutes(sqlite: InstanceType<typeof Database>) {
       const conflictBookmarks: BookmarkSyncRecord[] = []
 
       for (const incoming of body.bookmarks ?? []) {
-        incomingHlcs.push(incoming.sort_order_hlc, incoming.deleted_hlc)
+        incomingHlcs.push(
+          incoming.title_hlc, incoming.target_type_hlc,
+          incoming.target_document_id_hlc, incoming.target_node_id_hlc,
+          incoming.query_hlc, incoming.sort_order_hlc, incoming.deleted_hlc,
+        )
 
         const stored = sqlite
           .prepare('SELECT * FROM bookmarks WHERE id = ? AND user_id = ?')

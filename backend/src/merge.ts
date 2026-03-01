@@ -254,8 +254,16 @@ export function mergeDocuments(
 export interface BookmarkSyncRecord {
   id: string
   user_id: string
-  node_id: string
-  document_id: string
+  title: string
+  title_hlc: string
+  target_type: string
+  target_type_hlc: string
+  target_document_id: string | null
+  target_document_id_hlc: string
+  target_node_id: string | null
+  target_node_id_hlc: string
+  query: string | null
+  query_hlc: string
   sort_order: string
   sort_order_hlc: string
   deleted_at: number | null
@@ -273,14 +281,55 @@ export function mergeBookmarks(
   a: BookmarkSyncRecord,
   b: BookmarkSyncRecord,
 ): BookmarkSyncRecord {
+  const title = lwwStr(a.title, a.title_hlc, b.title, b.title_hlc)
+  const title_hlc = maxStr(a.title_hlc, b.title_hlc)
+
+  // target_type, target_document_id, target_node_id are immutable after creation
+  // but we still track their HLCs for sync purposes
+  const target_type = lwwStr(a.target_type, a.target_type_hlc, b.target_type, b.target_type_hlc)
+  const target_type_hlc = maxStr(a.target_type_hlc, b.target_type_hlc)
+
+  const rawTargetDocId = lwwStr(
+    a.target_document_id ?? '',
+    a.target_document_id_hlc,
+    b.target_document_id ?? '',
+    b.target_document_id_hlc,
+  )
+  const target_document_id: string | null = rawTargetDocId === '' ? null : rawTargetDocId
+  const target_document_id_hlc = maxStr(a.target_document_id_hlc, b.target_document_id_hlc)
+
+  const rawTargetNodeId = lwwStr(
+    a.target_node_id ?? '',
+    a.target_node_id_hlc,
+    b.target_node_id ?? '',
+    b.target_node_id_hlc,
+  )
+  const target_node_id: string | null = rawTargetNodeId === '' ? null : rawTargetNodeId
+  const target_node_id_hlc = maxStr(a.target_node_id_hlc, b.target_node_id_hlc)
+
+  const rawQuery = lwwStr(
+    a.query ?? '',
+    a.query_hlc,
+    b.query ?? '',
+    b.query_hlc,
+  )
+  const query: string | null = rawQuery === '' ? null : rawQuery
+  const query_hlc = maxStr(a.query_hlc, b.query_hlc)
+
   const sort_order = lwwStr(a.sort_order, a.sort_order_hlc, b.sort_order, b.sort_order_hlc)
   const sort_order_hlc = maxStr(a.sort_order_hlc, b.sort_order_hlc)
 
   const deleted_at = lwwNullableInt(a.deleted_at, a.deleted_hlc, b.deleted_at, b.deleted_hlc)
   const deleted_hlc = maxStr(a.deleted_hlc, b.deleted_hlc)
 
-  const allHlcsA = [a.sort_order_hlc, a.deleted_hlc]
-  const allHlcsB = [b.sort_order_hlc, b.deleted_hlc]
+  const allHlcsA = [
+    a.title_hlc, a.target_type_hlc, a.target_document_id_hlc,
+    a.target_node_id_hlc, a.query_hlc, a.sort_order_hlc, a.deleted_hlc,
+  ]
+  const allHlcsB = [
+    b.title_hlc, b.target_type_hlc, b.target_document_id_hlc,
+    b.target_node_id_hlc, b.query_hlc, b.sort_order_hlc, b.deleted_hlc,
+  ]
   const maxA = allHlcsA.reduce((m, v) => (v > m ? v : m), '')
   const maxB = allHlcsB.reduce((m, v) => (v > m ? v : m), '')
   const device_id =
@@ -291,8 +340,16 @@ export function mergeBookmarks(
   return {
     id: a.id,
     user_id: a.user_id,
-    node_id: a.node_id,
-    document_id: a.document_id,
+    title,
+    title_hlc,
+    target_type,
+    target_type_hlc,
+    target_document_id,
+    target_document_id_hlc,
+    target_node_id,
+    target_node_id_hlc,
+    query,
+    query_hlc,
     sort_order,
     sort_order_hlc,
     deleted_at,

@@ -1,19 +1,21 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 import { users } from './users.js'
-import { documents } from './documents.js'
-import { nodes } from './nodes.js'
 
 export const bookmarks = sqliteTable('bookmarks', {
   id: text('id').primaryKey(),
   user_id: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  node_id: text('node_id')
-    .notNull()
-    .references(() => nodes.id, { onDelete: 'cascade' }),
-  document_id: text('document_id')
-    .notNull()
-    .references(() => documents.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  title_hlc: text('title_hlc').notNull(),
+  target_type: text('target_type').notNull(), // 'document' | 'node' | 'search'
+  target_type_hlc: text('target_type_hlc').notNull(),
+  target_document_id: text('target_document_id'),
+  target_document_id_hlc: text('target_document_id_hlc').notNull(),
+  target_node_id: text('target_node_id'),
+  target_node_id_hlc: text('target_node_id_hlc').notNull(),
+  query: text('query'),
+  query_hlc: text('query_hlc').notNull(),
   sort_order: text('sort_order').notNull(),
   sort_order_hlc: text('sort_order_hlc').notNull(),
   deleted_at: integer('deleted_at'),
