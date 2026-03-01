@@ -28,8 +28,12 @@ export interface SettingsSyncRecord {
   user_id: string
   theme: string
   theme_hlc: string
-  font_size: number
-  font_size_hlc: string
+  density: string
+  density_hlc: string
+  show_guide_lines: number
+  show_guide_lines_hlc: string
+  show_backlink_badge: number
+  show_backlink_badge_hlc: string
   device_id: string
   created_at: number
   updated_at: number
@@ -140,19 +144,25 @@ function upsertSettings(sqlite: InstanceType<typeof Database>, rec: SettingsSync
   sqlite
     .prepare(
       `INSERT INTO settings (
-        id, user_id, theme, theme_hlc, font_size, font_size_hlc,
+        id, user_id, theme, theme_hlc, density, density_hlc,
+        show_guide_lines, show_guide_lines_hlc, show_backlink_badge, show_backlink_badge_hlc,
         device_id, created_at, updated_at
       ) VALUES (
-        @id, @user_id, @theme, @theme_hlc, @font_size, @font_size_hlc,
+        @id, @user_id, @theme, @theme_hlc, @density, @density_hlc,
+        @show_guide_lines, @show_guide_lines_hlc, @show_backlink_badge, @show_backlink_badge_hlc,
         @device_id, @created_at, @updated_at
       )
       ON CONFLICT(id) DO UPDATE SET
-        theme          = excluded.theme,
-        theme_hlc      = excluded.theme_hlc,
-        font_size      = excluded.font_size,
-        font_size_hlc  = excluded.font_size_hlc,
-        device_id      = excluded.device_id,
-        updated_at     = excluded.updated_at`,
+        theme                = excluded.theme,
+        theme_hlc            = excluded.theme_hlc,
+        density              = excluded.density,
+        density_hlc          = excluded.density_hlc,
+        show_guide_lines     = excluded.show_guide_lines,
+        show_guide_lines_hlc = excluded.show_guide_lines_hlc,
+        show_backlink_badge  = excluded.show_backlink_badge,
+        show_backlink_badge_hlc = excluded.show_backlink_badge_hlc,
+        device_id            = excluded.device_id,
+        updated_at           = excluded.updated_at`,
     )
     .run(rec)
 }
@@ -165,13 +175,20 @@ function mergeSettings(stored: SettingsSyncRecord, incoming: SettingsSyncRecord)
   const theme = stored.theme_hlc >= incoming.theme_hlc ? stored.theme : incoming.theme
   const theme_hlc = stored.theme_hlc >= incoming.theme_hlc ? stored.theme_hlc : incoming.theme_hlc
 
-  const font_size = stored.font_size_hlc >= incoming.font_size_hlc ? stored.font_size : incoming.font_size
-  const font_size_hlc =
-    stored.font_size_hlc >= incoming.font_size_hlc ? stored.font_size_hlc : incoming.font_size_hlc
+  const density = stored.density_hlc >= incoming.density_hlc ? stored.density : incoming.density
+  const density_hlc = stored.density_hlc >= incoming.density_hlc ? stored.density_hlc : incoming.density_hlc
+
+  const show_guide_lines = stored.show_guide_lines_hlc >= incoming.show_guide_lines_hlc ? stored.show_guide_lines : incoming.show_guide_lines
+  const show_guide_lines_hlc = stored.show_guide_lines_hlc >= incoming.show_guide_lines_hlc ? stored.show_guide_lines_hlc : incoming.show_guide_lines_hlc
+
+  const show_backlink_badge = stored.show_backlink_badge_hlc >= incoming.show_backlink_badge_hlc ? stored.show_backlink_badge : incoming.show_backlink_badge
+  const show_backlink_badge_hlc = stored.show_backlink_badge_hlc >= incoming.show_backlink_badge_hlc ? stored.show_backlink_badge_hlc : incoming.show_backlink_badge_hlc
 
   // device_id: whichever record has the higher max HLC
-  const maxStored = stored.theme_hlc >= stored.font_size_hlc ? stored.theme_hlc : stored.font_size_hlc
-  const maxIncoming = incoming.theme_hlc >= incoming.font_size_hlc ? incoming.theme_hlc : incoming.font_size_hlc
+  const hlcs = [stored.theme_hlc, stored.density_hlc, stored.show_guide_lines_hlc, stored.show_backlink_badge_hlc]
+  const maxStored = hlcs.reduce((a, b) => (a >= b ? a : b))
+  const iHlcs = [incoming.theme_hlc, incoming.density_hlc, incoming.show_guide_lines_hlc, incoming.show_backlink_badge_hlc]
+  const maxIncoming = iHlcs.reduce((a, b) => (a >= b ? a : b))
   const device_id = maxIncoming > maxStored ? incoming.device_id : stored.device_id
 
   return {
@@ -179,8 +196,12 @@ function mergeSettings(stored: SettingsSyncRecord, incoming: SettingsSyncRecord)
     user_id: stored.user_id,
     theme,
     theme_hlc,
-    font_size,
-    font_size_hlc,
+    density,
+    density_hlc,
+    show_guide_lines,
+    show_guide_lines_hlc,
+    show_backlink_badge,
+    show_backlink_badge_hlc,
     device_id,
     created_at: Math.min(stored.created_at, incoming.created_at),
     updated_at: Math.max(stored.updated_at, incoming.updated_at),
@@ -223,7 +244,9 @@ function isBookmarkFullyAccepted(incoming: BookmarkSyncRecord, stored: BookmarkS
 function isSettingsFullyAccepted(incoming: SettingsSyncRecord, stored: SettingsSyncRecord): boolean {
   return (
     incoming.theme_hlc >= stored.theme_hlc &&
-    incoming.font_size_hlc >= stored.font_size_hlc
+    incoming.density_hlc >= stored.density_hlc &&
+    incoming.show_guide_lines_hlc >= stored.show_guide_lines_hlc &&
+    incoming.show_backlink_badge_hlc >= stored.show_backlink_badge_hlc
   )
 }
 
@@ -274,10 +297,10 @@ export function createSyncRoutes(sqlite: InstanceType<typeof Database>) {
         .prepare(
           `SELECT * FROM settings
            WHERE user_id = ?
-           AND (theme_hlc > ? OR font_size_hlc > ?)
+           AND (theme_hlc > ? OR density_hlc > ? OR show_guide_lines_hlc > ? OR show_backlink_badge_hlc > ?)
            AND device_id != ?`,
         )
-        .get(userId, since, since, deviceId) as SettingsSyncRecord | undefined
+        .get(userId, since, since, since, since, deviceId) as SettingsSyncRecord | undefined
 
       // Bookmarks: any HLC column > since AND device_id != requester
       const bookmarks = sqlite
@@ -423,7 +446,7 @@ export function createSyncRoutes(sqlite: InstanceType<typeof Database>) {
 
       if (body.settings) {
         const incoming = body.settings
-        incomingHlcs.push(incoming.theme_hlc, incoming.font_size_hlc)
+        incomingHlcs.push(incoming.theme_hlc, incoming.density_hlc, incoming.show_guide_lines_hlc, incoming.show_backlink_badge_hlc)
 
         const stored = sqlite
           .prepare('SELECT * FROM settings WHERE user_id = ?')

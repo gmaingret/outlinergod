@@ -22,10 +22,14 @@ function makeInMemoryDb() {
     CREATE TABLE settings (
       id TEXT PRIMARY KEY NOT NULL,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      theme TEXT NOT NULL DEFAULT 'system',
+      theme TEXT NOT NULL DEFAULT 'dark',
       theme_hlc TEXT NOT NULL,
-      font_size INTEGER NOT NULL DEFAULT 14,
-      font_size_hlc TEXT NOT NULL,
+      density TEXT NOT NULL DEFAULT 'cozy',
+      density_hlc TEXT NOT NULL,
+      show_guide_lines INTEGER NOT NULL DEFAULT 1,
+      show_guide_lines_hlc TEXT NOT NULL,
+      show_backlink_badge INTEGER NOT NULL DEFAULT 1,
+      show_backlink_badge_hlc TEXT NOT NULL,
       device_id TEXT NOT NULL,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
@@ -46,7 +50,9 @@ function makeInMemoryDb() {
 const BASE_SETTING = {
   user_id: 'user-1',
   theme_hlc: '0000000000000:0:device-1',
-  font_size_hlc: '0000000000000:0:device-1',
+  density_hlc: '0000000000000:0:device-1',
+  show_guide_lines_hlc: '0000000000000:0:device-1',
+  show_backlink_badge_hlc: '0000000000000:0:device-1',
   device_id: 'device-1',
   created_at: 1000,
   updated_at: 1000,
@@ -58,39 +64,41 @@ describe('settings schema', () => {
     expect(config.name).toBe('settings')
   })
 
-  it('settings_hasTwoHlcColumns', () => {
+  it('settings_hasAllHlcColumns', () => {
     const config = getTableConfig(settings)
     const columnNames = config.columns.map((c) => c.name)
     expect(columnNames).toContain('theme_hlc')
-    expect(columnNames).toContain('font_size_hlc')
+    expect(columnNames).toContain('density_hlc')
+    expect(columnNames).toContain('show_guide_lines_hlc')
+    expect(columnNames).toContain('show_backlink_badge_hlc')
   })
 
-  it('settings_themeDefaultsToSystem', () => {
+  it('settings_themeDefaultsToDark', () => {
     const { sqlite } = makeInMemoryDb()
     sqlite
       .prepare(
-        `INSERT INTO settings (id, user_id, theme_hlc, font_size_hlc, device_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO settings (id, user_id, theme_hlc, density_hlc, show_guide_lines_hlc, show_backlink_badge_hlc, device_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .run('setting-1', 'user-1', '0000000000000:0:device-1', '0000000000000:0:device-1', 'device-1', 1000, 1000)
+      .run('setting-1', 'user-1', '', '', '', '', 'device-1', 1000, 1000)
     const row = sqlite.prepare('SELECT * FROM settings WHERE id = ?').get('setting-1') as {
       theme: string
     }
-    expect(row.theme).toBe('system')
+    expect(row.theme).toBe('dark')
   })
 
-  it('settings_fontSizeDefaultsTo14', () => {
+  it('settings_densityDefaultsToCozy', () => {
     const { sqlite } = makeInMemoryDb()
     sqlite
       .prepare(
-        `INSERT INTO settings (id, user_id, theme_hlc, font_size_hlc, device_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO settings (id, user_id, theme_hlc, density_hlc, show_guide_lines_hlc, show_backlink_badge_hlc, device_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .run('setting-2', 'user-1', '0000000000000:0:device-1', '0000000000000:0:device-1', 'device-1', 1000, 1000)
+      .run('setting-2', 'user-1', '', '', '', '', 'device-1', 1000, 1000)
     const row = sqlite.prepare('SELECT * FROM settings WHERE id = ?').get('setting-2') as {
-      font_size: number
+      density: string
     }
-    expect(row.font_size).toBe(14)
+    expect(row.density).toBe('cozy')
   })
 
   it('settings_cascadeDelete_onUserDelete', () => {

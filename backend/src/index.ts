@@ -7,6 +7,7 @@ import { createDocumentRoutes } from './routes/documents.js'
 import { createNodeRoutes } from './routes/nodes.js'
 import { createSyncRoutes } from './routes/sync.js'
 import { createFileRoutes } from './routes/files.js'
+import { createSettingsRoutes } from './routes/settings.js'
 import { createHealthRoute } from './routes/health.js'
 import { runMigrations } from './db/migrate.js'
 import { createConnection } from './db/connection.js'
@@ -48,6 +49,9 @@ export function buildApp(
 
   // File routes at /api/files/*
   void app.register(createFileRoutes(sqliteInstance), { prefix: '/api' })
+
+  // Settings routes at /api/settings
+  void app.register(createSettingsRoutes(sqliteInstance), { prefix: '/api' })
 
   // Placeholder root route
   app.get('/', async (_req, reply) => {

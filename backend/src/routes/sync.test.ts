@@ -112,24 +112,32 @@ function seedSettings(
     user_id: string
     theme?: string
     theme_hlc?: string
-    font_size?: number
-    font_size_hlc?: string
+    density?: string
+    density_hlc?: string
+    show_guide_lines?: number
+    show_guide_lines_hlc?: string
+    show_backlink_badge?: number
+    show_backlink_badge_hlc?: string
     device_id?: string
   },
 ): void {
   const now = Date.now()
   sqlite
     .prepare(
-      `INSERT INTO settings (id, user_id, theme, theme_hlc, font_size, font_size_hlc, device_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO settings (id, user_id, theme, theme_hlc, density, density_hlc, show_guide_lines, show_guide_lines_hlc, show_backlink_badge, show_backlink_badge_hlc, device_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       overrides.id,
       overrides.user_id,
-      overrides.theme ?? 'system',
+      overrides.theme ?? 'dark',
       overrides.theme_hlc ?? '',
-      overrides.font_size ?? 14,
-      overrides.font_size_hlc ?? '',
+      overrides.density ?? 'cozy',
+      overrides.density_hlc ?? '',
+      overrides.show_guide_lines ?? 1,
+      overrides.show_guide_lines_hlc ?? '',
+      overrides.show_backlink_badge ?? 1,
+      overrides.show_backlink_badge_hlc ?? '',
       overrides.device_id ?? 'deviceA',
       now,
       now,
@@ -304,7 +312,9 @@ describe('GET /api/sync/changes', () => {
       user_id: USER_ID,
       theme: 'dark',
       theme_hlc: 'AAAA',
-      font_size_hlc: '0',
+      density_hlc: '0',
+      show_guide_lines_hlc: '0',
+      show_backlink_badge_hlc: '0',
       device_id: 'deviceA',
     })
 
@@ -650,8 +660,12 @@ describe('POST /api/sync/changes', () => {
       user_id: USER_ID,
       theme: 'dark',
       theme_hlc: 'ZZZ',
-      font_size: 14,
-      font_size_hlc: 'AAA',
+      density: 'cozy',
+      density_hlc: 'AAA',
+      show_guide_lines: 1,
+      show_guide_lines_hlc: 'AAA',
+      show_backlink_badge: 1,
+      show_backlink_badge_hlc: 'AAA',
       device_id: 'deviceA',
     })
 
@@ -670,8 +684,12 @@ describe('POST /api/sync/changes', () => {
           user_id: USER_ID,
           theme: 'light',
           theme_hlc: 'AAA', // lower — stored 'dark' wins
-          font_size: 16,
-          font_size_hlc: 'AAA', // same as stored — tiebreaker
+          density: 'compact',
+          density_hlc: 'AAA', // same as stored — tiebreaker
+          show_guide_lines: 0,
+          show_guide_lines_hlc: 'AAA',
+          show_backlink_badge: 0,
+          show_backlink_badge_hlc: 'AAA',
           device_id: 'deviceB',
           created_at: Date.now(),
           updated_at: Date.now(),
