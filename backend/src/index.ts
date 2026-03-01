@@ -3,6 +3,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import Database from 'better-sqlite3'
 import authPlugin from './middleware/auth.js'
 import { createAuthRoutes, type GooglePayload } from './routes/auth.js'
+import { createDocumentRoutes } from './routes/documents.js'
 import { createHealthRoute } from './routes/health.js'
 import { runMigrations } from './db/migrate.js'
 import { createConnection } from './db/connection.js'
@@ -32,6 +33,9 @@ export function buildApp(
 
   // Auth routes at /api/auth/*
   void app.register(createAuthRoutes(sqliteInstance, verifyGoogle), { prefix: '/api' })
+
+  // Document routes at /api/documents/*
+  void app.register(createDocumentRoutes(sqliteInstance), { prefix: '/api' })
 
   // Placeholder root route
   app.get('/', async (_req, reply) => {
