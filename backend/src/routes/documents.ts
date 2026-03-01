@@ -194,6 +194,120 @@ export function createDocumentRoutes(sqlite: InstanceType<typeof Database>) {
     })
 
     // -----------------------------------------------------------------------
+    // POST /documents/:id/convert-to-node — fold document into a node
+    // -----------------------------------------------------------------------
+    fastify.post('/documents/:id/convert-to-node', { preHandler: requireAuth }, async (req, reply) => {
+      const { id } = req.params as { id: string }
+
+      const body = req.body as {
+        target_document_id?: string
+        target_parent_id?: string
+        sort_order?: string
+      }
+
+      if (
+        !body?.target_document_id ||
+        typeof body.target_document_id !== 'string' ||
+        body.target_parent_id === undefined ||
+        (body.target_parent_id !== null && typeof body.target_parent_id !== 'string') ||
+        !body.sort_order ||
+        typeof body.sort_order !== 'string'
+      ) {
+        return reply.status(400).send({ error: 'Missing required fields' })
+      }
+
+      // Fetch source document
+      const sourceDoc = sqlite
+        .prepare('SELECT * FROM documents WHERE id = ? AND user_id = ? AND deleted_at IS NULL')
+        .get(id, req.user!.id) as DocumentRow | undefined
+
+      if (!sourceDoc) {
+        return reply.status(404).send({ error: 'Document not found' })
+      }
+
+      // Fetch target document
+      const targetDoc = sqlite
+        .prepare('SELECT * FROM documents WHERE id = ? AND user_id = ? AND deleted_at IS NULL')
+        .get(body.target_document_id, req.user!.id) as DocumentRow | undefined
+
+      if (!targetDoc) {
+        return reply.status(404).send({ error: 'Target document not found' })
+      }
+
+      // Circular reference guard: cannot convert into itself
+      if (body.target_document_id === id) {
+        return reply.status(400).send({ error: 'Circular reference detected' })
+      }
+
+      const newNodeId = randomUUID()
+      const now = Date.now()
+
+      const transaction = sqlite.transaction(() => {
+        // 1. Create new node in target document with source doc title as content
+        sqlite
+          .prepare(
+            `INSERT INTO nodes (id, document_id, user_id, content, content_hlc, note, note_hlc, parent_id, parent_id_hlc, sort_order, sort_order_hlc, completed, completed_hlc, color, color_hlc, collapsed, collapsed_hlc, deleted_at, deleted_hlc, device_id, created_at, updated_at)
+             VALUES (?, ?, ?, ?, '', '', '', ?, '', ?, '', 0, '', 0, '', 0, '', NULL, '', '', ?, ?)`,
+          )
+          .run(newNodeId, body.target_document_id, req.user!.id, sourceDoc.title, body.target_parent_id ?? null, body.sort_order, now, now)
+
+        // 2. Migrate top-level nodes (parent_id IS NULL) — re-parent to newNode
+        sqlite
+          .prepare(
+            'UPDATE nodes SET document_id = ?, parent_id = ? WHERE document_id = ? AND deleted_at IS NULL AND parent_id IS NULL',
+          )
+          .run(body.target_document_id, newNodeId, id)
+
+        // 3. Migrate non-root nodes — just update document_id, keep parent_id
+        sqlite
+          .prepare(
+            'UPDATE nodes SET document_id = ? WHERE document_id = ? AND deleted_at IS NULL AND parent_id IS NOT NULL',
+          )
+          .run(body.target_document_id, id)
+
+        // 4. Soft-delete source document
+        sqlite
+          .prepare('UPDATE documents SET deleted_at = ? WHERE id = ?')
+          .run(now, id)
+      })
+
+      transaction()
+
+      const nodeRow = sqlite.prepare('SELECT * FROM nodes WHERE id = ?').get(newNodeId) as {
+        id: string
+        document_id: string
+        user_id: string
+        content: string
+        note: string
+        parent_id: string | null
+        sort_order: string
+        completed: number
+        color: number
+        collapsed: number
+        deleted_at: number | null
+        created_at: number
+        updated_at: number
+      }
+
+      return {
+        node: {
+          id: nodeRow.id,
+          document_id: nodeRow.document_id,
+          content: nodeRow.content,
+          note: nodeRow.note,
+          parent_id: nodeRow.parent_id,
+          sort_order: nodeRow.sort_order,
+          completed: nodeRow.completed === 1,
+          color: nodeRow.color,
+          collapsed: nodeRow.collapsed === 1,
+          deleted_at: nodeRow.deleted_at,
+          created_at: nodeRow.created_at,
+          updated_at: nodeRow.updated_at,
+        },
+      }
+    })
+
+    // -----------------------------------------------------------------------
     // DELETE /documents/:id — soft-delete document and all descendants
     // -----------------------------------------------------------------------
     fastify.delete('/documents/:id', { preHandler: requireAuth }, async (req, reply) => {

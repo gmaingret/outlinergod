@@ -634,4 +634,125 @@ describe('Document routes', () => {
       expect(res.json()).toEqual({ error: 'Document not found' })
     })
   })
+
+  // =========================================================================
+  // POST /api/documents/:id/convert-to-node
+  // =========================================================================
+  describe('POST /api/documents/:id/convert-to-node', () => {
+    it('returns200_withNewNode', async () => {
+      const sourceId = seedDocument(sqlite, { user_id: 'user-a', title: 'MyDoc' })
+      const targetId = seedDocument(sqlite, { user_id: 'user-a', title: 'Target Doc' })
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/documents/${sourceId}/convert-to-node`,
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({ target_document_id: targetId, target_parent_id: null, sort_order: 'a' }),
+      })
+
+      expect(res.statusCode).toBe(200)
+      const body = res.json()
+      expect(body.node.content).toBe('MyDoc')
+      expect(body.node.document_id).toBe(targetId)
+      expect(body.node.parent_id).toBeNull()
+      expect(body.node.sort_order).toBe('a')
+      expect(body.node.completed).toBe(false)
+      expect(body.node.collapsed).toBe(false)
+    })
+
+    it('sourceDocs_nodes_areMigrated_toTargetDocument', async () => {
+      const sourceId = seedDocument(sqlite, { user_id: 'user-a', title: 'Source' })
+      const targetId = seedDocument(sqlite, { user_id: 'user-a', title: 'Target' })
+      const node1 = seedNode(sqlite, sourceId, 'user-a')
+      const node2 = seedNode(sqlite, sourceId, 'user-a')
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/documents/${sourceId}/convert-to-node`,
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({ target_document_id: targetId, target_parent_id: null, sort_order: 'a' }),
+      })
+
+      expect(res.statusCode).toBe(200)
+
+      // Both nodes should now belong to target document
+      const n1 = sqlite.prepare('SELECT document_id, parent_id FROM nodes WHERE id = ?').get(node1) as { document_id: string; parent_id: string | null }
+      const n2 = sqlite.prepare('SELECT document_id, parent_id FROM nodes WHERE id = ?').get(node2) as { document_id: string; parent_id: string | null }
+      expect(n1.document_id).toBe(targetId)
+      expect(n2.document_id).toBe(targetId)
+
+      // Top-level nodes (parent_id was NULL) should now point to the new node
+      const newNodeId = res.json().node.id
+      expect(n1.parent_id).toBe(newNodeId)
+      expect(n2.parent_id).toBe(newNodeId)
+    })
+
+    it('sourceDocument_isSoftDeleted', async () => {
+      const sourceId = seedDocument(sqlite, { user_id: 'user-a', title: 'Source' })
+      const targetId = seedDocument(sqlite, { user_id: 'user-a', title: 'Target' })
+
+      await app.inject({
+        method: 'POST',
+        url: `/api/documents/${sourceId}/convert-to-node`,
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({ target_document_id: targetId, target_parent_id: null, sort_order: 'a' }),
+      })
+
+      const row = sqlite.prepare('SELECT deleted_at FROM documents WHERE id = ?').get(sourceId) as { deleted_at: number | null }
+      expect(row.deleted_at).toBeGreaterThan(0)
+    })
+
+    it('returns400_whenTargetDocumentIdMissing', async () => {
+      const sourceId = seedDocument(sqlite, { user_id: 'user-a', title: 'Source' })
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/documents/${sourceId}/convert-to-node`,
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({ target_parent_id: null, sort_order: 'a' }),
+      })
+
+      expect(res.statusCode).toBe(400)
+      expect(res.json()).toEqual({ error: 'Missing required fields' })
+    })
+
+    it('returns404_whenSourceDocumentNotFound', async () => {
+      const targetId = seedDocument(sqlite, { user_id: 'user-a', title: 'Target' })
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/documents/${randomUUID()}/convert-to-node`,
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({ target_document_id: targetId, target_parent_id: null, sort_order: 'a' }),
+      })
+
+      expect(res.statusCode).toBe(404)
+      expect(res.json()).toEqual({ error: 'Document not found' })
+    })
+
+    it('returns404_whenTargetDocumentNotFound', async () => {
+      const sourceId = seedDocument(sqlite, { user_id: 'user-a', title: 'Source' })
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/documents/${sourceId}/convert-to-node`,
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({ target_document_id: randomUUID(), target_parent_id: null, sort_order: 'a' }),
+      })
+
+      expect(res.statusCode).toBe(404)
+      expect(res.json()).toEqual({ error: 'Target document not found' })
+    })
+
+    it('returns401_withNoAuthHeader', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/documents/${randomUUID()}/convert-to-node`,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ target_document_id: randomUUID(), target_parent_id: null, sort_order: 'a' }),
+      })
+
+      expect(res.statusCode).toBe(401)
+    })
+  })
 })
