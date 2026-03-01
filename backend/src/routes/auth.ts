@@ -172,7 +172,13 @@ export function createAuthRoutes(
     // Validate the current JWT and return the authenticated user's profile.
     // -----------------------------------------------------------------------
     fastify.get('/auth/me', { preHandler: requireAuth }, async (req) => {
-      return req.user
+      const user = sqlite
+        .prepare('SELECT id, google_sub, email, name, picture FROM users WHERE id = ?')
+        .get(req.user!.id) as Pick<User, 'id' | 'google_sub' | 'email' | 'name' | 'picture'> | undefined
+      if (!user) {
+        return { error: 'User not found' }
+      }
+      return user
     })
 
     // -----------------------------------------------------------------------
