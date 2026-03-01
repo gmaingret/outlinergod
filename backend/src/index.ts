@@ -6,6 +6,7 @@ import { createAuthRoutes, type GooglePayload } from './routes/auth.js'
 import { createDocumentRoutes } from './routes/documents.js'
 import { createNodeRoutes } from './routes/nodes.js'
 import { createSyncRoutes } from './routes/sync.js'
+import { createFileRoutes } from './routes/files.js'
 import { createHealthRoute } from './routes/health.js'
 import { runMigrations } from './db/migrate.js'
 import { createConnection } from './db/connection.js'
@@ -44,6 +45,9 @@ export function buildApp(
 
   // Sync routes at /api/sync/*
   void app.register(createSyncRoutes(sqliteInstance), { prefix: '/api' })
+
+  // File routes at /api/files/*
+  void app.register(createFileRoutes(sqliteInstance), { prefix: '/api' })
 
   // Placeholder root route
   app.get('/', async (_req, reply) => {

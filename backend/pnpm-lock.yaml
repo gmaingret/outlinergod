@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@fastify/multipart':
-        specifier: ^8.3.0
-        version: 8.3.1
+        specifier: ^9.4.0
+        version: 9.4.0
       '@fastify/static':
         specifier: ^8.0.4
         version: 8.3.0
@@ -659,8 +659,8 @@ packages:
   '@fastify/busboy@3.2.0':
     resolution: {integrity: sha512-m9FVDXU3GT2ITSe0UaMA5rU3QkfC/UXtCU8y0gSN/GugTqtVldOBWIB5V6V3sbmenVZUIpU6f+mPEO2+m5iTaA==}
 
-  '@fastify/deepmerge@2.0.2':
-    resolution: {integrity: sha512-3wuLdX5iiiYeZWP6bQrjqhrcvBIf0NHbQH1Ur1WbHvoiuTYUEItgygea3zs8aHpiitn0lOB8gX20u1qO+FDm7Q==}
+  '@fastify/deepmerge@3.2.1':
+    resolution: {integrity: sha512-N5Oqvltoa2r9z1tbx4xjky0oRR60v+T47Ic4J1ukoVQcptLOrIdRnCSdTGmOmajZuHVKlTnfcmrjyqsGEW1ztA==}
 
   '@fastify/error@4.2.0':
     resolution: {integrity: sha512-RSo3sVDXfHskiBZKBPRgnQTtIqpi/7zhJOEmAxCiBcM7d0uwdGdxLlsCaLzGs8v8NnxIRlfG0N51p5yFaOentQ==}
@@ -674,8 +674,8 @@ packages:
   '@fastify/merge-json-schemas@0.2.1':
     resolution: {integrity: sha512-OA3KGBCy6KtIvLf8DINC5880o5iBlDX4SxzLQS8HorJAbqluzLRn80UXU0bxZn7UOFhFgpRJDasfwn9nG4FG4A==}
 
-  '@fastify/multipart@8.3.1':
-    resolution: {integrity: sha512-pncbnG28S6MIskFSVRtzTKE9dK+GrKAJl0NbaQ/CG8ded80okWFsYKzSlP9haaLNQhNRDOoHqmGQNvgbiPVpWQ==}
+  '@fastify/multipart@9.4.0':
+    resolution: {integrity: sha512-Z404bzZeLSXTBmp/trCBuoVFX28pM7rhv849Q5TsbTFZHuk1lc4QjQITTPK92DKVpXmNtJXeHSSc7GYvqFpxAQ==}
 
   '@fastify/proxy-addr@5.1.0':
     resolution: {integrity: sha512-INS+6gh91cLUjB+PVHfu1UqcB76Sqtpyp7bnL+FYojhjygvOPA9ctiD/JDKsyD9Xgu4hUhCSJBPig/w7duNajw==}
@@ -1218,9 +1218,6 @@ packages:
   fast-uri@3.1.0:
     resolution: {integrity: sha512-iPeeDKJSWf4IEOasVVrknXpaBV0IApz/gp7S2bb7Z4Lljbl2MGJRqInZiUrQwV16cpzw/D3S5j5Julj/gT52AA==}
 
-  fastify-plugin@4.5.1:
-    resolution: {integrity: sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==}
-
   fastify-plugin@5.1.0:
     resolution: {integrity: sha512-FAIDA8eovSt5qcDgcBvDuX/v0Cjz0ohGhENZ/wpc3y+oZCY2afZ9Baqql3g/lC+OHRnciQol4ww7tuthOb9idw==}
 
@@ -1523,9 +1520,6 @@ packages:
     resolution: {integrity: sha512-b3rppTKm9T+PsVCBEOUR46GWI7fdOs00VKZ1+9c1EWDaDMvjQc6tUwuFyIprgGgTcWoVHSKrU8H31ZHA2e0RHA==}
     engines: {node: '>=10'}
 
-  secure-json-parse@2.7.0:
-    resolution: {integrity: sha512-6aU+Rwsezw7VR8/nyvKTx8QpWH9FrcYiXXlqC4z5d5XQBDRqtbfsRjnwGyqbi3gddNtWHuEk9OANUotL26qKUw==}
-
   secure-json-parse@4.1.0:
     resolution: {integrity: sha512-l4KnYfEyqYJxDwlNVyRfO2E4NTHfMKAWdUuA8J0yve2Dz/E/PdBepY03RvyJpssIpRFwJoCD55wA+mEDs6ByWA==}
 
@@ -1588,10 +1582,6 @@ packages:
 
   std-env@3.10.0:
     resolution: {integrity: sha512-5GS12FdOZNliM5mAOxFRg7Ir0pWz8MdpYm6AY6VPkGpbA7ZzmbzNcBJQ0GPvvyWgcY7QAhCgf9Uy89I03faLkg==}
-
-  stream-wormhole@1.1.0:
-    resolution: {integrity: sha512-gHFfL3px0Kctd6Po0M8TzEvt3De/xu6cnRrjlfYNhwbhLPLwigI2t1nc6jrzNuaYg5C4YF78PPFuQPzRiqn9ew==}
-    engines: {node: '>=4.0.0'}
 
   string-width@4.2.3:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
@@ -2073,7 +2063,7 @@ snapshots:
 
   '@fastify/busboy@3.2.0': {}
 
-  '@fastify/deepmerge@2.0.2': {}
+  '@fastify/deepmerge@3.2.1': {}
 
   '@fastify/error@4.2.0': {}
 
@@ -2087,14 +2077,13 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
-  '@fastify/multipart@8.3.1':
+  '@fastify/multipart@9.4.0':
     dependencies:
       '@fastify/busboy': 3.2.0
-      '@fastify/deepmerge': 2.0.2
+      '@fastify/deepmerge': 3.2.1
       '@fastify/error': 4.2.0
-      fastify-plugin: 4.5.1
-      secure-json-parse: 2.7.0
-      stream-wormhole: 1.1.0
+      fastify-plugin: 5.1.0
+      secure-json-parse: 4.1.0
 
   '@fastify/proxy-addr@5.1.0':
     dependencies:
@@ -2572,8 +2561,6 @@ snapshots:
 
   fast-uri@3.1.0: {}
 
-  fastify-plugin@4.5.1: {}
-
   fastify-plugin@5.1.0: {}
 
   fastify@5.7.4:
@@ -2937,8 +2924,6 @@ snapshots:
 
   safe-stable-stringify@2.5.0: {}
 
-  secure-json-parse@2.7.0: {}
-
   secure-json-parse@4.1.0: {}
 
   semver@7.7.4: {}
@@ -2985,8 +2970,6 @@ snapshots:
   statuses@2.0.2: {}
 
   std-env@3.10.0: {}
-
-  stream-wormhole@1.1.0: {}
 
   string-width@4.2.3:
     dependencies:
