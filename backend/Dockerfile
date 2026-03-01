@@ -30,8 +30,8 @@ COPY --from=builder /app/package.json ./
 # Migration SQL files must be present at runtime (migrate.ts resolves ../../drizzle from dist/db/)
 COPY drizzle ./drizzle
 
-# Create /data dir owned by node so the named volume is writable by USER node
-RUN mkdir -p /data && chown node:node /data
+# Create /data dir with uploads subdir, owned by node so the named volume is writable
+RUN mkdir -p /data/uploads && chown -R node:node /data
 
 EXPOSE 3000
 
