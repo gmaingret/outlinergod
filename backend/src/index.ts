@@ -3,6 +3,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import Database from 'better-sqlite3'
 import authPlugin from './middleware/auth.js'
 import { createAuthRoutes, type GooglePayload } from './routes/auth.js'
+import { createHealthRoute } from './routes/health.js'
 import { runMigrations } from './db/migrate.js'
 import { createConnection } from './db/connection.js'
 
@@ -25,6 +26,9 @@ export function buildApp(
 
   // Global JWT middleware — sets req.user on every request.
   void app.register(authPlugin)
+
+  // Health check — unprotected, no /api prefix
+  void app.register(createHealthRoute(sqliteInstance))
 
   // Auth routes at /api/auth/*
   void app.register(createAuthRoutes(sqliteInstance, verifyGoogle), { prefix: '/api' })
