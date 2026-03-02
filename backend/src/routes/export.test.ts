@@ -123,7 +123,7 @@ describe('GET /api/export', () => {
     })
 
     expect(res.headers['content-disposition']).toMatch(
-      /^attachment; filename="outlinegod-export-\d+\.zip"$/,
+      /^attachment; filename="outlinergod-export-\d+\.zip"$/,
     )
   })
 

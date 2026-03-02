@@ -97,6 +97,7 @@ dependencies {
     implementation(libs.google.id)
 
     // Test
+    testImplementation(kotlin("reflect"))
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.kotest.property)

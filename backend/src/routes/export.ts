@@ -51,7 +51,7 @@ export function createExportRoutes(sqlite: InstanceType<typeof Database>) {
         .header('Content-Type', 'application/zip')
         .header(
           'Content-Disposition',
-          `attachment; filename="outlinegod-export-${Date.now()}.zip"`,
+          `attachment; filename="outlinergod-export-${Date.now()}.zip"`,
         )
         .send(zipBuffer)
     })

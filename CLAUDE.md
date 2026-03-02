@@ -1,4 +1,4 @@
-# OutlineGod — Claude Code Project Memory
+# OutlinerGod — Claude Code Project Memory
 
 ## First Session — Planning Only
 
@@ -92,7 +92,7 @@ The API contract lives in `API.md` — create this file first in planning, befor
 ## Project Structure
 
 ```
-outlinegod/
+outlinergod/
 ├── android/          # Android app (Kotlin + Compose)
 ├── backend/          # Fastify backend (TypeScript)
 ├── PRD.md            # Product requirements (v4)

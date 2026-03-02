@@ -1,4 +1,4 @@
-# OutlineGod — Self-Hosted Android Outliner
+# OutlinerGod — Self-Hosted Android Outliner
 ## Product Requirements Document v4
 
 **Project**: Self-hosted outliner combining Dynalist's organizational power with WorkFlowy's clean, minimal UX  

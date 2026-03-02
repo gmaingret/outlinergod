@@ -1,4 +1,4 @@
-# OutlineGod architecture decisions for 2025
+# OutlinerGod architecture decisions for 2025
 
 **The recommended stack pairs Kotlin-native libraries on Android (Ktor, Hilt, Room) with a lean Fastify + Drizzle backend, using string-based fractional indexing and per-field LWW sync with Hybrid Logical Clocks.** Three technical areas carry genuinely high risk: nested tree drag-and-drop, live WYSIWYG cursor stability, and offline sync correctness. Each has a viable path forward, but all three require early prototyping before committing. This report covers every decision point in the PRD across five sections — Android stack, backend stack, schema design, sync architecture, and critical risks — with specific library versions and implementation patterns.
 
@@ -12,7 +12,7 @@ The stable `BasicTextField(state: TextFieldState)` API (graduated from BasicText
 
 **Two-layer implementation** is the recommended pattern. Store raw Markdown as the source of truth in `TextFieldState`. Apply visual styling through `VisualTransformation` using regex-matched `SpanStyle` annotations. Because styling adds spans without changing text length, `OffsetMapping.Identity` preserves cursor position perfectly. The more advanced `OutputTransformation` API can collapse Markdown markers (hiding `**` around bold text), but **it does not yet support `AnnotatedString` styling as of early 2026** — the Compose team has confirmed this is high-priority but unshipped. Start with visible-markers styling (identity offset), then iteratively add marker-hiding once `OutputTransformation` gains span support.
 
-**Compose Rich Editor** (`com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13`) is the most mature third-party WYSIWYG library for Compose, but it is toolbar-driven — it does not support typing `**bold**` and seeing live formatting. It's useful as reference architecture, not as OutlineGod's core editor. The `compose-markdown-editor` library by konecny-ondrej (`me.okonecny:markdown-editor:0.2.1`) attempts true inline WYSIWYG but is too early-stage for production.
+**Compose Rich Editor** (`com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13`) is the most mature third-party WYSIWYG library for Compose, but it is toolbar-driven — it does not support typing `**bold**` and seeing live formatting. It's useful as reference architecture, not as OutlinerGod's core editor. The `compose-markdown-editor` library by konecny-ondrej (`me.okonecny:markdown-editor:0.2.1`) attempts true inline WYSIWYG but is too early-stage for production.
 
 ### Drag-and-drop via flattened list with sh.calvin.reorderable
 
@@ -22,9 +22,9 @@ No native Compose nested tree drag-and-drop exists. The official `dragAndDropSou
 
 ### Room 2.8.4 for local persistence with raw SQL for FTS5
 
-**Room `androidx.room:room-runtime:2.8.4`** with KSP is the recommended ORM. It integrates seamlessly with `Flow`, `ViewModel`, and Compose via `collectAsState()`. UUID primary keys work as `@PrimaryKey val id: String`. Room now supports KSP (not just deprecated KAPT) and has KMP support since 2.7+. Note: OutlineGod does NOT use a `children` array — tree structure is always reconstructed from `parent_id` + `sort_order`.
+**Room `androidx.room:room-runtime:2.8.4`** with KSP is the recommended ORM. It integrates seamlessly with `Flow`, `ViewModel`, and Compose via `collectAsState()`. UUID primary keys work as `@PrimaryKey val id: String`. Room now supports KSP (not just deprecated KAPT) and has KMP support since 2.7+. Note: OutlinerGod does NOT use a `children` array — tree structure is always reconstructed from `parent_id` + `sort_order`.
 
-**Critical caveat: Room only supports `@Fts3` and `@Fts4` annotations — there is no `@Fts5`.** Since OutlineGod requires FTS5 for `bm25()` ranking, prefix search, and boolean operators, create the FTS5 virtual table via raw SQL in a Room migration and query it through `@RawQuery` or `SupportSQLiteDatabase`. This hybrid approach keeps Room's type-safe DAOs for all CRUD operations while using raw SQL exclusively for full-text search. If FTS5 integration becomes too awkward, **SQLDelight `app.cash.sqldelight:android-driver:2.2.1`** is the fallback — it generates type-safe Kotlin from raw SQL and has full FTS5 support, but loses Room's annotation-based conciseness.
+**Critical caveat: Room only supports `@Fts3` and `@Fts4` annotations — there is no `@Fts5`.** Since OutlinerGod requires FTS5 for `bm25()` ranking, prefix search, and boolean operators, create the FTS5 virtual table via raw SQL in a Room migration and query it through `@RawQuery` or `SupportSQLiteDatabase`. This hybrid approach keeps Room's type-safe DAOs for all CRUD operations while using raw SQL exclusively for full-text search. If FTS5 integration becomes too awkward, **SQLDelight `app.cash.sqldelight:android-driver:2.2.1`** is the fallback — it generates type-safe Kotlin from raw SQL and has full FTS5 support, but loses Room's annotation-based conciseness.
 
 ### Credential Manager API is the only path for Google Sign-In
 
@@ -68,7 +68,7 @@ Use **Coil** (`io.coil-kt:coil-compose:2.7.0`) separately for image display via 
 **Drizzle ORM `v0.45.1`** paired with **better-sqlite3 `v12.6.2`** is the recommended data layer. Drizzle provides TypeScript-first schema definitions, a SQL-like query API, and automatic migration generation via `drizzle-kit`. better-sqlite3 is synchronous — which is actually optimal for SQLite's serialized write model, avoiding mutex thrashing from async drivers. Enable **WAL mode** and **foreign keys** on connection:
 
 ```typescript
-const sqlite = new Database('/data/outlinegod.db');
+const sqlite = new Database('/data/outlinergod.db');
 sqlite.pragma('journal_mode = WAL');
 sqlite.pragma('foreign_keys = ON');
 export const db = drizzle(sqlite);
@@ -78,7 +78,7 @@ For FTS5 queries, use Drizzle's `sql` template literal for raw SQL. Kysely (`v0.
 
 ### jose v6 for JWT, google-auth-library for token verification
 
-**jose `v6.1.3`** is the modern JWT library: TypeScript-native, zero dependencies, async/Promise-based, ESM-native, and supports all JWA algorithms including EdDSA. It supersedes `jsonwebtoken` (CommonJS, sync, limited algorithms) for all new projects. Use jose for signing and verifying OutlineGod's session JWTs.
+**jose `v6.1.3`** is the modern JWT library: TypeScript-native, zero dependencies, async/Promise-based, ESM-native, and supports all JWA algorithms including EdDSA. It supersedes `jsonwebtoken` (CommonJS, sync, limited algorithms) for all new projects. Use jose for signing and verifying OutlinerGod's session JWTs.
 
 For **Google ID token verification**, use **`google-auth-library` `v10.6.1`** — Google's official Node.js library. `OAuth2Client.verifyIdToken()` handles JWKS key fetching, caching, rotation, and all claim validation (`iss`, `aud`, `exp`) automatically. Use `payload.sub` (Google user ID) as the primary user identifier, not email.
 
@@ -132,7 +132,7 @@ END;
 
 Using regular `DELETE FROM nodes_fts` causes index corruption — a well-documented SQLite pitfall confirmed in multiple forum threads. When a node is soft-deleted, remove it from the FTS index using the same `'delete'` command pattern. Run `INSERT INTO nodes_fts(nodes_fts) VALUES('optimize')` periodically to merge index segments.
 
-For OutlineGod's custom search operators (`has:file`, `is:completed`, `#tag`, `@person`, `color:red`), build a **Kotlin-side query parser** that separates FTS terms from structured WHERE clauses, then combine them in a JOIN query:
+For OutlinerGod's custom search operators (`has:file`, `is:completed`, `#tag`, `@person`, `color:red`), build a **Kotlin-side query parser** that separates FTS terms from structured WHERE clauses, then combine them in a JOIN query:
 
 ```sql
 SELECT n.* FROM nodes n
@@ -242,7 +242,7 @@ This catches newlines from both hardware and software keyboards before they comm
 
 The recommended stack is deliberately conservative — **Room, Hilt, Ktor, and Fastify are all battle-tested choices** that minimize integration risk. The genuinely novel engineering challenges are concentrated in three areas: tree drag-and-drop interaction design, live WYSIWYG cursor management, and sync correctness. String-based fractional indexing with jitter solves ordering elegantly. Per-field HLC-based LWW registers provide a solid CRDT foundation without the complexity of full sequence CRDTs.
 
-The most actionable insight across this research: **OutlineGod's highest-risk features (nested DnD, marker-hiding WYSIWYG, sync correctness) should each get a dedicated 2-week prototype sprint before the architecture is finalized.** The flattened-list DnD approach, visible-marker WYSIWYG Phase 1, and single-device sync are all achievable with current tooling — but the "polished" versions of each require custom engineering that no library fully solves today.
+The most actionable insight across this research: **OutlinerGod's highest-risk features (nested DnD, marker-hiding WYSIWYG, sync correctness) should each get a dedicated 2-week prototype sprint before the architecture is finalized.** The flattened-list DnD approach, visible-marker WYSIWYG Phase 1, and single-device sync are all achievable with current tooling — but the "polished" versions of each require custom engineering that no library fully solves today.
 
 | Layer | Choice | Version |
 |-------|--------|---------|

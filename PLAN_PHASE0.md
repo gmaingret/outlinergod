@@ -12,9 +12,9 @@ Do not proceed to Phase 1 until all three prototypes have passing acceptance tes
 - **Title**: Flat-list DnD with horizontal reparenting gesture
 - **What to build**: Create a standalone Android `Activity` (not integrated into the main app) containing a hardcoded tree of ~10 nodes rendered as a `LazyColumn` with `List<FlatNode>` where each `FlatNode` carries `id: String`, `content: String`, and `depth: Int`. Use `sh.calvin.reorderable:reorderable:3.0.0` with `longPressDraggableHandle()` for vertical reordering. Add a `pointerInput` modifier that measures the finger's X-offset relative to the item's left edge during drag to detect indent (move right past one depth level) or outdent (move left past one depth level) — threshold: 48 dp per depth level. On drag release, compute the new `parentId` and regenerate `sort_order` using the `fractional-indexing-jittered` algorithm. Render depth via `Modifier.padding(start = (depth * 24).dp)`.
 - **Inputs required**: Android project skeleton, `sh.calvin.reorderable:reorderable:3.0.0`, `fractional-indexing-jittered` ported to Kotlin (or npm via a thin adapter for testing), Compose Foundation 1.9.x with `LazyColumn`, Hilt not required (hardcoded data only).
-- **Output artifact**: `android/app/src/main/java/com/outlinegod/prototype/DndPrototypeActivity.kt` — fully self-contained, showing a working tree that reorders vertically and reparents on horizontal drag. A companion `DndPrototypeViewModel.kt` holding the flat-list state.
+- **Output artifact**: `android/app/src/main/java/com/outlinergod/prototype/DndPrototypeActivity.kt` — fully self-contained, showing a working tree that reorders vertically and reparents on horizontal drag. A companion `DndPrototypeViewModel.kt` holding the flat-list state.
 - **How to test**:
-  - **Test file**: `android/app/src/test/java/com/outlinegod/prototype/DndPrototypeViewModelTest.kt`
+  - **Test file**: `android/app/src/test/java/com/outlinergod/prototype/DndPrototypeViewModelTest.kt`
   - **Test cases**:
     1. `verticalReorder_updatesListOrder` — given nodes [A, B, C], drag B above A; assert resulting order is [B, A, C] and `sort_order` of B is lexicographically less than that of A.
     2. `horizontalDragRight_indentsNode` — given node B at depth 0 following node A at depth 0, drag B 50+ dp to the right; assert B's `depth` becomes 1 and `parentId` equals A's id.
@@ -32,9 +32,9 @@ Do not proceed to Phase 1 until all three prototypes have passing acceptance tes
 - **Title**: BasicTextField live inline Markdown with cursor stability
 - **What to build**: Create a standalone Android `Activity` containing a single `BasicTextField` backed by `TextFieldState` (Compose Foundation 1.9.x). Apply a `VisualTransformation` that uses pre-compiled regexes to detect `**bold**`, `_italic_`, `` `code` ``, `~~strikethrough~~`, and `==highlight==` spans, and returns an `AnnotatedString` with the corresponding `SpanStyle` applied. Use `OffsetMapping.Identity` throughout (markers remain visible — this is Phase 1 scope only; marker-hiding is explicitly deferred). Compile all regexes once as top-level `val`s, not on each recomposition. The prototype must remain responsive while typing in a 2,000-character node with 20+ formatted spans.
 - **Inputs required**: Android project skeleton, Compose BOM 2025.x (includes Foundation 1.9.x with stable `TextFieldState`), no third-party editor library.
-- **Output artifact**: `android/app/src/main/java/com/outlinegod/prototype/WysiwygPrototypeActivity.kt` — single-screen prototype with one `BasicTextField`. A companion `MarkdownVisualTransformation.kt` containing the reusable `VisualTransformation` implementation and all regex patterns.
+- **Output artifact**: `android/app/src/main/java/com/outlinergod/prototype/WysiwygPrototypeActivity.kt` — single-screen prototype with one `BasicTextField`. A companion `MarkdownVisualTransformation.kt` containing the reusable `VisualTransformation` implementation and all regex patterns.
 - **How to test**:
-  - **Test file**: `android/app/src/test/java/com/outlinegod/prototype/MarkdownVisualTransformationTest.kt`
+  - **Test file**: `android/app/src/test/java/com/outlinergod/prototype/MarkdownVisualTransformationTest.kt`
   - **Test cases**:
     1. `bold_appliesBoldSpanStyle` — input `"hello **world** end"`; assert the `AnnotatedString` produced by the transformation contains exactly one `SpanStyle(fontWeight = FontWeight.Bold)` spanning offsets 6..11 (`"world"`).
     2. `italic_appliesItalicSpanStyle` — input `"_hello_"`; assert italic span covers offsets 0..6.
@@ -61,10 +61,10 @@ Do not proceed to Phase 1 until all three prototypes have passing acceptance tes
   - `backend/src/merge.ts` — per-field LWW merge function
   - `backend/src/routes/sync.ts` — `GET /api/sync/changes` + `POST /api/sync/changes` (stub auth)
   - `backend/src/routes/sync.test.ts` — Vitest integration tests
-  - `android/app/src/main/java/com/outlinegod/prototype/HlcClock.kt`
-  - `android/app/src/main/java/com/outlinegod/prototype/SyncRepository.kt`
-  - `android/app/src/test/java/com/outlinegod/prototype/HlcClockTest.kt`
-  - `android/app/src/test/java/com/outlinegod/prototype/LwwMergeTest.kt`
+  - `android/app/src/main/java/com/outlinergod/prototype/HlcClock.kt`
+  - `android/app/src/main/java/com/outlinergod/prototype/SyncRepository.kt`
+  - `android/app/src/test/java/com/outlinergod/prototype/HlcClockTest.kt`
+  - `android/app/src/test/java/com/outlinergod/prototype/LwwMergeTest.kt`
 - **How to test**:
   - **Backend test file**: `backend/src/routes/sync.test.ts`
   - **Backend test cases**:
@@ -78,7 +78,7 @@ Do not proceed to Phase 1 until all three prototypes have passing acceptance tes
     8. `GET /sync/changes` — after pushing from device A, pull from device B (`device_id` differs); assert the node appears in the response.
     9. `GET /sync/changes` — pull from device A (same `device_id` used to push); assert node does NOT appear (echo suppression).
     10. `conflict_serverVersionWins` — push node from device A; then push same node id from device B with an older HLC; assert `conflicts` array in response contains the A version for every field where B lost.
-  - **Android test file**: `android/app/src/test/java/com/outlinegod/prototype/HlcClockTest.kt` + `LwwMergeTest.kt`
+  - **Android test file**: `android/app/src/test/java/com/outlinergod/prototype/HlcClockTest.kt` + `LwwMergeTest.kt`
   - **Android test cases**:
     1. `HlcClock_generate_monotonic` — same as backend test 1, in Kotlin.
     2. `HlcClock_receive_advancesPastIncoming` — same as backend test 2, in Kotlin.

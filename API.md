@@ -1,4 +1,4 @@
-# OutlineGod — REST API Contract
+# OutlinerGod — REST API Contract
 
 **Backend**: Fastify v5 · Drizzle + better-sqlite3 · SQLite
 **Auth**: Google ID token → backend JWT (jose v6)
@@ -873,7 +873,7 @@ Bookmarks point to a document, a specific node (at any depth), or a saved search
 
 **Query parameters**: None
 
-**Response 200**: `application/zip` binary stream. Header: `Content-Disposition: attachment; filename="outlinegod-export-<timestamp>.zip"`
+**Response 200**: `application/zip` binary stream. Header: `Content-Disposition: attachment; filename="outlinergod-export-<timestamp>.zip"`
 
 ZIP contents:
 - `documents.json` — all documents and folders

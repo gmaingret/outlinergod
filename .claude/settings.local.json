@@ -35,7 +35,16 @@
       "Bash(printenv PATH:*)",
       "Bash(ssh:*)",
       "Bash(scp:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(grep:*)",
+      "Bash(npx drizzle-kit:*)",
+      "Bash(openssl rand:*)",
+      "Bash(powershell:*)",
+      "Bash(jar tf:*)",
+      "Bash(\"$JAVA_HOME/bin/jar\" tf:*)",
+      "Bash(\"/c/Program Files/Android/Android Studio/jbr/bin/jar.exe\" tf:*)",
+      "Bash(\"/c/Program Files/Android/Android Studio/jbr/bin/javap.exe\":*)",
+      "Bash(\"$JAVA_HOME/bin/javap.exe\":*)"
     ]
   }
 }

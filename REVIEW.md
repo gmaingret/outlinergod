@@ -1,4 +1,4 @@
-# OutlineGod — Pre-Implementation Review
+# OutlinerGod — Pre-Implementation Review
 
 ## Summary
 
@@ -48,7 +48,7 @@
 
 ### 8. ARCHITECTURE.md `children` TypeConverter Reference
 **Problem**: Section 1 mentions "The `children` JSON array serializes through a simple `@TypeConverter`" which directly contradicts the core rule in CLAUDE.md/PRD that "There is no `children` array in the database."  
-**Fix**: Sentence replaced with clarification that OutlineGod does NOT use a children array.
+**Fix**: Sentence replaced with clarification that OutlinerGod does NOT use a children array.
 
 ### 9. Deployment Details Not Captured
 **Problem**: Docker server (`greg@192.168.1.50`), GitHub repo (`gmaingret/outlinergod`), and Google OAuth SHA-1 fingerprint were not documented in any project file.  
@@ -103,7 +103,7 @@
 ### 14. SHA-1 Fingerprint Not Referenced in Google Sign-In Task
 **Files**: PLAN_PHASE4.md  
 **Problem**: P4-2 (LoginScreen) used `GetGoogleIdOption` with `BuildConfig.GOOGLE_CLIENT_ID` but never mentioned the SHA-1 fingerprint needed to register the Android credential in Google Cloud Console. Claude Code wouldn't know to configure it.  
-**Fix**: P4-2 now states the SHA-1 (`D8:B0:6D:19:92:71:D4:DA:60:EF:A7:0A:93:A4:5C:29:B7:A3:D5:C4`) and requires registering package `com.outlinegod.app` in Google Cloud Console. Notes that the web client ID (not Android client ID) goes in both `BuildConfig` and backend `.env`.
+**Fix**: P4-2 now states the SHA-1 (`D8:B0:6D:19:92:71:D4:DA:60:EF:A7:0A:93:A4:5C:29:B7:A3:D5:C4`) and requires registering package `com.gmaingret.outlinergod.app` in Google Cloud Console. Notes that the web client ID (not Android client ID) goes in both `BuildConfig` and backend `.env`.
 
 ---
 

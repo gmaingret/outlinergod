@@ -3,11 +3,11 @@ services:
     build:
       context: ./backend
     volumes:
-      - outlinegod-data:/data
+      - outlinergod-data:/data
     ports:
       - "3000:3000"
     env_file: .env
     restart: unless-stopped
 
 volumes:
-  outlinegod-data:
+  outlinergod-data:

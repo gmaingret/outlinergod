@@ -1,4 +1,4 @@
-# OutlineGod — Implementation Plan
+# OutlinerGod — Implementation Plan
 
 ## How to Use This Plan
 
