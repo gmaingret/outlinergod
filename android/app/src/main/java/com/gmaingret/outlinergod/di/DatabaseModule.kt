@@ -1,5 +1,6 @@
 package com.gmaingret.outlinergod.di
 
+import android.content.Context
 import com.gmaingret.outlinergod.db.AppDatabase
 import com.gmaingret.outlinergod.db.dao.BookmarkDao
 import com.gmaingret.outlinergod.db.dao.DocumentDao
@@ -8,6 +9,7 @@ import com.gmaingret.outlinergod.db.dao.SettingsDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -17,8 +19,8 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAppDatabase(): AppDatabase =
-        throw NotImplementedError("Wired in P3-8")
+    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
+        AppDatabase.build(context)
 
     @Provides
     fun provideNodeDao(db: AppDatabase): NodeDao = db.nodeDao()

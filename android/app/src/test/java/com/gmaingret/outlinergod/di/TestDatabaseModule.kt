@@ -1,5 +1,6 @@
 package com.gmaingret.outlinergod.di
 
+import android.content.Context
 import com.gmaingret.outlinergod.db.AppDatabase
 import com.gmaingret.outlinergod.db.dao.BookmarkDao
 import com.gmaingret.outlinergod.db.dao.DocumentDao
@@ -7,6 +8,7 @@ import com.gmaingret.outlinergod.db.dao.NodeDao
 import com.gmaingret.outlinergod.db.dao.SettingsDao
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
 import javax.inject.Singleton
@@ -17,8 +19,8 @@ object TestDatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAppDatabase(): AppDatabase =
-        throw NotImplementedError("In-memory Room DB wired in P3-8")
+    fun provideTestAppDatabase(@ApplicationContext context: Context): AppDatabase =
+        AppDatabase.buildInMemory(context)
 
     @Provides
     fun provideNodeDao(db: AppDatabase): NodeDao = db.nodeDao()
