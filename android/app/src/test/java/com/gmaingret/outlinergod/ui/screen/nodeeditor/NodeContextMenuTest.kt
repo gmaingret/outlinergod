@@ -1,0 +1,339 @@
+package com.gmaingret.outlinergod.ui.screen.nodeeditor
+
+import androidx.lifecycle.SavedStateHandle
+import com.gmaingret.outlinergod.db.dao.NodeDao
+import com.gmaingret.outlinergod.db.entity.NodeEntity
+import com.gmaingret.outlinergod.repository.AuthRepository
+import com.gmaingret.outlinergod.sync.HlcClock
+import com.gmaingret.outlinergod.ui.mapper.mapToFlatList
+import io.mockk.Runs
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.slot
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.orbitmvi.orbit.test.test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class NodeContextMenuTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var nodeDao: NodeDao
+    private lateinit var authRepository: AuthRepository
+    private lateinit var hlcClock: HlcClock
+    private lateinit var savedStateHandle: SavedStateHandle
+
+    private val testDeviceId = "device-1"
+    private val testHlcValue = "0000017b05a3a1be-0000-device-1"
+    private val testDocumentId = "doc-1"
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+        nodeDao = mockk(relaxed = true)
+        authRepository = mockk()
+        hlcClock = mockk()
+        savedStateHandle = SavedStateHandle(mapOf("documentId" to testDocumentId))
+        every { authRepository.getDeviceId() } returns flowOf(testDeviceId)
+        every { hlcClock.generate(any()) } returns testHlcValue
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private fun fakeNode(
+        id: String,
+        content: String = "",
+        note: String = "",
+        parentId: String? = testDocumentId,
+        sortOrder: String = "aP",
+        completed: Int = 0,
+        color: Int = 0,
+    ) = NodeEntity(
+        id = id,
+        documentId = testDocumentId,
+        userId = "user-1",
+        content = content,
+        contentHlc = testHlcValue,
+        note = note,
+        noteHlc = "",
+        parentId = parentId,
+        parentIdHlc = "",
+        sortOrder = sortOrder,
+        sortOrderHlc = "",
+        completed = completed,
+        completedHlc = "",
+        color = color,
+        colorHlc = "",
+        deviceId = testDeviceId,
+        createdAt = 1000L,
+        updatedAt = 1000L,
+    )
+
+    private fun createViewModel(): NodeEditorViewModel {
+        return NodeEditorViewModel(
+            savedStateHandle = savedStateHandle,
+            nodeDao = nodeDao,
+            authRepository = authRepository,
+            hlcClock = hlcClock,
+        )
+    }
+
+    private fun setupNodeDao(nodes: List<NodeEntity>) {
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        coEvery { nodeDao.getNodesByDocumentSync(testDocumentId) } returns nodes
+        coEvery { nodeDao.updateNode(any()) } just Runs
+        coEvery { nodeDao.insertNode(any()) } just Runs
+    }
+
+    // Test 1: showContextMenu sets contextMenuNodeId in state
+    @Test
+    fun `showContextMenu setsContextMenuNodeId`() = runTest {
+        val nodes = listOf(fakeNode(id = "n1", content = "Hello", sortOrder = "a0"))
+        setupNodeDao(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            expectState(
+                NodeEditorUiState(
+                    documentId = testDocumentId,
+                    status = NodeEditorStatus.Success,
+                    flatNodes = expectedFlatNodes
+                )
+            )
+
+            containerHost.showContextMenu("n1")
+            expectState(
+                NodeEditorUiState(
+                    documentId = testDocumentId,
+                    status = NodeEditorStatus.Success,
+                    flatNodes = expectedFlatNodes,
+                    contextMenuNodeId = "n1"
+                )
+            )
+        }
+    }
+
+    // Test 2: dismissContextMenu sets contextMenuNodeId to null
+    @Test
+    fun `dismissContextMenu clearsContextMenuNodeId`() = runTest {
+        val nodes = listOf(fakeNode(id = "n1", content = "Hello", sortOrder = "a0"))
+        setupNodeDao(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            expectState(
+                NodeEditorUiState(
+                    documentId = testDocumentId,
+                    status = NodeEditorStatus.Success,
+                    flatNodes = expectedFlatNodes
+                )
+            )
+
+            containerHost.showContextMenu("n1")
+            expectState(
+                NodeEditorUiState(
+                    documentId = testDocumentId,
+                    status = NodeEditorStatus.Success,
+                    flatNodes = expectedFlatNodes,
+                    contextMenuNodeId = "n1"
+                )
+            )
+
+            containerHost.dismissContextMenu()
+            expectState(
+                NodeEditorUiState(
+                    documentId = testDocumentId,
+                    status = NodeEditorStatus.Success,
+                    flatNodes = expectedFlatNodes,
+                    contextMenuNodeId = null
+                )
+            )
+        }
+    }
+
+    // Test 3: addChildNode inserts node with correct parentId
+    @Test
+    fun `addChildNode insertsNodeWithCorrectParentId`() = runTest {
+        val nodes = listOf(fakeNode(id = "n1", content = "Parent", sortOrder = "a0"))
+        setupNodeDao(nodes)
+
+        val insertSlot = slot<NodeEntity>()
+        coEvery { nodeDao.insertNode(capture(insertSlot)) } just Runs
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            awaitState() // Success
+
+            containerHost.addChildNode("n1")
+            awaitState() // focusedNodeId set
+        }
+
+        coVerify(exactly = 1) { nodeDao.insertNode(any()) }
+        assertEquals("n1", insertSlot.captured.parentId)
+        assertEquals("", insertSlot.captured.content)
+        assertEquals(testDocumentId, insertSlot.captured.documentId)
+    }
+
+    // Test 4: onColorChanged writes color and colorHlc to Room
+    @Test
+    fun `onColorChanged writesColorAndColorHlc toRoom`() = runTest {
+        val nodes = listOf(fakeNode(id = "n1", content = "Colored", sortOrder = "a0", color = 0))
+        setupNodeDao(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
+
+        val updateSlot = slot<NodeEntity>()
+        coEvery { nodeDao.updateNode(capture(updateSlot)) } just Runs
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            expectState(
+                NodeEditorUiState(
+                    documentId = testDocumentId,
+                    status = NodeEditorStatus.Success,
+                    flatNodes = expectedFlatNodes
+                )
+            )
+
+            containerHost.onColorChanged("n1", 3)
+            awaitState() // optimistic update
+            testDispatcher.scheduler.advanceTimeBy(301)
+            testDispatcher.scheduler.advanceUntilIdle()
+        }
+
+        assertEquals(3, updateSlot.captured.color)
+        assertTrue("colorHlc should be a valid HLC", updateSlot.captured.colorHlc.isNotBlank())
+        assertEquals(testHlcValue, updateSlot.captured.colorHlc)
+    }
+
+    // Test 5: onCompletedToggled flips completed bit from 0 to 1
+    @Test
+    fun `onCompletedToggled flipsCompletedBit`() = runTest {
+        val nodes = listOf(fakeNode(id = "n1", content = "Task", sortOrder = "a0", completed = 0))
+        setupNodeDao(nodes)
+
+        val updateSlot = slot<NodeEntity>()
+        coEvery { nodeDao.updateNode(capture(updateSlot)) } just Runs
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            awaitState() // Success
+
+            containerHost.onCompletedToggled("n1")
+            awaitState() // optimistic update
+        }
+
+        assertEquals(1, updateSlot.captured.completed)
+    }
+
+    // Test 6: onCompletedToggled flips back to zero
+    @Test
+    fun `onCompletedToggled flipsBackToZero`() = runTest {
+        val nodes = listOf(fakeNode(id = "n1", content = "Task", sortOrder = "a0", completed = 1))
+        setupNodeDao(nodes)
+
+        val updateSlot = slot<NodeEntity>()
+        coEvery { nodeDao.updateNode(capture(updateSlot)) } just Runs
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            awaitState() // Success
+
+            containerHost.onCompletedToggled("n1")
+            awaitState() // optimistic update
+        }
+
+        assertEquals(0, updateSlot.captured.completed)
+    }
+
+    // Test 7: deleteNode soft-deletes even non-empty nodes
+    @Test
+    fun `deleteNode softDeletesNonEmptyNode`() = runTest {
+        val nodes = listOf(
+            fakeNode(id = "n0", content = "First", sortOrder = "a0"),
+            fakeNode(id = "n1", content = "Non-empty content", sortOrder = "a1"),
+        )
+        setupNodeDao(nodes)
+        coEvery { nodeDao.softDeleteNode(any(), any(), any(), any()) } just Runs
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            awaitState() // Success
+
+            containerHost.deleteNode("n1")
+            awaitState() // focusedNodeId set to preceding
+        }
+
+        coVerify { nodeDao.softDeleteNode(eq("n1"), any(), any(), any()) }
+    }
+
+    // Test 8: deleteNode sets focus to preceding node
+    @Test
+    fun `deleteNode setsFocusToPrecedingNode`() = runTest {
+        val nodes = listOf(
+            fakeNode(id = "n0", content = "First", sortOrder = "a0"),
+            fakeNode(id = "n1", content = "Second", sortOrder = "a1"),
+        )
+        setupNodeDao(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
+        coEvery { nodeDao.softDeleteNode(any(), any(), any(), any()) } just Runs
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            expectState(
+                NodeEditorUiState(
+                    documentId = testDocumentId,
+                    status = NodeEditorStatus.Success,
+                    flatNodes = expectedFlatNodes
+                )
+            )
+
+            containerHost.deleteNode("n1")
+            expectState(
+                NodeEditorUiState(
+                    documentId = testDocumentId,
+                    status = NodeEditorStatus.Success,
+                    flatNodes = expectedFlatNodes,
+                    focusedNodeId = "n0"
+                )
+            )
+        }
+    }
+}

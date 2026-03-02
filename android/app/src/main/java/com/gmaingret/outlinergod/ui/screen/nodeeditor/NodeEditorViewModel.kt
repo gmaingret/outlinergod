@@ -458,6 +458,134 @@ class NodeEditorViewModel @Inject constructor(
             )
         )
     }
+
+    // --- P4-11: Context menu actions ---
+
+    fun showContextMenu(nodeId: String) = intent {
+        reduce { state.copy(contextMenuNodeId = nodeId) }
+    }
+
+    fun dismissContextMenu() = intent {
+        reduce { state.copy(contextMenuNodeId = null) }
+    }
+
+    fun addChildNode(parentNodeId: String) = intent {
+        val deviceId = authRepository.getDeviceId().first()
+        val now = System.currentTimeMillis()
+        val hlc = hlcClock.generate(deviceId)
+        val documentId = state.documentId
+
+        // Find existing children of the parent to determine sort order
+        val siblings = state.flatNodes.filter { it.entity.parentId == parentNodeId }
+        val lastSiblingSortOrder = siblings.maxByOrNull { it.entity.sortOrder }?.entity?.sortOrder
+
+        val newSortOrder = FractionalIndex.generateKeyBetween(lastSiblingSortOrder, null)
+        val newNodeId = UUID.randomUUID().toString()
+
+        val parentEntity = state.flatNodes.firstOrNull { it.entity.id == parentNodeId }?.entity
+        val newNode = NodeEntity(
+            id = newNodeId,
+            documentId = documentId,
+            userId = parentEntity?.userId ?: "",
+            content = "",
+            contentHlc = hlc,
+            note = "",
+            noteHlc = "",
+            parentId = parentNodeId,
+            parentIdHlc = hlc,
+            sortOrder = newSortOrder,
+            sortOrderHlc = hlc,
+            deviceId = deviceId,
+            createdAt = now,
+            updatedAt = now,
+        )
+
+        nodeDao.insertNode(newNode)
+        reduce { state.copy(focusedNodeId = newNodeId) }
+    }
+
+    fun deleteNode(nodeId: String) = intent {
+        val flatNodes = state.flatNodes
+        val index = flatNodes.indexOfFirst { it.entity.id == nodeId }
+        if (index == -1) return@intent
+
+        val deviceId = authRepository.getDeviceId().first()
+        val now = System.currentTimeMillis()
+        val hlc = hlcClock.generate(deviceId)
+
+        nodeDao.softDeleteNode(nodeId, now, hlc, now)
+
+        val precedingNodeId = if (index > 0) flatNodes[index - 1].entity.id else null
+        reduce { state.copy(focusedNodeId = precedingNodeId) }
+    }
+
+    private val colorDebounceJobs = mutableMapOf<String, Job>()
+
+    fun onColorChanged(nodeId: String, color: Int) {
+        // Optimistic in-memory update
+        intent {
+            reduce {
+                state.copy(
+                    flatNodes = state.flatNodes.map {
+                        if (it.entity.id == nodeId) it.copy(entity = it.entity.copy(color = color))
+                        else it
+                    }
+                )
+            }
+        }
+
+        // Debounced Room write
+        colorDebounceJobs[nodeId]?.cancel()
+        colorDebounceJobs[nodeId] = viewModelScope.launch {
+            delay(300)
+            persistColorChange(nodeId, color)
+        }
+    }
+
+    private suspend fun persistColorChange(nodeId: String, color: Int) {
+        val documentId = container.stateFlow.value.documentId
+        val entity = nodeDao.getNodesByDocumentSync(documentId)
+            .firstOrNull { it.id == nodeId } ?: return
+        val deviceId = authRepository.getDeviceId().first()
+        val hlc = hlcClock.generate(deviceId)
+        nodeDao.updateNode(
+            entity.copy(
+                color = color,
+                colorHlc = hlc,
+                updatedAt = System.currentTimeMillis(),
+                deviceId = deviceId,
+            )
+        )
+    }
+
+    fun onCompletedToggled(nodeId: String) = intent {
+        val flatNode = state.flatNodes.firstOrNull { it.entity.id == nodeId } ?: return@intent
+        val entity = flatNode.entity
+        val newCompleted = if (entity.completed == 0) 1 else 0
+
+        val deviceId = authRepository.getDeviceId().first()
+        val hlc = hlcClock.generate(deviceId)
+        val now = System.currentTimeMillis()
+
+        nodeDao.updateNode(
+            entity.copy(
+                completed = newCompleted,
+                completedHlc = hlc,
+                updatedAt = now,
+                deviceId = deviceId,
+            )
+        )
+
+        // Optimistic update
+        reduce {
+            state.copy(
+                flatNodes = state.flatNodes.map {
+                    if (it.entity.id == nodeId) it.copy(entity = it.entity.copy(completed = newCompleted))
+                    else it
+                }
+            )
+        }
+    }
 }
 
 data class NodeEditorUiState(
@@ -465,6 +593,7 @@ data class NodeEditorUiState(
     val flatNodes: List<FlatNode> = emptyList(),
     val focusedNodeId: String? = null,
     val documentId: String = "",
+    val contextMenuNodeId: String? = null,
 )
 
 sealed class NodeEditorStatus {

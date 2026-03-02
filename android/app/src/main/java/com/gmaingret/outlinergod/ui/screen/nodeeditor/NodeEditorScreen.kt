@@ -1,7 +1,9 @@
 package com.gmaingret.outlinergod.ui.screen.nodeeditor
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,7 +24,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,7 +56,7 @@ import com.gmaingret.outlinergod.ui.mapper.FlatNode
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun NodeEditorScreen(
     documentId: String,
@@ -144,6 +148,9 @@ fun NodeEditorScreen(
                                     onToggleCollapse = {
                                         viewModel.toggleCollapsed(flatNode.entity.id)
                                     },
+                                    onLongPress = {
+                                        viewModel.showContextMenu(flatNode.entity.id)
+                                    },
                                     dragModifier = Modifier.longPressDraggableHandle(
                                         onDragStarted = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -155,10 +162,55 @@ fun NodeEditorScreen(
                     }
                 }
             }
+
+            // Context menu bottom sheet
+            if (state.contextMenuNodeId != null) {
+                val contextNodeId = state.contextMenuNodeId!!
+                ModalBottomSheet(
+                    onDismissRequest = { viewModel.dismissContextMenu() }
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Add Child") },
+                        modifier = Modifier.clickable {
+                            viewModel.addChildNode(contextNodeId)
+                            viewModel.dismissContextMenu()
+                        }
+                    )
+                    ListItem(
+                        headlineContent = { Text("Indent") },
+                        modifier = Modifier.clickable {
+                            viewModel.indentNode(contextNodeId)
+                            viewModel.dismissContextMenu()
+                        }
+                    )
+                    ListItem(
+                        headlineContent = { Text("Outdent") },
+                        modifier = Modifier.clickable {
+                            viewModel.outdentNode(contextNodeId)
+                            viewModel.dismissContextMenu()
+                        }
+                    )
+                    ListItem(
+                        headlineContent = { Text("Toggle Completed") },
+                        modifier = Modifier.clickable {
+                            viewModel.onCompletedToggled(contextNodeId)
+                            viewModel.dismissContextMenu()
+                        }
+                    )
+                    ListItem(
+                        headlineContent = { Text("Delete") },
+                        modifier = Modifier.clickable {
+                            viewModel.deleteNode(contextNodeId)
+                            viewModel.dismissContextMenu()
+                        }
+                    )
+                }
+            }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun NodeRow(
     flatNode: FlatNode,
@@ -169,6 +221,7 @@ private fun NodeRow(
     onFocusLost: () -> Unit,
     onGlyphTap: () -> Unit,
     onToggleCollapse: () -> Unit,
+    onLongPress: () -> Unit,
     dragModifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -185,6 +238,10 @@ private fun NodeRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .combinedClickable(
+                onClick = { /* regular tap handled by text field focus */ },
+                onLongClick = onLongPress,
+            )
             .padding(vertical = 2.dp, horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
