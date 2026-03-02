@@ -108,6 +108,15 @@ class LoginViewModelTest {
     }
 
     @Test
+    fun `handleSignInError reduces to Error state`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.handleSignInError("Sign-in unavailable")
+            expectState(LoginUiState.Error("Sign-in unavailable"))
+        }
+    }
+
+    @Test
     fun `emptyIdToken produces Idle not Error`() = runTest {
         val viewModel = createViewModel()
         viewModel.test(this) {

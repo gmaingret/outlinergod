@@ -14,6 +14,7 @@ val localProps = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 val googleClientId: String = localProps.getProperty("GOOGLE_CLIENT_ID", "")
+val baseUrl: String = localProps.getProperty("BASE_URL", "http://10.0.2.2:3000")
 
 android {
     namespace = "com.gmaingret.outlinergod"
@@ -28,7 +29,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000\"")
+        buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
 
         buildConfigField("String", "GOOGLE_CLIENT_ID", "\"$googleClientId\"")
     }

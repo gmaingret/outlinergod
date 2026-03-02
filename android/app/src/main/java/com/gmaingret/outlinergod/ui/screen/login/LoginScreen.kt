@@ -18,13 +18,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gmaingret.outlinergod.BuildConfig
@@ -39,6 +42,7 @@ fun LoginScreen(
     val state by viewModel.container.stateFlow.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    var retryCount by remember { mutableIntStateOf(0) }
 
     // Collect side effects for navigation
     LaunchedEffect(Unit) {
@@ -49,8 +53,8 @@ fun LoginScreen(
         }
     }
 
-    // Launch Google Sign-In via Credential Manager
-    LaunchedEffect(Unit) {
+    // Launch Google Sign-In via Credential Manager (retryCount key allows retry)
+    LaunchedEffect(retryCount) {
         val credentialManager = CredentialManager.create(context)
         val googleIdOption = GetGoogleIdOption.Builder()
             .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
@@ -63,8 +67,10 @@ fun LoginScreen(
             val result = credentialManager.getCredential(context, request)
             val idToken = GoogleIdTokenCredential.createFrom(result.credential.data).idToken
             viewModel.handleGoogleSignIn(idToken)
+        } catch (e: GetCredentialCancellationException) {
+            viewModel.handleGoogleSignIn("") // user cancelled — back to Idle
         } catch (e: GetCredentialException) {
-            viewModel.handleGoogleSignIn("")
+            viewModel.handleSignInError(e.message ?: "Sign-in unavailable")
         }
     }
 
@@ -106,9 +112,7 @@ fun LoginScreen(
                             color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = {
-                            // Re-trigger sign-in by recomposing — user can tap retry
-                        }) {
+                        Button(onClick = { retryCount++ }) {
                             Text("Retry")
                         }
                     }

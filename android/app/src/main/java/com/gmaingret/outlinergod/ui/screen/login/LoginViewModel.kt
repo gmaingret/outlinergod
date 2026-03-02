@@ -14,6 +14,10 @@ class LoginViewModel @Inject constructor(
 
     override val container = container<LoginUiState, LoginSideEffect>(LoginUiState.Idle)
 
+    fun handleSignInError(message: String) = intent {
+        reduce { LoginUiState.Error(message) }
+    }
+
     fun handleGoogleSignIn(idToken: String) = intent {
         if (idToken.isEmpty()) {
             reduce { LoginUiState.Idle }

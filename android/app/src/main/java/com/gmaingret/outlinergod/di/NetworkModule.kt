@@ -2,11 +2,14 @@ package com.gmaingret.outlinergod.di
 
 import com.gmaingret.outlinergod.BuildConfig
 import com.gmaingret.outlinergod.network.KtorClientFactory
+import com.gmaingret.outlinergod.repository.AuthRepository
+import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.flow.first
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -16,9 +19,9 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideHttpClient(): HttpClient = KtorClientFactory.create(
-        tokenProvider = { null },      // replaced when AuthRepository is wired in P3-12
-        tokenRefresher = { null }      // replaced when AuthRepository is wired in P3-12
+    fun provideHttpClient(authRepo: Lazy<AuthRepository>): HttpClient = KtorClientFactory.create(
+        tokenProvider = { authRepo.get().getAccessToken().first() },
+        tokenRefresher = { authRepo.get().refreshToken().getOrNull()?.token }
     )
 
     @Provides
