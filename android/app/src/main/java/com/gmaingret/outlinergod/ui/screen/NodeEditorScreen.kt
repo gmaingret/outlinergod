@@ -6,6 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 @Composable
-fun NodeEditorScreen(nodeId: String) {
+fun NodeEditorScreen(documentId: String) {
     Box(modifier = Modifier.fillMaxSize())
 }

@@ -30,8 +30,8 @@ fun AppNavHost(
             DocumentDetailScreen(documentId = documentId)
         }
         composable(AppRoutes.NODE_EDITOR) { backStackEntry ->
-            val nodeId = backStackEntry.arguments?.getString("nodeId") ?: ""
-            NodeEditorScreen(nodeId = nodeId)
+            val documentId = backStackEntry.arguments?.getString("documentId") ?: ""
+            NodeEditorScreen(documentId = documentId)
         }
         composable(AppRoutes.SETTINGS) {
             SettingsScreen()

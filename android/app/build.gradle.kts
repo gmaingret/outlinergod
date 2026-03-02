@@ -91,6 +91,10 @@ dependencies {
     // Navigation
     implementation(libs.navigation.compose)
 
+    // Orbit MVI
+    implementation(libs.orbit.core)
+    implementation(libs.orbit.viewmodel)
+
     // Credentials (Google Sign-In)
     implementation(libs.credentials)
     implementation(libs.credentials.play.services.auth)
@@ -108,6 +112,7 @@ dependencies {
     testImplementation(libs.room.testing)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.hilt.android.testing)
+    testImplementation(libs.orbit.test)
 
     // Android Test
     androidTestImplementation(libs.androidx.junit)

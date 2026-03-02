@@ -21,8 +21,8 @@ class AppRoutesTest {
     }
 
     @Test
-    fun nodeEditor_route_containsNodeIdParam() {
-        assertTrue(AppRoutes.NODE_EDITOR.contains("{nodeId}"))
+    fun nodeEditor_route_containsDocumentIdParam() {
+        assertTrue(AppRoutes.NODE_EDITOR.contains("{documentId}"))
     }
 
     @Test
