@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.gmaingret.outlinergod.ui.screen.*
+import com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreen
 import com.gmaingret.outlinergod.ui.screen.login.LoginScreen
 
 @Composable
@@ -28,7 +29,14 @@ fun AppNavHost(
             )
         }
         composable(AppRoutes.DOCUMENT_LIST) {
-            DocumentListScreen()
+            DocumentListScreen(
+                onNavigateToNodeEditor = { documentId ->
+                    navController.navigate("node_editor/$documentId")
+                },
+                onNavigateToSettings = {
+                    navController.navigate(AppRoutes.SETTINGS)
+                }
+            )
         }
         composable(AppRoutes.DOCUMENT_DETAIL) { backStackEntry ->
             val documentId = backStackEntry.arguments?.getString("documentId") ?: ""
