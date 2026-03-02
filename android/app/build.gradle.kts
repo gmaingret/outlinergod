@@ -104,6 +104,8 @@ dependencies {
     testImplementation(libs.kotest.runner.junit4)
     testImplementation(libs.mockk)
     testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.room.testing)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.hilt.android.testing)
 
