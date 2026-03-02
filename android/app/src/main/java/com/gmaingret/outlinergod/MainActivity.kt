@@ -3,16 +3,21 @@ package com.gmaingret.outlinergod
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.activity.enableEdgeToEdge
+import androidx.navigation.compose.rememberNavController
+import com.gmaingret.outlinergod.ui.navigation.AppNavHost
+import com.gmaingret.outlinergod.ui.theme.OutlinerGodTheme
+import dagger.hilt.android.AndroidEntryPoint
 
-/** Entry point — will be replaced by the real app in Phase 3. */
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
-            MaterialTheme {
-                Text("OutlinerGod — coming soon")
+            OutlinerGodTheme {
+                val navController = rememberNavController()
+                AppNavHost(navController = navController)
             }
         }
     }
