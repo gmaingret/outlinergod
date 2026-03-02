@@ -182,6 +182,26 @@ class NodeEditorViewModel @Inject constructor(
         postSideEffect(NodeEditorSideEffect.NavigateUp)
     }
 
+    fun toggleCollapsed(nodeId: String) = intent {
+        val flatNodes = state.flatNodes
+        val flatNode = flatNodes.firstOrNull { it.entity.id == nodeId } ?: return@intent
+        val entity = flatNode.entity
+        val newCollapsed = if (entity.collapsed == 1) 0 else 1
+
+        val deviceId = authRepository.getDeviceId().first()
+        val hlc = hlcClock.generate(deviceId)
+        val now = System.currentTimeMillis()
+
+        nodeDao.updateNode(
+            entity.copy(
+                collapsed = newCollapsed,
+                collapsedHlc = hlc,
+                updatedAt = now,
+                deviceId = deviceId,
+            )
+        )
+    }
+
     // --- P4-8: Debounced persistence ---
 
     private val contentDebounceJobs = mutableMapOf<String, Job>()

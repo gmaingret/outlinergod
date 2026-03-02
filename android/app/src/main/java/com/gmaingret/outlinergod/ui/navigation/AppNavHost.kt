@@ -5,9 +5,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.gmaingret.outlinergod.ui.screen.*
+import com.gmaingret.outlinergod.ui.screen.BookmarksScreen
+import com.gmaingret.outlinergod.ui.screen.DocumentDetailScreen
+import com.gmaingret.outlinergod.ui.screen.SettingsScreen
 import com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreen
 import com.gmaingret.outlinergod.ui.screen.login.LoginScreen
+import com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorScreen
 
 @Composable
 fun AppNavHost(
@@ -44,7 +47,10 @@ fun AppNavHost(
         }
         composable(AppRoutes.NODE_EDITOR) { backStackEntry ->
             val documentId = backStackEntry.arguments?.getString("documentId") ?: ""
-            NodeEditorScreen(documentId = documentId)
+            NodeEditorScreen(
+                documentId = documentId,
+                onNavigateUp = { navController.navigateUp() }
+            )
         }
         composable(AppRoutes.SETTINGS) {
             SettingsScreen()
