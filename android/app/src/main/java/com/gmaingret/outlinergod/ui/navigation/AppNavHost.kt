@@ -1,13 +1,12 @@
 package com.gmaingret.outlinergod.ui.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.gmaingret.outlinergod.ui.screen.*
+import com.gmaingret.outlinergod.ui.screen.login.LoginScreen
 
 @Composable
 fun AppNavHost(
@@ -20,7 +19,13 @@ fun AppNavHost(
         modifier = modifier
     ) {
         composable(AppRoutes.LOGIN) {
-            LoginScreen()
+            LoginScreen(
+                onNavigateToDocumentList = {
+                    navController.navigate(AppRoutes.DOCUMENT_LIST) {
+                        popUpTo(AppRoutes.LOGIN) { inclusive = true }
+                    }
+                }
+            )
         }
         composable(AppRoutes.DOCUMENT_LIST) {
             DocumentListScreen()

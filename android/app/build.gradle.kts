@@ -21,6 +21,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000\"")
+        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"\"")
     }
 
     buildTypes {
@@ -67,6 +68,7 @@ dependencies {
 
     // Hilt
     implementation(libs.hilt.android)
+    implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
 
     // Room
