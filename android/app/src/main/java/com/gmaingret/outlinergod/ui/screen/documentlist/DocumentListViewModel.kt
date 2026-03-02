@@ -11,15 +11,15 @@ import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.db.dao.NodeDao
 import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.ui.common.SyncStatus
-import com.gmaingret.outlinergod.db.entity.BookmarkEntity
 import com.gmaingret.outlinergod.db.entity.DocumentEntity
-import com.gmaingret.outlinergod.db.entity.NodeEntity
-import com.gmaingret.outlinergod.db.entity.SettingsEntity
-import com.gmaingret.outlinergod.network.model.BookmarkSyncRecord
-import com.gmaingret.outlinergod.network.model.DocumentSyncRecord
-import com.gmaingret.outlinergod.network.model.NodeSyncRecord
-import com.gmaingret.outlinergod.network.model.SettingsSyncRecord
 import com.gmaingret.outlinergod.network.model.SyncPushPayload
+import com.gmaingret.outlinergod.sync.toNodeEntity
+import com.gmaingret.outlinergod.sync.toDocumentEntity
+import com.gmaingret.outlinergod.sync.toBookmarkEntity
+import com.gmaingret.outlinergod.sync.toSettingsEntity
+import com.gmaingret.outlinergod.sync.toNodeSyncRecord
+import com.gmaingret.outlinergod.sync.toDocumentSyncRecord
+import com.gmaingret.outlinergod.sync.toBookmarkSyncRecord
 import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
@@ -288,150 +288,3 @@ sealed class DocumentListUiState {
 sealed class DocumentListSideEffect {
     data class ShowError(val message: String) : DocumentListSideEffect()
 }
-
-// Extension functions for converting between sync records and entities
-internal fun NodeSyncRecord.toNodeEntity() = NodeEntity(
-    id = id,
-    documentId = documentId,
-    userId = userId,
-    content = content,
-    contentHlc = contentHlc,
-    note = note,
-    noteHlc = noteHlc,
-    parentId = parentId,
-    parentIdHlc = parentIdHlc,
-    sortOrder = sortOrder,
-    sortOrderHlc = sortOrderHlc,
-    completed = completed,
-    completedHlc = completedHlc,
-    color = color,
-    colorHlc = colorHlc,
-    collapsed = collapsed,
-    collapsedHlc = collapsedHlc,
-    deletedAt = deletedAt,
-    deletedHlc = deletedHlc,
-    deviceId = deviceId,
-    createdAt = createdAt,
-    updatedAt = updatedAt
-)
-
-internal fun DocumentSyncRecord.toDocumentEntity() = DocumentEntity(
-    id = id,
-    userId = userId,
-    title = title,
-    titleHlc = titleHlc,
-    type = type,
-    parentId = parentId,
-    parentIdHlc = parentIdHlc,
-    sortOrder = sortOrder,
-    sortOrderHlc = sortOrderHlc,
-    collapsed = collapsed,
-    collapsedHlc = collapsedHlc,
-    deletedAt = deletedAt,
-    deletedHlc = deletedHlc,
-    deviceId = deviceId,
-    createdAt = createdAt,
-    updatedAt = updatedAt
-)
-
-internal fun BookmarkSyncRecord.toBookmarkEntity() = BookmarkEntity(
-    id = id,
-    userId = userId,
-    title = title,
-    titleHlc = titleHlc,
-    targetType = targetType,
-    targetTypeHlc = targetTypeHlc,
-    targetDocumentId = targetDocumentId,
-    targetDocumentIdHlc = targetDocumentIdHlc,
-    targetNodeId = targetNodeId,
-    targetNodeIdHlc = targetNodeIdHlc,
-    query = query,
-    queryHlc = queryHlc,
-    sortOrder = sortOrder,
-    sortOrderHlc = sortOrderHlc,
-    deletedAt = deletedAt,
-    deletedHlc = deletedHlc,
-    deviceId = deviceId,
-    createdAt = createdAt,
-    updatedAt = updatedAt
-)
-
-internal fun SettingsSyncRecord.toSettingsEntity() = SettingsEntity(
-    userId = userId,
-    theme = theme,
-    themeHlc = themeHlc,
-    density = density,
-    densityHlc = densityHlc,
-    showGuideLines = showGuideLines,
-    showGuideLinesHlc = showGuideLinesHlc,
-    showBacklinkBadge = showBacklinkBadge,
-    showBacklinkBadgeHlc = showBacklinkBadgeHlc,
-    deviceId = deviceId,
-    updatedAt = updatedAt
-)
-
-internal fun NodeEntity.toNodeSyncRecord() = NodeSyncRecord(
-    id = id,
-    documentId = documentId,
-    userId = userId,
-    content = content,
-    contentHlc = contentHlc,
-    note = note,
-    noteHlc = noteHlc,
-    parentId = parentId,
-    parentIdHlc = parentIdHlc,
-    sortOrder = sortOrder,
-    sortOrderHlc = sortOrderHlc,
-    completed = completed,
-    completedHlc = completedHlc,
-    color = color,
-    colorHlc = colorHlc,
-    collapsed = collapsed,
-    collapsedHlc = collapsedHlc,
-    deletedAt = deletedAt,
-    deletedHlc = deletedHlc,
-    deviceId = deviceId,
-    createdAt = createdAt,
-    updatedAt = updatedAt
-)
-
-internal fun DocumentEntity.toDocumentSyncRecord() = DocumentSyncRecord(
-    id = id,
-    userId = userId,
-    title = title,
-    titleHlc = titleHlc,
-    type = type,
-    parentId = parentId,
-    parentIdHlc = parentIdHlc,
-    sortOrder = sortOrder,
-    sortOrderHlc = sortOrderHlc,
-    collapsed = collapsed,
-    collapsedHlc = collapsedHlc,
-    deletedAt = deletedAt,
-    deletedHlc = deletedHlc,
-    deviceId = deviceId,
-    createdAt = createdAt,
-    updatedAt = updatedAt
-)
-
-internal fun BookmarkEntity.toBookmarkSyncRecord() = BookmarkSyncRecord(
-    id = id,
-    userId = userId,
-    title = title,
-    titleHlc = titleHlc,
-    targetType = targetType,
-    targetTypeHlc = targetTypeHlc,
-    targetDocumentId = targetDocumentId,
-    targetDocumentIdHlc = targetDocumentIdHlc,
-    targetNodeId = targetNodeId,
-    targetNodeIdHlc = targetNodeIdHlc,
-    query = query,
-    queryHlc = queryHlc,
-    sortOrder = sortOrder,
-    sortOrderHlc = sortOrderHlc,
-    deletedAt = deletedAt,
-    deletedHlc = deletedHlc,
-    deviceId = deviceId,
-    createdAt = createdAt,
-    updatedAt = updatedAt
-)

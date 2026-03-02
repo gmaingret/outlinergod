@@ -97,6 +97,10 @@ dependencies {
     implementation(libs.orbit.core)
     implementation(libs.orbit.viewmodel)
 
+    // WorkManager
+    implementation(libs.work.runtime.ktx)
+    implementation(libs.hilt.work)
+
     // Credentials (Google Sign-In)
     implementation(libs.credentials)
     implementation(libs.credentials.play.services.auth)
@@ -115,6 +119,7 @@ dependencies {
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.hilt.android.testing)
     testImplementation(libs.orbit.test)
+    testImplementation(libs.work.testing)
 
     // Android Test
     androidTestImplementation(libs.androidx.junit)
