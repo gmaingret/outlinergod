@@ -7,10 +7,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.gmaingret.outlinergod.ui.screen.BookmarksScreen
 import com.gmaingret.outlinergod.ui.screen.DocumentDetailScreen
-import com.gmaingret.outlinergod.ui.screen.SettingsScreen
 import com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreen
 import com.gmaingret.outlinergod.ui.screen.login.LoginScreen
 import com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorScreen
+import com.gmaingret.outlinergod.ui.screen.settings.SettingsScreen
 
 @Composable
 fun AppNavHost(
@@ -53,7 +53,14 @@ fun AppNavHost(
             )
         }
         composable(AppRoutes.SETTINGS) {
-            SettingsScreen()
+            SettingsScreen(
+                onNavigateToLogin = {
+                    navController.navigate(AppRoutes.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
         composable(AppRoutes.BOOKMARKS) {
             BookmarksScreen()
