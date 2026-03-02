@@ -13,6 +13,5 @@ object ClockModule {
 
     @Provides
     @Singleton
-    fun provideHlcClock(): HlcClock =
-        throw NotImplementedError("Wired in P3-9")
+    fun provideHlcClock(): HlcClock = HlcClock()
 }
