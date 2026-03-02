@@ -459,6 +459,14 @@ class NodeEditorViewModel @Inject constructor(
         )
     }
 
+    // --- P4-12: Note editor ---
+
+    fun toggleNote(nodeId: String) = intent {
+        val current = state.expandedNoteIds
+        val updated = if (nodeId in current) current - nodeId else current + nodeId
+        reduce { state.copy(expandedNoteIds = updated) }
+    }
+
     // --- P4-11: Context menu actions ---
 
     fun showContextMenu(nodeId: String) = intent {
@@ -594,6 +602,7 @@ data class NodeEditorUiState(
     val focusedNodeId: String? = null,
     val documentId: String = "",
     val contextMenuNodeId: String? = null,
+    val expandedNoteIds: Set<String> = emptySet(),
 )
 
 sealed class NodeEditorStatus {

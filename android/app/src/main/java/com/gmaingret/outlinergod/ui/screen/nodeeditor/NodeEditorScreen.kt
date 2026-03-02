@@ -5,6 +5,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +20,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -140,10 +142,13 @@ fun NodeEditorScreen(
                                 NodeRow(
                                     flatNode = flatNode,
                                     isFocused = state.focusedNodeId == flatNode.entity.id,
+                                    isNoteExpanded = flatNode.entity.id in state.expandedNoteIds || flatNode.entity.note.isNotBlank(),
                                     onContentChanged = { viewModel.onContentChanged(flatNode.entity.id, it) },
                                     onEnterPressed = { cursor -> viewModel.onEnterPressed(flatNode.entity.id, cursor) },
                                     onBackspaceOnEmpty = { viewModel.onBackspaceOnEmptyNode(flatNode.entity.id) },
                                     onFocusLost = { viewModel.onNodeFocusLost(flatNode.entity.id) },
+                                    onNoteChanged = { viewModel.onNoteChanged(flatNode.entity.id, it) },
+                                    onToggleNote = { viewModel.toggleNote(flatNode.entity.id) },
                                     onGlyphTap = { /* zoom in -- wired in future task */ },
                                     onToggleCollapse = {
                                         viewModel.toggleCollapsed(flatNode.entity.id)
@@ -215,10 +220,13 @@ fun NodeEditorScreen(
 private fun NodeRow(
     flatNode: FlatNode,
     isFocused: Boolean,
+    isNoteExpanded: Boolean,
     onContentChanged: (String) -> Unit,
     onEnterPressed: (Int) -> Unit,
     onBackspaceOnEmpty: () -> Unit,
     onFocusLost: () -> Unit,
+    onNoteChanged: (String) -> Unit,
+    onToggleNote: () -> Unit,
     onGlyphTap: () -> Unit,
     onToggleCollapse: () -> Unit,
     onLongPress: () -> Unit,
@@ -235,7 +243,7 @@ private fun NodeRow(
         }
     }
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
@@ -243,88 +251,139 @@ private fun NodeRow(
                 onLongClick = onLongPress,
             )
             .padding(vertical = 2.dp, horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Indentation
-        Spacer(modifier = Modifier.width((flatNode.depth * 24).dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Indentation
+            Spacer(modifier = Modifier.width((flatNode.depth * 24).dp))
 
-        // Glyph: filled dot, or directional arrow if has children
-        // The glyph area also serves as the drag handle via dragModifier
-        if (flatNode.hasChildren) {
-            IconButton(
-                onClick = onToggleCollapse,
-                modifier = Modifier
-                    .size(24.dp)
-                    .then(dragModifier)
-            ) {
-                Icon(
-                    imageVector = if (flatNode.entity.collapsed == 1)
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight
-                    else
-                        Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (flatNode.entity.collapsed == 1) "Expand" else "Collapse",
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        } else {
-            // Filled dot glyph -- tap = zoom in, long-press = drag
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .then(dragModifier)
-                    .clickable(onClick = onGlyphTap),
-                contentAlignment = Alignment.Center
-            ) {
-                val color = MaterialTheme.colorScheme.onSurface
-                Canvas(modifier = Modifier.size(6.dp)) {
-                    drawCircle(
-                        color = color,
-                        radius = size.minDimension / 2,
-                        center = Offset(size.width / 2, size.height / 2)
+            // Glyph: filled dot, or directional arrow if has children
+            // The glyph area also serves as the drag handle via dragModifier
+            if (flatNode.hasChildren) {
+                IconButton(
+                    onClick = onToggleCollapse,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .then(dragModifier)
+                ) {
+                    Icon(
+                        imageVector = if (flatNode.entity.collapsed == 1)
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight
+                        else
+                            Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (flatNode.entity.collapsed == 1) "Expand" else "Collapse",
+                        modifier = Modifier.size(18.dp)
                     )
                 }
+            } else {
+                // Filled dot glyph -- tap = zoom in, long-press = drag
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .then(dragModifier)
+                        .clickable(onClick = onGlyphTap),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val color = MaterialTheme.colorScheme.onSurface
+                    Canvas(modifier = Modifier.size(6.dp)) {
+                        drawCircle(
+                            color = color,
+                            radius = size.minDimension / 2,
+                            center = Offset(size.width / 2, size.height / 2)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            // Content field
+            BasicTextField(
+                value = textFieldValue,
+                onValueChange = { newValue ->
+                    val newText = newValue.text
+                    val oldText = textFieldValue.text
+
+                    // Detect Enter key: newline inserted
+                    val newlineIndex = newText.indexOf('\n')
+                    if (newlineIndex >= 0 && !oldText.contains('\n')) {
+                        // Enter pressed at the newline position
+                        onEnterPressed(newlineIndex)
+                        return@BasicTextField
+                    }
+
+                    // Detect Backspace on empty node
+                    if (oldText.isEmpty() && newText.isEmpty() && newValue.selection == TextRange(0)) {
+                        onBackspaceOnEmpty()
+                        return@BasicTextField
+                    }
+
+                    textFieldValue = newValue
+                    onContentChanged(newValue.text)
+                },
+                visualTransformation = MarkdownVisualTransformation,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { focusState ->
+                        if (!focusState.isFocused) {
+                            onFocusLost()
+                        }
+                    }
+            )
+
+            // Note toggle button
+            IconButton(
+                onClick = onToggleNote,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Toggle note",
+                    modifier = Modifier.size(16.dp),
+                    tint = if (isNoteExpanded || flatNode.entity.note.isNotBlank())
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                )
             }
         }
 
-        Spacer(modifier = Modifier.width(4.dp))
+        // Note field (shown when expanded or note has content)
+        if (isNoteExpanded) {
+            var noteValue by remember(flatNode.entity.id, flatNode.entity.note) {
+                mutableStateOf(flatNode.entity.note)
+            }
 
-        // Content field
-        BasicTextField(
-            value = textFieldValue,
-            onValueChange = { newValue ->
-                val newText = newValue.text
-                val oldText = textFieldValue.text
-
-                // Detect Enter key: newline inserted
-                val newlineIndex = newText.indexOf('\n')
-                if (newlineIndex >= 0 && !oldText.contains('\n')) {
-                    // Enter pressed at the newline position
-                    onEnterPressed(newlineIndex)
-                    return@BasicTextField
-                }
-
-                // Detect Backspace on empty node
-                if (oldText.isEmpty() && newText.isEmpty() && newValue.selection == TextRange(0)) {
-                    onBackspaceOnEmpty()
-                    return@BasicTextField
-                }
-
-                textFieldValue = newValue
-                onContentChanged(newValue.text)
-            },
-            visualTransformation = MarkdownVisualTransformation,
-            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                color = MaterialTheme.colorScheme.onSurface
-            ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            modifier = Modifier
-                .weight(1f)
-                .focusRequester(focusRequester)
-                .onFocusChanged { focusState ->
-                    if (!focusState.isFocused) {
-                        onFocusLost()
+            BasicTextField(
+                value = noteValue,
+                onValueChange = { newNote ->
+                    noteValue = newNote
+                    onNoteChanged(newNote)
+                },
+                textStyle = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = ((flatNode.depth * 24) + 28).dp),
+                decorationBox = { innerTextField ->
+                    if (noteValue.isEmpty()) {
+                        Text(
+                            text = "Add a note...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        )
                     }
+                    innerTextField()
                 }
-        )
+            )
+        }
     }
 }
