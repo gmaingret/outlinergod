@@ -42,7 +42,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun googleSignIn(idToken: String): Result<AuthResponse> = runCatching {
         val response: AuthResponse = httpClient.post("$baseUrl/api/auth/google") {
             contentType(ContentType.Application.Json)
-            setBody(mapOf("idToken" to idToken))
+            setBody(mapOf("id_token" to idToken))
         }.body()
         dataStore.edit { prefs ->
             prefs[ACCESS_TOKEN] = response.token
