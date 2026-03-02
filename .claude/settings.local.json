@@ -44,7 +44,8 @@
       "Bash(\"$JAVA_HOME/bin/jar\" tf:*)",
       "Bash(\"/c/Program Files/Android/Android Studio/jbr/bin/jar.exe\" tf:*)",
       "Bash(\"/c/Program Files/Android/Android Studio/jbr/bin/javap.exe\":*)",
-      "Bash(\"$JAVA_HOME/bin/javap.exe\":*)"
+      "Bash(\"$JAVA_HOME/bin/javap.exe\":*)",
+      "Bash(find:*)"
     ]
   }
 }
