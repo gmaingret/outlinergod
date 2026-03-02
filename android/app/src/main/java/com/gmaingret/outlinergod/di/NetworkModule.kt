@@ -1,12 +1,12 @@
 package com.gmaingret.outlinergod.di
 
 import com.gmaingret.outlinergod.BuildConfig
+import com.gmaingret.outlinergod.network.KtorClientFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -16,7 +16,10 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideHttpClient(): HttpClient = HttpClient(OkHttp) {}
+    fun provideHttpClient(): HttpClient = KtorClientFactory.create(
+        tokenProvider = { null },      // replaced when AuthRepository is wired in P3-12
+        tokenRefresher = { null }      // replaced when AuthRepository is wired in P3-12
+    )
 
     @Provides
     @Named("baseUrl")
