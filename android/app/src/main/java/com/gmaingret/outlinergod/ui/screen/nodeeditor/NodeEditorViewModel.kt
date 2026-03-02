@@ -2,6 +2,7 @@ package com.gmaingret.outlinergod.ui.screen.nodeeditor
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.gmaingret.outlinergod.db.dao.NodeDao
 import com.gmaingret.outlinergod.db.entity.NodeEntity
 import com.gmaingret.outlinergod.prototype.FractionalIndex
@@ -10,7 +11,10 @@ import com.gmaingret.outlinergod.sync.HlcClock
 import com.gmaingret.outlinergod.ui.mapper.FlatNode
 import com.gmaingret.outlinergod.ui.mapper.mapToFlatList
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.viewmodel.container
 import java.util.UUID
@@ -176,6 +180,119 @@ class NodeEditorViewModel @Inject constructor(
 
     fun navigateUp() = intent {
         postSideEffect(NodeEditorSideEffect.NavigateUp)
+    }
+
+    // --- P4-8: Debounced persistence ---
+
+    private val contentDebounceJobs = mutableMapOf<String, Job>()
+    private val noteDebounceJobs = mutableMapOf<String, Job>()
+
+    fun onContentChanged(nodeId: String, newContent: String) {
+        // Optimistic in-memory state update
+        intent {
+            reduce {
+                state.copy(
+                    flatNodes = state.flatNodes.map {
+                        if (it.entity.id == nodeId) it.copy(entity = it.entity.copy(content = newContent))
+                        else it
+                    }
+                )
+            }
+        }
+
+        // Debounced Room write
+        contentDebounceJobs[nodeId]?.cancel()
+        contentDebounceJobs[nodeId] = viewModelScope.launch {
+            delay(300)
+            persistContentChange(nodeId, newContent)
+        }
+    }
+
+    fun onNoteChanged(nodeId: String, newNote: String) {
+        // Optimistic in-memory state update
+        intent {
+            reduce {
+                state.copy(
+                    flatNodes = state.flatNodes.map {
+                        if (it.entity.id == nodeId) it.copy(entity = it.entity.copy(note = newNote))
+                        else it
+                    }
+                )
+            }
+        }
+
+        // Debounced Room write
+        noteDebounceJobs[nodeId]?.cancel()
+        noteDebounceJobs[nodeId] = viewModelScope.launch {
+            delay(300)
+            persistNoteChange(nodeId, newNote)
+        }
+    }
+
+    fun onNodeFocusLost(nodeId: String) {
+        // Flush any pending content debounce immediately
+        contentDebounceJobs[nodeId]?.cancel()
+        contentDebounceJobs.remove(nodeId)
+
+        noteDebounceJobs[nodeId]?.cancel()
+        noteDebounceJobs.remove(nodeId)
+
+        viewModelScope.launch {
+            val entity = nodeDao.getNodesByDocumentSync(container.stateFlow.value.documentId)
+                .firstOrNull { it.id == nodeId } ?: return@launch
+            val currentState = container.stateFlow.value
+            val flatNode = currentState.flatNodes.firstOrNull { it.entity.id == nodeId } ?: return@launch
+            val inMemoryEntity = flatNode.entity
+
+            // Only persist if in-memory content/note differs from DB
+            if (inMemoryEntity.content != entity.content || inMemoryEntity.note != entity.note) {
+                val deviceId = authRepository.getDeviceId().first()
+                val hlc = hlcClock.generate(deviceId)
+                val now = System.currentTimeMillis()
+                nodeDao.updateNode(
+                    entity.copy(
+                        content = inMemoryEntity.content,
+                        contentHlc = if (inMemoryEntity.content != entity.content) hlc else entity.contentHlc,
+                        note = inMemoryEntity.note,
+                        noteHlc = if (inMemoryEntity.note != entity.note) hlc else entity.noteHlc,
+                        updatedAt = now,
+                        deviceId = deviceId,
+                    )
+                )
+            }
+        }
+    }
+
+    private suspend fun persistContentChange(nodeId: String, content: String) {
+        val documentId = container.stateFlow.value.documentId
+        val entity = nodeDao.getNodesByDocumentSync(documentId)
+            .firstOrNull { it.id == nodeId } ?: return
+        val deviceId = authRepository.getDeviceId().first()
+        val hlc = hlcClock.generate(deviceId)
+        nodeDao.updateNode(
+            entity.copy(
+                content = content,
+                contentHlc = hlc,
+                updatedAt = System.currentTimeMillis(),
+                deviceId = deviceId,
+            )
+        )
+    }
+
+    private suspend fun persistNoteChange(nodeId: String, note: String) {
+        val documentId = container.stateFlow.value.documentId
+        val entity = nodeDao.getNodesByDocumentSync(documentId)
+            .firstOrNull { it.id == nodeId } ?: return
+        val deviceId = authRepository.getDeviceId().first()
+        val hlc = hlcClock.generate(deviceId)
+        nodeDao.updateNode(
+            entity.copy(
+                note = note,
+                noteHlc = hlc,
+                updatedAt = System.currentTimeMillis(),
+                deviceId = deviceId,
+            )
+        )
     }
 }
 
