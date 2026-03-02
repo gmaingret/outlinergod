@@ -202,6 +202,150 @@ class NodeEditorViewModel @Inject constructor(
         )
     }
 
+    // --- P4-10: Drag-and-drop reorder + indent/outdent ---
+
+    fun reorderNodes(fromIndex: Int, toIndex: Int) = intent {
+        val flatNodes = state.flatNodes
+        if (fromIndex == toIndex || fromIndex !in flatNodes.indices || toIndex !in flatNodes.indices) return@intent
+
+        val node = flatNodes[fromIndex]
+
+        // Collect the block: the node plus all its descendants (deeper nodes immediately following)
+        val blockEnd = ((fromIndex + 1)..flatNodes.lastIndex)
+            .firstOrNull { flatNodes[it].depth <= node.depth } ?: flatNodes.size
+        val blockSize = blockEnd - fromIndex
+        val block = flatNodes.subList(fromIndex, blockEnd).toList()
+
+        // Remove the block from the list
+        val withoutBlock = flatNodes.toMutableList()
+        withoutBlock.subList(fromIndex, blockEnd).clear()
+
+        // Compute where to insert in the shortened list
+        val insertAt = if (toIndex > fromIndex) {
+            (toIndex - blockSize + 1).coerceIn(0, withoutBlock.size)
+        } else {
+            toIndex.coerceIn(0, withoutBlock.size)
+        }
+        withoutBlock.addAll(insertAt, block)
+
+        // Recompute sort orders and parent IDs, then persist
+        val recomputed = recomputeFlatNodes(withoutBlock)
+
+        // Optimistic UI update
+        reduce { state.copy(flatNodes = recomputed) }
+
+        // Persist changed nodes to Room
+        persistReorderedNodes(flatNodes, recomputed)
+    }
+
+    fun indentNode(nodeId: String) = intent {
+        val flatNodes = state.flatNodes
+        val nodeIndex = flatNodes.indexOfFirst { it.entity.id == nodeId }
+        if (nodeIndex <= 0) return@intent
+
+        val node = flatNodes[nodeIndex]
+        val predecessor = flatNodes[nodeIndex - 1]
+
+        // Can only indent if predecessor is at same depth (becomes new parent)
+        if (predecessor.depth != node.depth) return@intent
+
+        val result = flatNodes.toMutableList()
+        result[nodeIndex] = node.copy(
+            entity = node.entity.copy(parentId = predecessor.entity.id),
+            depth = node.depth + 1,
+        )
+        // Shift all descendants by +1
+        var i = nodeIndex + 1
+        while (i < result.size && result[i].depth > node.depth) {
+            result[i] = result[i].copy(depth = result[i].depth + 1)
+            i++
+        }
+
+        val recomputed = recomputeFlatNodes(result)
+        reduce { state.copy(flatNodes = recomputed) }
+        persistReorderedNodes(flatNodes, recomputed)
+    }
+
+    fun outdentNode(nodeId: String) = intent {
+        val flatNodes = state.flatNodes
+        val nodeIndex = flatNodes.indexOfFirst { it.entity.id == nodeId }
+        if (nodeIndex < 0) return@intent
+
+        val node = flatNodes[nodeIndex]
+        if (node.depth == 0) return@intent // already at root
+
+        // Find the grandparent id by looking at current parent's parentId
+        val parentNode = flatNodes.subList(0, nodeIndex)
+            .lastOrNull { it.entity.id == node.entity.parentId }
+        val grandparentId = parentNode?.entity?.parentId
+
+        val result = flatNodes.toMutableList()
+        result[nodeIndex] = node.copy(
+            entity = node.entity.copy(parentId = grandparentId),
+            depth = node.depth - 1,
+        )
+        // Shift all descendants by -1
+        var i = nodeIndex + 1
+        while (i < result.size && result[i].depth > node.depth) {
+            result[i] = result[i].copy(depth = result[i].depth - 1)
+            i++
+        }
+
+        val recomputed = recomputeFlatNodes(result)
+        reduce { state.copy(flatNodes = recomputed) }
+        persistReorderedNodes(flatNodes, recomputed)
+    }
+
+    companion object {
+        fun recomputeFlatNodes(nodes: List<FlatNode>): List<FlatNode> {
+            // Collect indices per parent, in flat-list order (= correct sibling order)
+            val parentToIndices = linkedMapOf<String?, MutableList<Int>>()
+            nodes.forEachIndexed { idx, node ->
+                parentToIndices.getOrPut(node.entity.parentId) { mutableListOf() }.add(idx)
+            }
+
+            val result = nodes.toMutableList()
+            for ((_, indices) in parentToIndices) {
+                indices.forEachIndexed { rank, nodeIdx ->
+                    val charIdx = rank.coerceAtMost(FractionalIndex.DIGITS.length - 1)
+                    val newSortOrder = "a${FractionalIndex.DIGITS[charIdx]}"
+                    val current = result[nodeIdx]
+                    result[nodeIdx] = current.copy(
+                        entity = current.entity.copy(sortOrder = newSortOrder),
+                    )
+                }
+            }
+            return result
+        }
+    }
+
+    private suspend fun persistReorderedNodes(oldFlatNodes: List<FlatNode>, newFlatNodes: List<FlatNode>) {
+        val deviceId = authRepository.getDeviceId().first()
+        val hlc = hlcClock.generate(deviceId)
+        val now = System.currentTimeMillis()
+
+        val oldMap = oldFlatNodes.associateBy { it.entity.id }
+        for (newFlatNode in newFlatNodes) {
+            val oldFlatNode = oldMap[newFlatNode.entity.id] ?: continue
+            val oldEntity = oldFlatNode.entity
+            val newEntity = newFlatNode.entity
+
+            val sortOrderChanged = oldEntity.sortOrder != newEntity.sortOrder
+            val parentIdChanged = oldEntity.parentId != newEntity.parentId
+
+            if (sortOrderChanged || parentIdChanged) {
+                nodeDao.updateNode(
+                    newEntity.copy(
+                        sortOrderHlc = if (sortOrderChanged) hlc else newEntity.sortOrderHlc,
+                        parentIdHlc = if (parentIdChanged) hlc else newEntity.parentIdHlc,
+                        updatedAt = now,
+                        deviceId = deviceId,
+                    )
+                )
+            }
+        }
+    }
+
     // --- P4-8: Debounced persistence ---
 
     private val contentDebounceJobs = mutableMapOf<String, Job>()
