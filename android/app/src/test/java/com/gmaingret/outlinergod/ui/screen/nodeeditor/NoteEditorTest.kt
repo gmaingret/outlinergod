@@ -1,9 +1,15 @@
 package com.gmaingret.outlinergod.ui.screen.nodeeditor
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.SavedStateHandle
+import com.gmaingret.outlinergod.db.dao.BookmarkDao
+import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.db.dao.NodeDao
+import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.NodeEntity
 import com.gmaingret.outlinergod.repository.AuthRepository
+import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
 import com.gmaingret.outlinergod.ui.mapper.mapToFlatList
 import io.mockk.Runs
@@ -36,6 +42,11 @@ class NoteEditorTest {
     private lateinit var authRepository: AuthRepository
     private lateinit var hlcClock: HlcClock
     private lateinit var savedStateHandle: SavedStateHandle
+    private lateinit var syncRepository: SyncRepository
+    private lateinit var documentDao: DocumentDao
+    private lateinit var bookmarkDao: BookmarkDao
+    private lateinit var settingsDao: SettingsDao
+    private lateinit var dataStore: DataStore<Preferences>
 
     private val testDeviceId = "device-1"
     private val testHlcValue = "0000017b05a3a1be-0000-device-1"
@@ -47,6 +58,11 @@ class NoteEditorTest {
         nodeDao = mockk(relaxed = true)
         authRepository = mockk()
         hlcClock = mockk()
+        syncRepository = mockk(relaxed = true)
+        documentDao = mockk(relaxed = true)
+        bookmarkDao = mockk(relaxed = true)
+        settingsDao = mockk(relaxed = true)
+        dataStore = mockk(relaxed = true)
         savedStateHandle = SavedStateHandle(mapOf("documentId" to testDocumentId))
         every { authRepository.getDeviceId() } returns flowOf(testDeviceId)
         every { hlcClock.generate(any()) } returns testHlcValue
@@ -86,6 +102,11 @@ class NoteEditorTest {
             nodeDao = nodeDao,
             authRepository = authRepository,
             hlcClock = hlcClock,
+            syncRepository = syncRepository,
+            documentDao = documentDao,
+            bookmarkDao = bookmarkDao,
+            settingsDao = settingsDao,
+            dataStore = dataStore,
         )
     }
 
@@ -185,7 +206,7 @@ class NoteEditorTest {
             containerHost.onNoteChanged("n1", "my note")
             awaitState() // consume optimistic update
             testDispatcher.scheduler.advanceTimeBy(301)
-            testDispatcher.scheduler.advanceUntilIdle()
+            testDispatcher.scheduler.runCurrent()
         }
 
         assertEquals("my note", updateSlot.captured.note)

@@ -1,9 +1,15 @@
 package com.gmaingret.outlinergod.ui.screen.nodeeditor
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.SavedStateHandle
+import com.gmaingret.outlinergod.db.dao.BookmarkDao
+import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.db.dao.NodeDao
+import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.NodeEntity
 import com.gmaingret.outlinergod.repository.AuthRepository
+import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
 import com.gmaingret.outlinergod.ui.mapper.mapToFlatList
 import io.mockk.Runs
@@ -37,6 +43,11 @@ class NodeEditorPersistenceTest {
     private lateinit var authRepository: AuthRepository
     private lateinit var hlcClock: HlcClock
     private lateinit var savedStateHandle: SavedStateHandle
+    private lateinit var syncRepository: SyncRepository
+    private lateinit var documentDao: DocumentDao
+    private lateinit var bookmarkDao: BookmarkDao
+    private lateinit var settingsDao: SettingsDao
+    private lateinit var dataStore: DataStore<Preferences>
 
     private val testDeviceId = "device-1"
     private val testHlcValue = "0000017b05a3a1be-0000-device-1"
@@ -48,6 +59,11 @@ class NodeEditorPersistenceTest {
         nodeDao = mockk(relaxed = true)
         authRepository = mockk()
         hlcClock = mockk()
+        syncRepository = mockk(relaxed = true)
+        documentDao = mockk(relaxed = true)
+        bookmarkDao = mockk(relaxed = true)
+        settingsDao = mockk(relaxed = true)
+        dataStore = mockk(relaxed = true)
         savedStateHandle = SavedStateHandle(mapOf("documentId" to testDocumentId))
         every { authRepository.getDeviceId() } returns flowOf(testDeviceId)
         every { hlcClock.generate(any()) } returns testHlcValue
@@ -87,6 +103,11 @@ class NodeEditorPersistenceTest {
             nodeDao = nodeDao,
             authRepository = authRepository,
             hlcClock = hlcClock,
+            syncRepository = syncRepository,
+            documentDao = documentDao,
+            bookmarkDao = bookmarkDao,
+            settingsDao = settingsDao,
+            dataStore = dataStore,
         )
     }
 
@@ -151,7 +172,7 @@ class NodeEditorPersistenceTest {
             containerHost.onContentChanged("n1", "new content")
             awaitState() // consume optimistic update
             testDispatcher.scheduler.advanceTimeBy(301)
-            testDispatcher.scheduler.advanceUntilIdle()
+            testDispatcher.scheduler.runCurrent()
         }
 
         coVerify(exactly = 1) { nodeDao.updateNode(match { it.content == "new content" }) }
@@ -182,7 +203,7 @@ class NodeEditorPersistenceTest {
             containerHost.onContentChanged("n1", "abc")
             awaitState()
             testDispatcher.scheduler.advanceTimeBy(301)
-            testDispatcher.scheduler.advanceUntilIdle()
+            testDispatcher.scheduler.runCurrent()
         }
 
         coVerify(exactly = 1) { nodeDao.updateNode(match { it.content == "abc" }) }
@@ -203,7 +224,7 @@ class NodeEditorPersistenceTest {
             containerHost.onContentChanged("n1", "new")
             awaitState()
             testDispatcher.scheduler.advanceTimeBy(301)
-            testDispatcher.scheduler.advanceUntilIdle()
+            testDispatcher.scheduler.runCurrent()
         }
 
         coVerify {
@@ -230,7 +251,8 @@ class NodeEditorPersistenceTest {
             testDispatcher.scheduler.runCurrent()
 
             containerHost.onNodeFocusLost("n1")
-            testDispatcher.scheduler.advanceUntilIdle()
+            testDispatcher.scheduler.advanceTimeBy(1)
+            testDispatcher.scheduler.runCurrent()
         }
 
         coVerify { nodeDao.updateNode(match { it.content == "flushed" }) }
@@ -255,7 +277,7 @@ class NodeEditorPersistenceTest {
             containerHost.onNoteChanged("n1", "my note")
             awaitState()
             testDispatcher.scheduler.advanceTimeBy(301)
-            testDispatcher.scheduler.advanceUntilIdle()
+            testDispatcher.scheduler.runCurrent()
         }
 
         assertTrue("noteHlc should be non-blank", updateSlot.captured.noteHlc.isNotBlank())

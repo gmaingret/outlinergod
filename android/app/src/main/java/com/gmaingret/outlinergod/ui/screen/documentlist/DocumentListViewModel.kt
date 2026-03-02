@@ -10,6 +10,7 @@ import com.gmaingret.outlinergod.db.dao.BookmarkDao
 import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.db.dao.NodeDao
 import com.gmaingret.outlinergod.db.dao.SettingsDao
+import com.gmaingret.outlinergod.ui.common.SyncStatus
 import com.gmaingret.outlinergod.db.entity.BookmarkEntity
 import com.gmaingret.outlinergod.db.entity.DocumentEntity
 import com.gmaingret.outlinergod.db.entity.NodeEntity
@@ -283,8 +284,6 @@ sealed class DocumentListUiState {
     ) : DocumentListUiState()
     data class Error(val message: String) : DocumentListUiState()
 }
-
-enum class SyncStatus { Idle, Syncing, Error }
 
 sealed class DocumentListSideEffect {
     data class ShowError(val message: String) : DocumentListSideEffect()

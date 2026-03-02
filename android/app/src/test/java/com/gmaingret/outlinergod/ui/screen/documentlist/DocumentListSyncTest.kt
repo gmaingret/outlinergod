@@ -3,6 +3,7 @@ package com.gmaingret.outlinergod.ui.screen.documentlist
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import com.gmaingret.outlinergod.ui.common.SyncStatus
 import com.gmaingret.outlinergod.db.dao.BookmarkDao
 import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.db.dao.NodeDao

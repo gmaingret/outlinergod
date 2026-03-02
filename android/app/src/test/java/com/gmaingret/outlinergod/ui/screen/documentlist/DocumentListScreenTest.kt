@@ -1,5 +1,6 @@
 package com.gmaingret.outlinergod.ui.screen.documentlist
 
+import com.gmaingret.outlinergod.ui.common.SyncStatus
 import com.gmaingret.outlinergod.ui.navigation.AppRoutes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

@@ -1,19 +1,38 @@
 package com.gmaingret.outlinergod.ui.screen.nodeeditor
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gmaingret.outlinergod.db.dao.BookmarkDao
+import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.db.dao.NodeDao
+import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.NodeEntity
 import com.gmaingret.outlinergod.prototype.FractionalIndex
 import com.gmaingret.outlinergod.repository.AuthRepository
+import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
+import com.gmaingret.outlinergod.ui.common.SyncStatus
 import com.gmaingret.outlinergod.ui.mapper.FlatNode
 import com.gmaingret.outlinergod.ui.mapper.mapToFlatList
+import com.gmaingret.outlinergod.ui.screen.documentlist.toBookmarkSyncRecord
+import com.gmaingret.outlinergod.ui.screen.documentlist.toDocumentSyncRecord
+import com.gmaingret.outlinergod.ui.screen.documentlist.toNodeSyncRecord
+import com.gmaingret.outlinergod.ui.screen.documentlist.toBookmarkEntity
+import com.gmaingret.outlinergod.ui.screen.documentlist.toDocumentEntity
+import com.gmaingret.outlinergod.ui.screen.documentlist.toNodeEntity
+import com.gmaingret.outlinergod.ui.screen.documentlist.toSettingsEntity
+import com.gmaingret.outlinergod.network.model.SyncPushPayload
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.viewmodel.container
@@ -26,6 +45,11 @@ class NodeEditorViewModel @Inject constructor(
     private val nodeDao: NodeDao,
     private val authRepository: AuthRepository,
     private val hlcClock: HlcClock,
+    private val syncRepository: SyncRepository,
+    private val documentDao: DocumentDao,
+    private val bookmarkDao: BookmarkDao,
+    private val settingsDao: SettingsDao,
+    private val dataStore: DataStore<Preferences>,
 ) : ViewModel(), ContainerHost<NodeEditorUiState, NodeEditorSideEffect> {
 
     override val container = container<NodeEditorUiState, NodeEditorSideEffect>(NodeEditorUiState())
@@ -236,6 +260,7 @@ class NodeEditorViewModel @Inject constructor(
 
         // Persist changed nodes to Room
         persistReorderedNodes(flatNodes, recomputed)
+        resetInactivityTimer()
     }
 
     fun indentNode(nodeId: String) = intent {
@@ -296,29 +321,6 @@ class NodeEditorViewModel @Inject constructor(
         persistReorderedNodes(flatNodes, recomputed)
     }
 
-    companion object {
-        fun recomputeFlatNodes(nodes: List<FlatNode>): List<FlatNode> {
-            // Collect indices per parent, in flat-list order (= correct sibling order)
-            val parentToIndices = linkedMapOf<String?, MutableList<Int>>()
-            nodes.forEachIndexed { idx, node ->
-                parentToIndices.getOrPut(node.entity.parentId) { mutableListOf() }.add(idx)
-            }
-
-            val result = nodes.toMutableList()
-            for ((_, indices) in parentToIndices) {
-                indices.forEachIndexed { rank, nodeIdx ->
-                    val charIdx = rank.coerceAtMost(FractionalIndex.DIGITS.length - 1)
-                    val newSortOrder = "a${FractionalIndex.DIGITS[charIdx]}"
-                    val current = result[nodeIdx]
-                    result[nodeIdx] = current.copy(
-                        entity = current.entity.copy(sortOrder = newSortOrder),
-                    )
-                }
-            }
-            return result
-        }
-    }
-
     private suspend fun persistReorderedNodes(oldFlatNodes: List<FlatNode>, newFlatNodes: List<FlatNode>) {
         val deviceId = authRepository.getDeviceId().first()
         val hlc = hlcClock.generate(deviceId)
@@ -370,6 +372,7 @@ class NodeEditorViewModel @Inject constructor(
             delay(300)
             persistContentChange(nodeId, newContent)
         }
+        resetInactivityTimer()
     }
 
     fun onNoteChanged(nodeId: String, newNote: String) {
@@ -391,6 +394,7 @@ class NodeEditorViewModel @Inject constructor(
             delay(300)
             persistNoteChange(nodeId, newNote)
         }
+        resetInactivityTimer()
     }
 
     fun onNodeFocusLost(nodeId: String) {
@@ -548,6 +552,7 @@ class NodeEditorViewModel @Inject constructor(
             delay(300)
             persistColorChange(nodeId, color)
         }
+        resetInactivityTimer()
     }
 
     private suspend fun persistColorChange(nodeId: String, color: Int) {
@@ -593,6 +598,121 @@ class NodeEditorViewModel @Inject constructor(
                 }
             )
         }
+        resetInactivityTimer()
+    }
+
+    // --- P4-13: Sync trigger ---
+
+    private var inactivityTimerJob: Job? = null
+
+    private fun triggerSync() = intent {
+        try {
+            reduce { state.copy(syncStatus = SyncStatus.Syncing) }
+
+            val deviceId = authRepository.getDeviceId().first()
+            val lastSyncHlc = dataStore.data.map { prefs ->
+                prefs[LAST_SYNC_HLC_KEY] ?: "0"
+            }.first()
+
+            // Pull changes from server
+            val pullResult = syncRepository.pull(since = lastSyncHlc, deviceId = deviceId)
+            pullResult.getOrThrow().let { response ->
+                if (response.nodes.isNotEmpty()) {
+                    nodeDao.upsertNodes(response.nodes.map { it.toNodeEntity() })
+                }
+                if (response.documents.isNotEmpty()) {
+                    documentDao.upsertDocuments(response.documents.map { it.toDocumentEntity() })
+                }
+                if (response.bookmarks.isNotEmpty()) {
+                    bookmarkDao.upsertBookmarks(response.bookmarks.map { it.toBookmarkEntity() })
+                }
+                response.settings?.let { settings ->
+                    settingsDao.upsertSettings(settings.toSettingsEntity())
+                }
+            }
+
+            // Build and push local changes
+            val userId = authRepository.getAccessToken().filterNotNull().first()
+            val pendingNodes = nodeDao.getPendingChanges(lastSyncHlc, deviceId)
+            val pendingDocs = documentDao.getPendingChanges(userId, lastSyncHlc, deviceId)
+            val pendingBookmarks = bookmarkDao.getPendingChanges(userId, lastSyncHlc, deviceId)
+
+            val pushPayload = SyncPushPayload(
+                deviceId = deviceId,
+                nodes = pendingNodes.map { it.toNodeSyncRecord() }.ifEmpty { null },
+                documents = pendingDocs.map { it.toDocumentSyncRecord() }.ifEmpty { null },
+                bookmarks = pendingBookmarks.map { it.toBookmarkSyncRecord() }.ifEmpty { null }
+            )
+
+            val pushResult = syncRepository.push(pushPayload)
+            pushResult.getOrThrow().let { response ->
+                if (response.conflicts.nodes.isNotEmpty()) {
+                    nodeDao.upsertNodes(response.conflicts.nodes.map { it.toNodeEntity() })
+                }
+                if (response.conflicts.documents.isNotEmpty()) {
+                    documentDao.upsertDocuments(response.conflicts.documents.map { it.toDocumentEntity() })
+                }
+                if (response.conflicts.bookmarks.isNotEmpty()) {
+                    bookmarkDao.upsertBookmarks(response.conflicts.bookmarks.map { it.toBookmarkEntity() })
+                }
+                response.conflicts.settings?.let { settings ->
+                    settingsDao.upsertSettings(settings.toSettingsEntity())
+                }
+
+                dataStore.edit { prefs ->
+                    prefs[LAST_SYNC_HLC_KEY] = response.serverHlc
+                }
+            }
+
+            reduce { state.copy(syncStatus = SyncStatus.Idle) }
+        } catch (_: Exception) {
+            reduce { state.copy(syncStatus = SyncStatus.Error) }
+        }
+    }
+
+    fun onScreenResumed() {
+        viewModelScope.launch {
+            triggerSync()
+        }
+        resetInactivityTimer()
+    }
+
+    fun onScreenPaused() {
+        inactivityTimerJob?.cancel()
+        inactivityTimerJob = null
+    }
+
+    fun resetInactivityTimer() {
+        inactivityTimerJob?.cancel()
+        inactivityTimerJob = viewModelScope.launch {
+            delay(30_000)
+            triggerSync()
+        }
+    }
+
+    companion object {
+        internal val LAST_SYNC_HLC_KEY = stringPreferencesKey("last_sync_hlc")
+
+        fun recomputeFlatNodes(nodes: List<FlatNode>): List<FlatNode> {
+            // Collect indices per parent, in flat-list order (= correct sibling order)
+            val parentToIndices = linkedMapOf<String?, MutableList<Int>>()
+            nodes.forEachIndexed { idx, node ->
+                parentToIndices.getOrPut(node.entity.parentId) { mutableListOf() }.add(idx)
+            }
+
+            val result = nodes.toMutableList()
+            for ((_, indices) in parentToIndices) {
+                indices.forEachIndexed { rank, nodeIdx ->
+                    val charIdx = rank.coerceAtMost(FractionalIndex.DIGITS.length - 1)
+                    val newSortOrder = "a${FractionalIndex.DIGITS[charIdx]}"
+                    val current = result[nodeIdx]
+                    result[nodeIdx] = current.copy(
+                        entity = current.entity.copy(sortOrder = newSortOrder),
+                    )
+                }
+            }
+            return result
+        }
     }
 }
 
@@ -603,6 +723,7 @@ data class NodeEditorUiState(
     val documentId: String = "",
     val contextMenuNodeId: String? = null,
     val expandedNoteIds: Set<String> = emptySet(),
+    val syncStatus: SyncStatus = SyncStatus.Idle,
 )
 
 sealed class NodeEditorStatus {
