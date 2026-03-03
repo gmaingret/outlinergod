@@ -12,6 +12,7 @@ import com.gmaingret.outlinergod.db.dao.NodeDao
 import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.ui.common.SyncStatus
 import com.gmaingret.outlinergod.db.entity.DocumentEntity
+import com.gmaingret.outlinergod.db.entity.NodeEntity
 import com.gmaingret.outlinergod.network.model.SyncPushPayload
 import com.gmaingret.outlinergod.sync.toNodeEntity
 import com.gmaingret.outlinergod.sync.toDocumentEntity
@@ -165,12 +166,13 @@ class DocumentListViewModel @Inject constructor(
 
     fun createDocument(title: String, type: String, parentId: String?, sortOrder: String) = intent {
         try {
+            val userId = authRepository.getAccessToken().filterNotNull().first()
             val deviceId = authRepository.getDeviceId().first()
             val now = System.currentTimeMillis()
             val hlc = hlcClock.generate(deviceId)
             val doc = DocumentEntity(
                 id = java.util.UUID.randomUUID().toString(),
-                userId = "",
+                userId = userId,
                 title = title,
                 titleHlc = hlc,
                 type = type,
@@ -205,6 +207,25 @@ class DocumentListViewModel @Inject constructor(
             }
 
             documentDao.insertDocument(doc)
+
+            val rootNode = NodeEntity(
+                id = java.util.UUID.randomUUID().toString(),
+                documentId = doc.id,
+                userId = userId,
+                content = "",
+                contentHlc = hlc,
+                note = "",
+                noteHlc = "",
+                parentId = doc.id,
+                parentIdHlc = hlc,
+                sortOrder = "a0",
+                sortOrderHlc = hlc,
+                deviceId = deviceId,
+                createdAt = now,
+                updatedAt = now,
+                syncStatus = 0
+            )
+            nodeDao.insertNode(rootNode)
         } catch (e: Exception) {
             postSideEffect(DocumentListSideEffect.ShowError(e.message ?: "Failed to create document"))
         }
