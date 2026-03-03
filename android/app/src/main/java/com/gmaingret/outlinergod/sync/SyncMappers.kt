@@ -154,3 +154,18 @@ fun BookmarkEntity.toBookmarkSyncRecord() = BookmarkSyncRecord(
     createdAt = createdAt,
     updatedAt = updatedAt
 )
+
+fun SettingsEntity.toSettingsSyncRecord() = SettingsSyncRecord(
+    id = userId,
+    userId = userId,
+    theme = theme,
+    themeHlc = themeHlc,
+    density = density,
+    densityHlc = densityHlc,
+    showGuideLines = showGuideLines,
+    showGuideLinesHlc = showGuideLinesHlc,
+    showBacklinkBadge = showBacklinkBadge,
+    showBacklinkBadgeHlc = showBacklinkBadgeHlc,
+    deviceId = deviceId,
+    updatedAt = updatedAt
+)

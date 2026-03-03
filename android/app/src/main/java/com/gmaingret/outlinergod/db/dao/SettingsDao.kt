@@ -14,4 +14,16 @@ interface SettingsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertSettings(settings: SettingsEntity)
+
+    @Query("""
+        SELECT * FROM settings
+        WHERE user_id = :userId
+        AND device_id = :deviceId
+        AND (theme_hlc > :sinceHlc
+          OR density_hlc > :sinceHlc
+          OR show_guide_lines_hlc > :sinceHlc
+          OR show_backlink_badge_hlc > :sinceHlc)
+        LIMIT 1
+    """)
+    suspend fun getPendingSettings(userId: String, sinceHlc: String, deviceId: String): SettingsEntity?
 }

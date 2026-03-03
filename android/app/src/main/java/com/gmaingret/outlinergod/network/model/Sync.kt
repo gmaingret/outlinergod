@@ -74,6 +74,7 @@ data class BookmarkSyncRecord(
 
 @Serializable
 data class SettingsSyncRecord(
+    @SerialName("id") val id: String = "",
     @SerialName("user_id") val userId: String,
     @SerialName("theme") val theme: String = "dark",
     @SerialName("theme_hlc") val themeHlc: String = "",
