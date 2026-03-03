@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,6 +52,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gmaingret.outlinergod.ui.common.MarkdownVisualTransformation
@@ -158,6 +160,8 @@ fun NodeEditorScreen(
                                     onLongPress = {
                                         viewModel.showContextMenu(flatNode.entity.id)
                                     },
+                                    onIndent = { viewModel.indentNode(flatNode.entity.id) },
+                                    onOutdent = { viewModel.outdentNode(flatNode.entity.id) },
                                     dragModifier = Modifier.longPressDraggableHandle(
                                         onDragStarted = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -232,6 +236,8 @@ private fun NodeRow(
     onGlyphTap: () -> Unit,
     onToggleCollapse: () -> Unit,
     onLongPress: () -> Unit,
+    onIndent: () -> Unit,
+    onOutdent: () -> Unit,
     dragModifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -249,10 +255,6 @@ private fun NodeRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(
-                onClick = { /* regular tap handled by text field focus */ },
-                onLongClick = onLongPress,
-            )
             .padding(vertical = 2.dp, horizontal = 8.dp),
     ) {
         Row(
@@ -262,13 +264,34 @@ private fun NodeRow(
             Spacer(modifier = Modifier.width((flatNode.depth * 24).dp))
 
             // Glyph: filled dot, or directional arrow if has children
-            // The glyph area also serves as the drag handle via dragModifier
+            // The glyph area also serves as the drag handle (via dragModifier) and
+            // horizontal drag for indent (right) / outdent (left).
             if (flatNode.hasChildren) {
                 IconButton(
                     onClick = onToggleCollapse,
                     modifier = Modifier
                         .size(24.dp)
                         .then(dragModifier)
+                        .pointerInput(flatNode.entity.id) {
+                            var totalDrag = 0f
+                            var fired = false
+                            detectHorizontalDragGestures(
+                                onDragStart = { totalDrag = 0f; fired = false },
+                                onDragEnd = { totalDrag = 0f; fired = false },
+                                onDragCancel = { totalDrag = 0f; fired = false },
+                                onHorizontalDrag = { _, amt ->
+                                    totalDrag += amt
+                                    if (!fired) {
+                                        val threshPx = 40.dp.toPx()
+                                        if (totalDrag > threshPx) {
+                                            onIndent(); fired = true
+                                        } else if (totalDrag < -threshPx) {
+                                            onOutdent(); fired = true
+                                        }
+                                    }
+                                }
+                            )
+                        }
                 ) {
                     Icon(
                         imageVector = if (flatNode.entity.collapsed == 1)
@@ -280,11 +303,31 @@ private fun NodeRow(
                     )
                 }
             } else {
-                // Filled dot glyph -- tap = zoom in, long-press = drag
+                // Filled dot glyph -- tap = zoom in, long-press = drag, horizontal drag = indent/outdent
                 Box(
                     modifier = Modifier
                         .size(24.dp)
                         .then(dragModifier)
+                        .pointerInput(flatNode.entity.id) {
+                            var totalDrag = 0f
+                            var fired = false
+                            detectHorizontalDragGestures(
+                                onDragStart = { totalDrag = 0f; fired = false },
+                                onDragEnd = { totalDrag = 0f; fired = false },
+                                onDragCancel = { totalDrag = 0f; fired = false },
+                                onHorizontalDrag = { _, amt ->
+                                    totalDrag += amt
+                                    if (!fired) {
+                                        val threshPx = 40.dp.toPx()
+                                        if (totalDrag > threshPx) {
+                                            onIndent(); fired = true
+                                        } else if (totalDrag < -threshPx) {
+                                            onOutdent(); fired = true
+                                        }
+                                    }
+                                }
+                            )
+                        }
                         .clickable(onClick = onGlyphTap),
                     contentAlignment = Alignment.Center
                 ) {
@@ -301,54 +344,64 @@ private fun NodeRow(
 
             Spacer(modifier = Modifier.width(4.dp))
 
-            // Content field
-            BasicTextField(
-                value = textFieldValue,
-                onValueChange = { newValue ->
-                    val newText = newValue.text
-                    val oldText = textFieldValue.text
-
-                    // Detect Enter key: newline inserted
-                    val newlineIndex = newText.indexOf('\n')
-                    if (newlineIndex >= 0 && !oldText.contains('\n')) {
-                        // Strip ZWS from position calculation
-                        val cleanPosition = newText.substring(0, newlineIndex).replace(ZWS, "").length
-                        onEnterPressed(cleanPosition)
-                        return@BasicTextField
-                    }
-
-                    // Detect Backspace on empty node via ZWS sentinel
-                    // When user backspaces on a node showing only ZWS, the text becomes empty
-                    if (oldText == ZWS && newText.isEmpty()) {
-                        onBackspaceOnEmpty()
-                        return@BasicTextField
-                    }
-
-                    // Normal edit: strip ZWS from the text
-                    val cleanText = newText.replace(ZWS, "")
-                    if (cleanText.isEmpty()) {
-                        // Node is now empty — restore the ZWS sentinel so backspace keeps working
-                        textFieldValue = TextFieldValue(ZWS, selection = TextRange(1))
-                        onContentChanged("")
-                    } else {
-                        textFieldValue = newValue.copy(text = cleanText)
-                        onContentChanged(cleanText)
-                    }
-                },
-                visualTransformation = MarkdownVisualTransformation,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            // Content field — wrapped in combinedClickable so long-press opens context menu
+            // but does NOT interfere with the glyph drag zone
+            Column(
                 modifier = Modifier
                     .weight(1f)
-                    .focusRequester(focusRequester)
-                    .onFocusChanged { focusState ->
-                        if (!focusState.isFocused) {
-                            onFocusLost()
+                    .combinedClickable(
+                        onClick = { /* regular tap handled by text field focus */ },
+                        onLongClick = onLongPress,
+                    )
+            ) {
+                BasicTextField(
+                    value = textFieldValue,
+                    onValueChange = { newValue ->
+                        val newText = newValue.text
+                        val oldText = textFieldValue.text
+
+                        // Detect Enter key: newline inserted
+                        val newlineIndex = newText.indexOf('\n')
+                        if (newlineIndex >= 0 && !oldText.contains('\n')) {
+                            // Strip ZWS from position calculation
+                            val cleanPosition = newText.substring(0, newlineIndex).replace(ZWS, "").length
+                            onEnterPressed(cleanPosition)
+                            return@BasicTextField
                         }
-                    }
-            )
+
+                        // Detect Backspace on empty node via ZWS sentinel
+                        // When user backspaces on a node showing only ZWS, the text becomes empty
+                        if (oldText == ZWS && newText.isEmpty()) {
+                            onBackspaceOnEmpty()
+                            return@BasicTextField
+                        }
+
+                        // Normal edit: strip ZWS from the text
+                        val cleanText = newText.replace(ZWS, "")
+                        if (cleanText.isEmpty()) {
+                            // Node is now empty — restore the ZWS sentinel so backspace keeps working
+                            textFieldValue = TextFieldValue(ZWS, selection = TextRange(1))
+                            onContentChanged("")
+                        } else {
+                            textFieldValue = newValue.copy(text = cleanText)
+                            onContentChanged(cleanText)
+                        }
+                    },
+                    visualTransformation = MarkdownVisualTransformation,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurface
+                    ),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester)
+                        .onFocusChanged { focusState ->
+                            if (!focusState.isFocused) {
+                                onFocusLost()
+                            }
+                        }
+                )
+            }
 
             // Note toggle button
             IconButton(
