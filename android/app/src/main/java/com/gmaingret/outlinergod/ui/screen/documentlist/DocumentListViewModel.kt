@@ -24,6 +24,7 @@ import com.gmaingret.outlinergod.sync.toBookmarkSyncRecord
 import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
+import com.gmaingret.outlinergod.util.SyncLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -177,7 +178,6 @@ class DocumentListViewModel @Inject constructor(
                 deviceId = deviceId,
                 createdAt = now,
                 updatedAt = now,
-                syncStatus = 0
             )
 
             documentDao.insertDocument(doc)
@@ -197,7 +197,6 @@ class DocumentListViewModel @Inject constructor(
                 deviceId = deviceId,
                 createdAt = now,
                 updatedAt = now,
-                syncStatus = 0
             )
             nodeDao.insertNode(rootNode)
             triggerSync()

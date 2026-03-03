@@ -22,5 +22,4 @@ data class DocumentEntity(
     @ColumnInfo(name = "device_id") val deviceId: String = "",
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "updated_at") val updatedAt: Long,
-    @ColumnInfo(name = "sync_status") val syncStatus: Int = 0,
 )

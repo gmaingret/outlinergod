@@ -102,7 +102,6 @@ class DocumentListViewModelTest {
         deviceId = "device-1",
         createdAt = 1000L,
         updatedAt = 1000L,
-        syncStatus = 0
     )
 
     private fun createViewModel(): DocumentListViewModel {

@@ -75,7 +75,7 @@ class EntitySchemaTest {
             "sortOrder", "sortOrderHlc", "completed", "completedHlc",
             "color", "colorHlc", "collapsed", "collapsedHlc",
             "deletedAt", "deletedHlc", "deviceId",
-            "createdAt", "updatedAt", "syncStatus"
+            "createdAt", "updatedAt"
         )
         assertEquals("NodeEntity should have exactly the 'nodes' table columns",
             expectedColumns, props)
@@ -118,16 +118,4 @@ class EntitySchemaTest {
             }
     }
 
-    @Test
-    fun syncStatusDefaultsToZero() {
-        val node = NodeEntity(id = "1", documentId = "d", userId = "u",
-            sortOrder = "a0", createdAt = 0L, updatedAt = 0L)
-        val doc = DocumentEntity(id = "1", userId = "u",
-            sortOrder = "a0", createdAt = 0L, updatedAt = 0L)
-        val bookmark = BookmarkEntity(id = "1", userId = "u",
-            createdAt = 0L, updatedAt = 0L)
-        assertEquals(0, node.syncStatus)
-        assertEquals(0, doc.syncStatus)
-        assertEquals(0, bookmark.syncStatus)
-    }
 }

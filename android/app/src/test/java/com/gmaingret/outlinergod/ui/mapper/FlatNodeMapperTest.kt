@@ -43,7 +43,6 @@ class FlatNodeMapperTest : StringSpec({
         deviceId = "",
         createdAt = 1000L,
         updatedAt = 1000L,
-        syncStatus = 0,
     )
 
     "emptyList_returnsEmptyFlatList" {
