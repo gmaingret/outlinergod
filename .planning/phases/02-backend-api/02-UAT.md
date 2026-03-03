@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 02-backend-api
 source: PLAN_PHASE2.md
 started: 2026-03-03T00:00:00Z
@@ -57,5 +57,12 @@ skipped: 0
   reason: "User reported: pnpm: command not found — pnpm is not installed on the Docker host server, so `pnpm build` fails and the server cannot be started directly"
   severity: blocker
   test: 2
-  artifacts: []
-  missing: []
+  root_cause: "Documentation gap, not a code bug. The server is designed to run exclusively via `docker compose up -d --build`. The Dockerfile is multi-stage: pnpm/tsc run only in the builder stage, dist/ is never committed to git, and the host has no pnpm. The UAT criterion tested a deployment path that was never intended. The correct deployment command is `docker compose up -d --build` which already works (confirmed by tests 3-7)."
+  artifacts:
+    - path: "backend/Dockerfile"
+      issue: "Multi-stage build — pnpm only inside builder stage, no host-side build path intended"
+    - path: "docker-compose.yml"
+      issue: "Correct deployment mechanism exists and works, just undocumented for human operators"
+  missing:
+    - "Project-level README.md documenting two execution paths: dev (pnpm dev) and production (docker compose up -d --build)"
+  debug_session: ""
