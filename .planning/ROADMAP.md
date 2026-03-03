@@ -2,7 +2,7 @@
 
 ## v0.4: android-core *(gap closure in progress)*
 
-Phases 01–04 are complete. Phase 05–06 close critical integration gaps found in the v0.4 audit before advancing to v0.5.
+Phases 01–05 are complete. Phase 06 closes non-blocking tech debt before advancing to v0.5.
 
 ### Phase 01: backend-foundation ✅
 **Goal:** Fastify scaffold, SQLite + Drizzle, HLC, JWT, Docker
@@ -20,15 +20,15 @@ Phases 01–04 are complete. Phase 05–06 close critical integration gaps found
 **Goal:** Full editing experience — auth, document CRUD (local), node editor, DnD, settings, background sync
 **Status:** Complete (VERIFICATION.md present, 17/17 must-haves verified)
 
-### Phase 05: sync-integration-fixes
+### Phase 05: sync-integration-fixes ✅
 **Goal:** Fix all three critical integration blockers so Android↔backend sync works end-to-end
 **Requirements:** GAP-1 (HLC format), GAP-2 (userId = JWT), GAP-3 (camelCase POST body)
 **Gap Closure:** Closes all gaps from v0.4 audit — must complete before v0.5 work begins
 **Plans:** 2 plans
 Plans:
-- [ ] 05-01-PLAN.md — HLC decimal format + AuthRepository getUserId() infrastructure
-- [ ] 05-02-PLAN.md — ViewModel consumer migration + test fixture updates
-**Status:** Planned
+- [x] 05-01-PLAN.md — HLC decimal format + AuthRepository getUserId() infrastructure
+- [x] 05-02-PLAN.md — ViewModel consumer migration + test fixture updates
+**Status:** Complete (VERIFICATION.md present, 10/10 must-haves verified)
 
 ### Phase 06: tech-debt-cleanup
 **Goal:** Fix the "should" sort-order divergence and remove dead code, missing docs, verification stubs
