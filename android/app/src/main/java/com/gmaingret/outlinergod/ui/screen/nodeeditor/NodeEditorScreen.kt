@@ -58,6 +58,8 @@ import com.gmaingret.outlinergod.ui.mapper.FlatNode
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
+private const val ZWS = "\u200B"
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun NodeEditorScreen(
@@ -234,7 +236,8 @@ private fun NodeRow(
 ) {
     val focusRequester = remember { FocusRequester() }
     var textFieldValue by remember(flatNode.entity.id) {
-        mutableStateOf(TextFieldValue(flatNode.entity.content))
+        val displayText = flatNode.entity.content.ifEmpty { ZWS }
+        mutableStateOf(TextFieldValue(displayText, selection = TextRange(displayText.length)))
     }
 
     LaunchedEffect(isFocused) {
@@ -308,19 +311,29 @@ private fun NodeRow(
                     // Detect Enter key: newline inserted
                     val newlineIndex = newText.indexOf('\n')
                     if (newlineIndex >= 0 && !oldText.contains('\n')) {
-                        // Enter pressed at the newline position
-                        onEnterPressed(newlineIndex)
+                        // Strip ZWS from position calculation
+                        val cleanPosition = newText.substring(0, newlineIndex).replace(ZWS, "").length
+                        onEnterPressed(cleanPosition)
                         return@BasicTextField
                     }
 
-                    // Detect Backspace on empty node
-                    if (oldText.isEmpty() && newText.isEmpty() && newValue.selection == TextRange(0)) {
+                    // Detect Backspace on empty node via ZWS sentinel
+                    // When user backspaces on a node showing only ZWS, the text becomes empty
+                    if (oldText == ZWS && newText.isEmpty()) {
                         onBackspaceOnEmpty()
                         return@BasicTextField
                     }
 
-                    textFieldValue = newValue
-                    onContentChanged(newValue.text)
+                    // Normal edit: strip ZWS from the text
+                    val cleanText = newText.replace(ZWS, "")
+                    if (cleanText.isEmpty()) {
+                        // Node is now empty — restore the ZWS sentinel so backspace keeps working
+                        textFieldValue = TextFieldValue(ZWS, selection = TextRange(1))
+                        onContentChanged("")
+                    } else {
+                        textFieldValue = newValue.copy(text = cleanText)
+                        onContentChanged(cleanText)
+                    }
                 },
                 visualTransformation = MarkdownVisualTransformation,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
