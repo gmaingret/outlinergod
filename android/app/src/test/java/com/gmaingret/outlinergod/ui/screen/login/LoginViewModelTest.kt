@@ -4,9 +4,11 @@ import com.gmaingret.outlinergod.network.model.AuthResponse
 import com.gmaingret.outlinergod.network.model.UserProfile
 import com.gmaingret.outlinergod.repository.AuthRepository
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -27,6 +29,7 @@ class LoginViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         authRepository = mockk()
+        every { authRepository.getAccessToken() } returns flowOf(null)
     }
 
     @After
@@ -52,11 +55,31 @@ class LoginViewModelTest {
     )
 
     @Test
-    fun `initialState is Idle`() = runTest {
+    fun `initialState is CheckingSession`() = runTest {
         val viewModel = createViewModel()
         viewModel.test(this) {
-            // Orbit 10 auto-checks initial state matches LoginUiState.Idle
-            // No actions performed — no further states to expect
+            // Orbit 10 auto-checks initial state matches LoginUiState.CheckingSession
+        }
+    }
+
+    @Test
+    fun `checkExistingSession withToken navigatesToDocumentList`() = runTest {
+        every { authRepository.getAccessToken() } returns flowOf("existing-token")
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.checkExistingSession()
+            expectState(LoginUiState.Success)
+            expectSideEffect(LoginSideEffect.NavigateToDocumentList)
+        }
+    }
+
+    @Test
+    fun `checkExistingSession withNoToken transitionsToIdle`() = runTest {
+        every { authRepository.getAccessToken() } returns flowOf(null)
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.checkExistingSession()
+            expectState(LoginUiState.Idle)
         }
     }
 
@@ -122,8 +145,8 @@ class LoginViewModelTest {
         viewModel.test(this) {
             containerHost.handleGoogleSignIn("")
             // Empty token is cancellation — reduce back to Idle.
-            // Since Idle is already the initial state, Orbit may not emit a duplicate.
-            // We verify no Error or Loading was emitted.
+            // Initial state is CheckingSession, so Idle IS a state change that must be consumed.
+            expectState(LoginUiState.Idle)
         }
     }
 }

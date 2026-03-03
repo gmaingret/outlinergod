@@ -53,8 +53,15 @@ fun LoginScreen(
         }
     }
 
-    // Launch Google Sign-In via Credential Manager (retryCount key allows retry)
-    LaunchedEffect(retryCount) {
+    // Check for existing session token before launching sign-in
+    LaunchedEffect(Unit) {
+        viewModel.checkExistingSession()
+    }
+
+    // Launch Google Sign-In via Credential Manager only when state is Idle
+    // (i.e., session check completed and no token found, or user retried)
+    LaunchedEffect(state, retryCount) {
+        if (state !is LoginUiState.Idle) return@LaunchedEffect
         val credentialManager = CredentialManager.create(context)
         val googleIdOption = GetGoogleIdOption.Builder()
             .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
@@ -102,6 +109,9 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 when (state) {
+                    is LoginUiState.CheckingSession -> {
+                        CircularProgressIndicator()
+                    }
                     is LoginUiState.Loading -> {
                         CircularProgressIndicator()
                     }
