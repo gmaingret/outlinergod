@@ -102,4 +102,7 @@ class AuthRepositoryImpl @Inject constructor(
     override fun getDeviceId(): Flow<String> = flow {
         emit(getOrCreateDeviceId())
     }
+
+    override fun getRefreshToken(): Flow<String?> =
+        dataStore.data.map { prefs -> prefs[REFRESH_TOKEN_KEY] }
 }

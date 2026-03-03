@@ -199,6 +199,36 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `logout withStoredToken navigatesToLogin`() = runTest {
+        val settings = fakeSettings()
+        every { settingsDao.getSettings("u1") } returns flowOf(settings)
+        every { authRepository.getRefreshToken() } returns flowOf("refresh-tok-123")
+        coEvery { authRepository.logout("refresh-tok-123") } returns Result.success(Unit)
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadSettings()
+            expectState(SettingsUiState.Success(settings = settings))
+            containerHost.logout()
+            expectSideEffect(SettingsSideEffect.NavigateToLogin)
+        }
+    }
+
+    @Test
+    fun `logout withNetworkFailure stillNavigatesToLogin`() = runTest {
+        val settings = fakeSettings()
+        every { settingsDao.getSettings("u1") } returns flowOf(settings)
+        every { authRepository.getRefreshToken() } returns flowOf("refresh-tok-123")
+        coEvery { authRepository.logout("refresh-tok-123") } returns Result.failure(RuntimeException("network error"))
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadSettings()
+            expectState(SettingsUiState.Success(settings = settings))
+            containerHost.logout()
+            expectSideEffect(SettingsSideEffect.NavigateToLogin)
+        }
+    }
+
+    @Test
     fun `allMutations stampHlcOnUpdatedField`() = runTest {
         val settings = fakeSettings()
         every { settingsDao.getSettings("u1") } returns flowOf(settings)

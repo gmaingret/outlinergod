@@ -102,6 +102,18 @@ class SettingsViewModel @Inject constructor(
         )
         settingsDao.upsertSettings(updated)
     }
+
+    fun logout() = intent {
+        try {
+            val refreshToken = authRepository.getRefreshToken().filterNotNull().first()
+            authRepository.logout(refreshToken)
+                .onSuccess { postSideEffect(SettingsSideEffect.NavigateToLogin) }
+                .onFailure { postSideEffect(SettingsSideEffect.NavigateToLogin) }
+        } catch (e: Exception) {
+            // No refresh token stored — still navigate to login
+            postSideEffect(SettingsSideEffect.NavigateToLogin)
+        }
+    }
 }
 
 sealed class SettingsUiState {

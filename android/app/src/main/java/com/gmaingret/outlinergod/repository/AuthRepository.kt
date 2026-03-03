@@ -13,4 +13,5 @@ interface AuthRepository {
     fun getAccessToken(): Flow<String?>
     fun getUserId(): Flow<String?>
     fun getDeviceId(): Flow<String>
+    fun getRefreshToken(): Flow<String?>
 }
