@@ -36,6 +36,7 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.gmaingret.outlinergod.sync.SyncConstants
 import java.io.File
 import java.io.IOException
 
@@ -194,7 +195,7 @@ class SyncWorkerTest {
 
         assertEquals(ListenableWorker.Result.success(), result)
         val storedHlc = dataStore.data.map { prefs ->
-            prefs[SyncWorker.LAST_SYNC_HLC_KEY]
+            prefs[SyncConstants.LAST_SYNC_HLC_KEY]
         }.first()
         assertEquals("CCCC", storedHlc)
     }

@@ -15,6 +15,7 @@ import com.gmaingret.outlinergod.network.model.SyncPushResponse
 import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
+import com.gmaingret.outlinergod.sync.SyncConstants
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -168,7 +169,7 @@ class DocumentListSyncTest {
 
         // Verify the DataStore was updated
         val hlcValue = dataStore.data.map { prefs ->
-            prefs[DocumentListViewModel.LAST_SYNC_HLC_KEY]
+            prefs[SyncConstants.LAST_SYNC_HLC_KEY]
         }.first()
         assertEquals("BBBB", hlcValue)
     }

@@ -3,7 +3,7 @@ package com.gmaingret.outlinergod.ui.screen.documentlist
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
+import com.gmaingret.outlinergod.sync.SyncConstants
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gmaingret.outlinergod.db.dao.BookmarkDao
@@ -76,7 +76,7 @@ class DocumentListViewModel @Inject constructor(
 
             val deviceId = authRepository.getDeviceId().first()
             val lastSyncHlc = dataStore.data.map { prefs ->
-                prefs[LAST_SYNC_HLC_KEY] ?: "0"
+                prefs[SyncConstants.LAST_SYNC_HLC_KEY] ?: "0"
             }.first()
 
             // Pull changes from server
@@ -128,7 +128,7 @@ class DocumentListViewModel @Inject constructor(
 
                 // Update last sync HLC
                 dataStore.edit { prefs ->
-                    prefs[LAST_SYNC_HLC_KEY] = response.serverHlc
+                    prefs[SyncConstants.LAST_SYNC_HLC_KEY] = response.serverHlc
                 }
             }
 
@@ -245,9 +245,6 @@ class DocumentListViewModel @Inject constructor(
         }
     }
 
-    companion object {
-        internal val LAST_SYNC_HLC_KEY = stringPreferencesKey("last_sync_hlc")
-    }
 }
 
 sealed class DocumentListUiState {

@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -46,7 +45,7 @@ class SyncWorker @AssistedInject constructor(
 
         val deviceId = authRepository.getDeviceId().first()
         val lastSyncHlc = dataStore.data.map { prefs ->
-            prefs[LAST_SYNC_HLC_KEY] ?: "0"
+            prefs[SyncConstants.LAST_SYNC_HLC_KEY] ?: "0"
         }.first()
 
         // Step 2: PULL changes from server
@@ -99,13 +98,10 @@ class SyncWorker @AssistedInject constructor(
 
         // Step 4: Update last sync HLC
         dataStore.edit { prefs ->
-            prefs[LAST_SYNC_HLC_KEY] = pushResponse.serverHlc
+            prefs[SyncConstants.LAST_SYNC_HLC_KEY] = pushResponse.serverHlc
         }
 
         return Result.success()
     }
 
-    companion object {
-        internal val LAST_SYNC_HLC_KEY = stringPreferencesKey("last_sync_hlc")
-    }
 }
