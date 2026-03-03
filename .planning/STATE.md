@@ -2,12 +2,12 @@
 
 ## Current Position
 
-Phase: 07 of 08 (settings-display-and-techdebt) — COMPLETE
+Phase: 08 of 08 (settings-sync-push) — COMPLETE
 Plan: 01 of 1 (complete)
-Status: v0.4 gap closure in progress — 1 audit gap remains (GAP-B)
-Last activity: 2026-03-03 - Completed 07-01-PLAN.md (GAP-A closed, tech debt fixed)
+Status: v0.4 milestone — all audit gaps closed (GAP-A and GAP-B)
+Last activity: 2026-03-03 - Completed 08-01-PLAN.md (GAP-B closed: settings now pushed bidirectionally)
 
-Progress: ██████████████████░░ (completed: 01, 02, 03, 04, 05, 06, 07 | planned: 08)
+Progress: ████████████████████ (completed: 01, 02, 03, 04, 05, 06, 07, 08 | planned: none remaining)
 
 ## Accumulated Decisions
 
@@ -32,16 +32,24 @@ Progress: ██████████████████░░ (complete
 | D17 | GAP-A fix: MainActivity must call getUserId() (UUID) not getAccessToken() (JWT) for settingsDao.getSettings(); JWT string never matches UUID-keyed settings rows | 07-01 | MainActivity theme/density |
 | D18 | SyncConstants object in sync package holds LAST_SYNC_HLC_KEY; all callers import from SyncConstants — no duplication across companion objects | 07-01 | SyncWorker, DocumentListViewModel, NodeEditorViewModel |
 | D19 | ExistingPeriodicWorkPolicy.UPDATE replaces deprecated KEEP in SyncScheduler | 07-01 | WorkManager periodic sync |
+| D20 | SettingsSyncRecord.id defaults to "" for pull-direction backward compatibility; push-direction always sets id = userId via mapper | 08-01 | Sync.kt, SyncMappers.kt |
+| D21 | getPendingSettings filters by device_id to prevent echo-back (pulled settings must not be re-pushed) | 08-01 | SettingsDao, all push sites |
+| D22 | GAP-B closed: settings flow bidirectionally; SyncPushPayload.settings was always null before this phase | 08-01 | SyncWorker, DocumentListVM, NodeEditorVM |
 
 ## Blockers / Concerns
 
-- UAT gap: Empty document has no initial node (NodeEditorViewModel now creates root node on empty load as fallback)
-- UAT test 16 (collapse/expand) was previously skipped; now unblocked
 - BookmarkDaoTest.observeAllActive_excludesOtherUsers has a flaky Robolectric/Room race condition (pre-existing, passes on retry)
-- GAP-B: backend audit gap — to be addressed in phase 08
+- All v0.4 audit gaps (GAP-A, GAP-B) are now closed
+
+## Key Environment
+
+- Java: Android Studio JBR at /c/Program Files/Android/Android Studio/jbr (JDK 21)
+- ANDROID_HOME: /c/Users/gmain/AppData/Local/Android/Sdk
+- Run tests: export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr" && export ANDROID_HOME="/c/Users/gmain/AppData/Local/Android/Sdk" && cd android && ./gradlew test
+- Git remote: https://github.com/gmaingret/outlinergod.git (branch: master)
 
 ## Session Continuity
 
-Last session: 2026-03-03T19:26:35Z
-Stopped at: Completed 07-01-PLAN.md — GAP-A closed, SyncConstants extracted, WorkManager policy fixed
+Last session: 2026-03-03T19:55:56Z
+Stopped at: Completed 08-01-PLAN.md — GAP-B closed, all v0.4 audit gaps resolved
 Resume file: None
