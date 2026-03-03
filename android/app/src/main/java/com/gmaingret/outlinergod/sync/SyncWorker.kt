@@ -71,12 +71,14 @@ class SyncWorker @AssistedInject constructor(
         val pendingNodes = nodeDao.getPendingChanges(lastSyncHlc, deviceId)
         val pendingDocs = documentDao.getPendingChanges(userId, lastSyncHlc, deviceId)
         val pendingBookmarks = bookmarkDao.getPendingChanges(userId, lastSyncHlc, deviceId)
+        val pendingSettings = settingsDao.getPendingSettings(userId, lastSyncHlc, deviceId)
 
         val pushPayload = SyncPushPayload(
             deviceId = deviceId,
             nodes = pendingNodes.map { it.toNodeSyncRecord() }.ifEmpty { null },
             documents = pendingDocs.map { it.toDocumentSyncRecord() }.ifEmpty { null },
-            bookmarks = pendingBookmarks.map { it.toBookmarkSyncRecord() }.ifEmpty { null }
+            bookmarks = pendingBookmarks.map { it.toBookmarkSyncRecord() }.ifEmpty { null },
+            settings = pendingSettings?.toSettingsSyncRecord()
         )
 
         val pushResult = syncRepository.push(pushPayload)
