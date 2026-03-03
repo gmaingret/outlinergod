@@ -142,7 +142,13 @@ fun NodeEditorScreen(
                         ReorderableItem(reorderState, key = flatNode.entity.id) { isDragging ->
                             Surface(
                                 tonalElevation = if (isDragging) 4.dp else 0.dp,
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .longPressDraggableHandle(
+                                        onDragStarted = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        },
+                                    ),
                             ) {
                                 NodeRow(
                                     flatNode = flatNode,
@@ -163,11 +169,6 @@ fun NodeEditorScreen(
                                     },
                                     onIndent = { viewModel.indentNode(flatNode.entity.id) },
                                     onOutdent = { viewModel.outdentNode(flatNode.entity.id) },
-                                    dragModifier = Modifier.longPressDraggableHandle(
-                                        onDragStarted = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        },
-                                    ),
                                 )
                             }
                         }
@@ -239,7 +240,6 @@ private fun NodeRow(
     onLongPress: () -> Unit,
     onIndent: () -> Unit,
     onOutdent: () -> Unit,
-    dragModifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
     var textFieldValue by remember(flatNode.entity.id) {
@@ -295,7 +295,6 @@ private fun NodeRow(
                                 }
                             }
                         }
-                        .then(dragModifier)
                 ) {
                     Icon(
                         imageVector = if (flatNode.entity.collapsed == 1)
@@ -331,7 +330,6 @@ private fun NodeRow(
                                 }
                             }
                         }
-                        .then(dragModifier)
                         .clickable(onClick = onGlyphTap),
                     contentAlignment = Alignment.Center
                 ) {
