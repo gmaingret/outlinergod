@@ -37,6 +37,7 @@ class AuthRepositoryImpl @Inject constructor(
         private val ACCESS_TOKEN = stringPreferencesKey("access_token")
         private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")
         private val DEVICE_ID_KEY = stringPreferencesKey("device_id")
+        private val USER_ID_KEY = stringPreferencesKey("user_id")
     }
 
     override suspend fun googleSignIn(idToken: String): Result<AuthResponse> = runCatching {
@@ -47,6 +48,7 @@ class AuthRepositoryImpl @Inject constructor(
         dataStore.edit { prefs ->
             prefs[ACCESS_TOKEN] = response.token
             prefs[REFRESH_TOKEN_KEY] = response.refreshToken
+            prefs[USER_ID_KEY] = response.user.id
         }
         response
     }
@@ -79,11 +81,15 @@ class AuthRepositoryImpl @Inject constructor(
         dataStore.edit { prefs ->
             prefs.remove(ACCESS_TOKEN)
             prefs.remove(REFRESH_TOKEN_KEY)
+            prefs.remove(USER_ID_KEY)
         }
     }
 
     override fun getAccessToken(): Flow<String?> =
         dataStore.data.map { prefs -> prefs[ACCESS_TOKEN] }
+
+    override fun getUserId(): Flow<String?> =
+        dataStore.data.map { prefs -> prefs[USER_ID_KEY] }
 
     private suspend fun getOrCreateDeviceId(): String {
         val existing = dataStore.data.first()[DEVICE_ID_KEY]

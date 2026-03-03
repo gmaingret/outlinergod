@@ -11,5 +11,6 @@ interface AuthRepository {
     suspend fun getMe(): Result<UserProfile>
     suspend fun logout(refreshToken: String): Result<Unit>
     fun getAccessToken(): Flow<String?>
+    fun getUserId(): Flow<String?>
     fun getDeviceId(): Flow<String>
 }

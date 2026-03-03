@@ -130,6 +130,28 @@ class AuthRepositoryTest {
     }
 
     @Test
+    fun googleSignIn_storesUserId() = runTest {
+        val dataStore = createDataStore("test7")
+        val repo = AuthRepositoryImpl(successClient(), dataStore, "http://localhost:3000")
+
+        repo.googleSignIn("id-token")
+
+        assertEquals("uid1", repo.getUserId().first())
+    }
+
+    @Test
+    fun logout_clearsUserId() = runTest {
+        val dataStore = createDataStore("test8")
+        val repo = AuthRepositoryImpl(successClient(), dataStore, "http://localhost:3000")
+
+        repo.googleSignIn("id-token")
+        assertEquals("uid1", repo.getUserId().first())
+
+        repo.logout("rt")
+        assertNull(repo.getUserId().first())
+    }
+
+    @Test
     fun getMe_returnsUserProfile_onSuccess() = runTest {
         val dataStore = createDataStore("test6")
         val profile = mockUserProfile()
