@@ -3,8 +3,8 @@ package com.gmaingret.outlinergod.ui.screen.nodeeditor
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -344,15 +344,10 @@ private fun NodeRow(
 
             Spacer(modifier = Modifier.width(4.dp))
 
-            // Content field — wrapped in combinedClickable so long-press opens context menu
-            // but does NOT interfere with the glyph drag zone
+            // Content field — long-press detection wired directly into BasicTextField modifier
+            // to sidestep BasicTextField's internal pointer-event consumption which blocks ancestor click handlers
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .combinedClickable(
-                        onClick = { /* regular tap handled by text field focus */ },
-                        onLongClick = onLongPress,
-                    )
+                modifier = Modifier.weight(1f)
             ) {
                 BasicTextField(
                     value = textFieldValue,
@@ -394,6 +389,9 @@ private fun NodeRow(
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     modifier = Modifier
                         .fillMaxWidth()
+                        .pointerInput(Unit) {
+                            detectTapGestures(onLongPress = { onLongPress() })
+                        }
                         .focusRequester(focusRequester)
                         .onFocusChanged { focusState ->
                             if (!focusState.isFocused) {
