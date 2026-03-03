@@ -110,16 +110,16 @@ class NodeDaoTest {
     }
 
     @Test
-    fun getPendingChanges_excludesEchoDevice() = runTest {
+    fun getPendingChanges_includesNode_fromSameDevice() = runTest {
         dao.insertNode(makeNode(id = "n1", deviceId = "deviceA", contentHlc = "ZZZZZZZZZZZZZZZZ-0000-deviceA"))
         val result = dao.getPendingChanges("0", "deviceA")
-        assertTrue(result.isEmpty())
+        assertEquals(1, result.size)
     }
 
     @Test
-    fun getPendingChanges_includesNode_fromDifferentDevice() = runTest {
+    fun getPendingChanges_excludesNode_fromDifferentDevice() = runTest {
         dao.insertNode(makeNode(id = "n1", deviceId = "deviceB", contentHlc = "ZZZZZZZZZZZZZZZZ-0000-deviceB"))
         val result = dao.getPendingChanges("0", "deviceA")
-        assertEquals(1, result.size)
+        assertTrue(result.isEmpty())
     }
 }

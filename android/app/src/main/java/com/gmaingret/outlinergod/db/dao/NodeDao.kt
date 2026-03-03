@@ -29,7 +29,7 @@ interface NodeDao {
 
     @Query("""
         SELECT * FROM nodes
-        WHERE device_id != :deviceId
+        WHERE device_id = :deviceId
         AND (content_hlc > :sinceHlc
           OR note_hlc > :sinceHlc
           OR parent_id_hlc > :sinceHlc

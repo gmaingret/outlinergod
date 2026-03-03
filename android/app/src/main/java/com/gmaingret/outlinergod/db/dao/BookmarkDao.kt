@@ -27,7 +27,7 @@ interface BookmarkDao {
     @Query("""
         SELECT * FROM bookmarks
         WHERE user_id = :userId
-        AND device_id != :deviceId
+        AND device_id = :deviceId
         AND (title_hlc > :sinceHlc
           OR target_type_hlc > :sinceHlc
           OR target_document_id_hlc > :sinceHlc
