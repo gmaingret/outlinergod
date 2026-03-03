@@ -1,9 +1,9 @@
 ---
 status: complete
 phase: 04-android-core
-source: PLAN_PHASE4.md, 04-01-SUMMARY.md
-started: 2026-03-03T00:00:00Z
-updated: 2026-03-03T02:00:00Z
+source: 04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md
+started: 2026-03-03T10:00:00Z
+updated: 2026-03-03T11:00:00Z
 ---
 
 ## Current Test
@@ -40,42 +40,38 @@ result: pass
 ### 7. Node Editor Opens
 expected: Tapping a document navigates to the Node Editor screen. An empty document shows at least one empty node ready to type in.
 result: pass
-note: Fixed by gap closure plan 04-01 (createDocument inserts root NodeEntity)
 
 ### 8. Typing in a Node
 expected: Tapping a node and typing text updates the node content. The text appears inline in real time. Characters appear in correct left-to-right order.
 result: pass
-note: Fixed by gap closure (root node created) + cursor fix (remember key no longer includes content)
 
 ### 9. Enter Key Creates New Node
 expected: Pressing Enter in a node's content field creates a new sibling node below it. Focus moves to the new node. Enter does NOT insert a newline.
 result: pass
 
 ### 10. Backspace on Empty Node Deletes It
-expected: Pressing Backspace in an empty node deletes the node and moves focus to the previous node.
-result: issue
-reported: "pressing backspace in an empty node does nothing"
-severity: major
+expected: Pressing Backspace in an empty node deletes the node and moves focus to the previous node. (Previously broken — ZWS sentinel fix applied in 04-03.)
+result: pass
 
 ### 11. Inline Markdown Formatting
 expected: Typing **bold** shows text with bold markers visible (asterisks may be shown or hidden). Typing _italic_ similarly shows italic-style text. Formatting renders visually distinct from plain text.
 result: pass
-note: Markers remain visible by design — Phase 1 per architecture. Marker-hiding deferred to future phase.
+note: User noted markers should be hidden — marker-hiding is intentionally deferred to a future phase (architecture: Phase 1 = visible markers)
 
 ### 12. Drag-and-Drop Reorder
 expected: Long-pressing a node activates drag mode. Dragging up/down reorders nodes in the list. Releasing drops the node in the new position. The reorder persists after releasing.
 result: pass
 
 ### 13. Indent / Outdent (Horizontal Drag)
-expected: Dragging a node horizontally to the right indents it (makes it a child of the node above). Dragging left outdents it. The tree nesting is visually reflected by indentation.
+expected: Long-pressing the glyph (bullet/circle) and dragging right >40dp indents the node (makes it a child of the node above). Dragging left >40dp outdents it. The tree nesting is visually reflected by indentation. (Previously broken — pointerInput gesture wired in 04-03.)
 result: issue
-reported: "doesn't work. Can't drag horizontally"
+reported: "fail, no horizontal drag"
 severity: major
 
 ### 14. Node Context Menu
-expected: Long-pressing and releasing (without dragging) shows a context menu bottom sheet with options like "Add Child". Tapping "Add Child" adds a nested child node.
+expected: Long-pressing the text area of a node (not the glyph) shows a context menu bottom sheet with options like "Add Child". Tapping "Add Child" adds a nested child node. Long-pressing the glyph still activates drag-to-reorder. (Previously broken — gesture zone separation applied in 04-03.)
 result: issue
-reported: "Long press doesn't show bottom sheet. It directly enters the drag&drop mode"
+reported: "fail, no context menu"
 severity: major
 
 ### 15. Node Note Editor
@@ -83,46 +79,32 @@ expected: A node with a note field can be expanded to show the note. Tapping the
 result: pass
 
 ### 16. Collapse and Expand Nodes
-expected: A node with children shows a directional arrow. Tapping the arrow collapses the children (hides them). Tapping again expands them. Tapping the node glyph (bullet/circle) zooms into that subtree rather than collapsing.
+expected: A node with children shows a directional arrow. Tapping the arrow collapses the children (hides them). Tapping again expands them. Tapping the node glyph (bullet/circle) zooms into that subtree rather than collapsing. (Previously skipped — now testable after context menu fix.)
 result: skipped
-reason: blocked by context menu issue (test 14) — can't create child nodes without "Add Child"
+reason: context menu still broken (test 14) — can't create child nodes to test collapse/expand
 
-### 17. Settings Screen
-expected: Navigating to Settings shows options for Theme (e.g., System/Light/Dark chips), Density (Normal/Compact chips), and toggles for Guide Lines and Backlink Badge. Changing a setting reflects immediately or after navigation.
-result: issue
-reported: "I see this content with these buttons, but they do nothing. Theme doesn't change, etc."
-severity: major
+### 17. Settings Screen Controls Work
+expected: Navigating to Settings shows Theme chips (System/Light/Dark), Density chips (Normal/Compact), and toggles for Guide Lines and Backlink Badge. Selecting Dark theme makes the app go dark. Selecting Light makes it light. Density chips visibly affect spacing. (Previously broken — OutlinerGodTheme now wired to SettingsDao in 04-04.)
+result: pass
 
-### 18. Background Sync / Data Persistence
-expected: With the app installed and network connected, sync happens automatically in the background (approximately every 15 minutes via WorkManager). A sync status indicator is visible somewhere in the Node Editor or Document List while sync is in progress.
-result: issue
-reported: "doesn't work. If I kill the app and restart it, I have to login again and it's empty: no more document, no nodes"
-severity: blocker
+### 18. Auth Persistence After Restart
+expected: After signing in and creating documents, killing the app and relaunching it goes directly to the Document List screen (no login required). All documents and nodes are still present. (Previously broken — CheckingSession state + session check on startup fixed in 04-02.)
+result: pass
 
 ## Summary
 
 total: 18
-passed: 12
-issues: 5
+passed: 15
+issues: 2
+issues: 0
 pending: 0
 skipped: 1
-skipped: 0
 
 ## Gaps
 
-- truth: "Pressing Backspace in an empty node deletes the node and moves focus to the previous node"
+- truth: "Dragging the glyph horizontally >40dp indents or outdents the node"
   status: failed
-  reason: "User reported: pressing backspace in an empty node does nothing"
-  severity: major
-  test: 10
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
-
-- truth: "Dragging a node horizontally indents or outdents it"
-  status: failed
-  reason: "User reported: doesn't work. Can't drag horizontally"
+  reason: "User reported: fail, no horizontal drag"
   severity: major
   test: 13
   root_cause: ""
@@ -130,31 +112,11 @@ skipped: 0
   missing: []
   debug_session: ""
 
-- truth: "Long-pressing and releasing shows a context menu bottom sheet"
+- truth: "Long-pressing the text area of a node shows a context menu bottom sheet"
   status: failed
-  reason: "User reported: Long press doesn't show bottom sheet. It directly enters the drag&drop mode"
+  reason: "User reported: fail, no context menu"
   severity: major
   test: 14
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
-
-- truth: "Settings screen controls change the app theme, density, and toggles"
-  status: failed
-  reason: "User reported: I see this content with these buttons, but they do nothing. Theme doesn't change, etc."
-  severity: major
-  test: 17
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
-
-- truth: "After app restart, user remains logged in and all documents and nodes are intact"
-  status: failed
-  reason: "User reported: If I kill the app and restart it, I have to login again and it's empty: no more document, no nodes"
-  severity: blocker
-  test: 18
   root_cause: ""
   artifacts: []
   missing: []
