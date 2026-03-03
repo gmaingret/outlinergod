@@ -40,14 +40,14 @@ Plans:
 - [x] 06-02-PLAN.md — VERIFICATION.md stubs for phases 01-03 + project README
 **Status:** Complete (VERIFICATION.md present, 9/9 must-haves verified, 2026-03-03)
 
-### Phase 07: settings-display-and-techdebt
+### Phase 07: settings-display-and-techdebt ✅
 **Goal:** Fix MainActivity JWT-as-userId bug so settings visually apply; remove orphaned SyncStatus enum; fix WorkManager policy; extract LAST_SYNC_HLC_KEY to shared constant
 **Requirements:** GAP-A (MainActivity reads settings with wrong key), tech debt cleanup
 **Gap Closure:** Closes GAP-A from v0.4 re-audit + 3 non-blocking tech debt items
 **Plans:** 1 plan
 Plans:
-- [ ] 07-01-PLAN.md — MainActivity getUserId() fix + SyncStatus deletion + KEEP→REPLACE + LAST_SYNC_HLC_KEY constant
-**Status:** Planned
+- [x] 07-01-PLAN.md — MainActivity getUserId() fix + SyncStatus deletion + KEEP→UPDATE + LAST_SYNC_HLC_KEY constant
+**Status:** Complete (VERIFICATION.md present, 6/6 must-haves verified, 2026-03-03)
 
 ### Phase 08: settings-sync-push
 **Goal:** Wire settings into the sync push pipeline so Android-originating settings changes reach the backend
