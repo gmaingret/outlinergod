@@ -110,6 +110,7 @@ dependencies {
     // WorkManager
     implementation(libs.work.runtime.ktx)
     implementation(libs.hilt.work)
+    ksp(libs.hilt.androidx.compiler)
 
     // Credentials (Google Sign-In)
     implementation(libs.credentials)
