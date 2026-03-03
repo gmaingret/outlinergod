@@ -4,8 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.PointerEventPass
 import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -274,24 +273,27 @@ private fun NodeRow(
                     modifier = Modifier
                         .size(24.dp)
                         .pointerInput(flatNode.entity.id) {
-                            var totalDrag = 0f
-                            var fired = false
-                            detectHorizontalDragGestures(
-                                onDragStart = { totalDrag = 0f; fired = false },
-                                onDragEnd = { totalDrag = 0f; fired = false },
-                                onDragCancel = { totalDrag = 0f; fired = false },
-                                onHorizontalDrag = { _, amt ->
-                                    totalDrag += amt
-                                    if (!fired) {
-                                        val threshPx = 40.dp.toPx()
-                                        if (totalDrag > threshPx) {
-                                            onIndent(); fired = true
-                                        } else if (totalDrag < -threshPx) {
-                                            onOutdent(); fired = true
-                                        }
+                            // Initial pass (capture, outer→inner): fires before longPressDraggableHandle
+                            // which runs in Main pass. Consuming on threshold prevents DnD activating
+                            // on a quick horizontal swipe.
+                            awaitEachGesture {
+                                val down = awaitPointerEvent(PointerEventPass.Initial)
+                                    .changes.firstOrNull { it.pressed } ?: return@awaitEachGesture
+                                var totalDrag = 0f
+                                var fired = false
+                                while (!fired) {
+                                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                                    if (!change.pressed) break
+                                    totalDrag += change.position.x - change.previousPosition.x
+                                    val threshPx = 40.dp.toPx()
+                                    if (totalDrag > threshPx) {
+                                        onIndent(); fired = true; change.consume()
+                                    } else if (totalDrag < -threshPx) {
+                                        onOutdent(); fired = true; change.consume()
                                     }
                                 }
-                            )
+                            }
                         }
                         .then(dragModifier)
                 ) {
@@ -310,24 +312,24 @@ private fun NodeRow(
                     modifier = Modifier
                         .size(24.dp)
                         .pointerInput(flatNode.entity.id) {
-                            var totalDrag = 0f
-                            var fired = false
-                            detectHorizontalDragGestures(
-                                onDragStart = { totalDrag = 0f; fired = false },
-                                onDragEnd = { totalDrag = 0f; fired = false },
-                                onDragCancel = { totalDrag = 0f; fired = false },
-                                onHorizontalDrag = { _, amt ->
-                                    totalDrag += amt
-                                    if (!fired) {
-                                        val threshPx = 40.dp.toPx()
-                                        if (totalDrag > threshPx) {
-                                            onIndent(); fired = true
-                                        } else if (totalDrag < -threshPx) {
-                                            onOutdent(); fired = true
-                                        }
+                            awaitEachGesture {
+                                val down = awaitPointerEvent(PointerEventPass.Initial)
+                                    .changes.firstOrNull { it.pressed } ?: return@awaitEachGesture
+                                var totalDrag = 0f
+                                var fired = false
+                                while (!fired) {
+                                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                                    if (!change.pressed) break
+                                    totalDrag += change.position.x - change.previousPosition.x
+                                    val threshPx = 40.dp.toPx()
+                                    if (totalDrag > threshPx) {
+                                        onIndent(); fired = true; change.consume()
+                                    } else if (totalDrag < -threshPx) {
+                                        onOutdent(); fired = true; change.consume()
                                     }
                                 }
-                            )
+                            }
                         }
                         .then(dragModifier)
                         .clickable(onClick = onGlyphTap),
@@ -346,10 +348,30 @@ private fun NodeRow(
 
             Spacer(modifier = Modifier.width(4.dp))
 
-            // Content field — long-press detection wired directly into BasicTextField modifier
-            // to sidestep BasicTextField's internal pointer-event consumption which blocks ancestor click handlers
+            // Content field — long-press on parent Column using Initial pass (capture phase).
+            // Initial pass fires before BasicTextField's Main-pass text-selection handler,
+            // so our timer runs to completion and onLongPress() fires reliably.
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .pointerInput(flatNode.entity.id) {
+                        awaitEachGesture {
+                            val firstDown = awaitPointerEvent(PointerEventPass.Initial)
+                                .changes.firstOrNull { it.pressed } ?: return@awaitEachGesture
+                            var longPressTriggered = false
+                            withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                                while (true) {
+                                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                                    val change = event.changes.firstOrNull { it.id == firstDown.id } ?: break
+                                    if (!change.pressed) break
+                                    val dx = change.position.x - firstDown.position.x
+                                    val dy = change.position.y - firstDown.position.y
+                                    if (dx * dx + dy * dy > viewConfiguration.touchSlop * viewConfiguration.touchSlop) break
+                                }
+                            } ?: run { longPressTriggered = true }
+                            if (longPressTriggered) onLongPress()
+                        }
+                    }
             ) {
                 BasicTextField(
                     value = textFieldValue,
@@ -391,27 +413,6 @@ private fun NodeRow(
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .pointerInput(flatNode.entity.id) {
-                            // detectTapGestures(onLongPress) does not work here: it calls
-                            // awaitFirstDown(requireUnconsumed = true) and BasicTextField
-                            // consumes the pointer-down for cursor placement before we see it.
-                            // awaitFirstDown(requireUnconsumed = false) bypasses that.
-                            awaitEachGesture {
-                                val firstDown = awaitFirstDown(requireUnconsumed = false)
-                                var longPressTriggered = false
-                                withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
-                                    while (true) {
-                                        val event = awaitPointerEvent()
-                                        val change = event.changes.firstOrNull { it.id == firstDown.id } ?: break
-                                        if (!change.pressed) break
-                                        val dx = change.position.x - firstDown.position.x
-                                        val dy = change.position.y - firstDown.position.y
-                                        if (dx * dx + dy * dy > viewConfiguration.touchSlop * viewConfiguration.touchSlop) break
-                                    }
-                                } ?: run { longPressTriggered = true }
-                                if (longPressTriggered) onLongPress()
-                            }
-                        }
                         .focusRequester(focusRequester)
                         .onFocusChanged { focusState ->
                             if (!focusState.isFocused) {
