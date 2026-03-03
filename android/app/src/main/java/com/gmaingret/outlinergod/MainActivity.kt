@@ -40,10 +40,10 @@ class MainActivity : ComponentActivity() {
                 else -> true
             }
             val densityScale = when (settings?.density) {
-                "cozy" -> 1.0f
-                "comfortable" -> 0.95f
-                "compact" -> 0.85f
-                else -> 1.0f
+                "compact"     -> 1.0f
+                "comfortable" -> 1.10f
+                "cozy"        -> 1.20f
+                else          -> 1.0f
             }
             OutlinerGodTheme(darkTheme = isDarkTheme, densityScale = densityScale) {
                 val navController = rememberNavController()
