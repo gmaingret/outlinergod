@@ -30,7 +30,7 @@ class SettingsViewModel @Inject constructor(
 
     fun loadSettings() = intent {
         try {
-            userId = authRepository.getAccessToken().filterNotNull().first()
+            userId = authRepository.getUserId().filterNotNull().first()
             deviceId = authRepository.getDeviceId().first()
             settingsDao.getSettings(userId).collect { entity ->
                 if (entity == null) {

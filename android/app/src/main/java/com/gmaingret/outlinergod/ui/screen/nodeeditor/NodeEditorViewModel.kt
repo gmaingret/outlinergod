@@ -61,7 +61,7 @@ class NodeEditorViewModel @Inject constructor(
                 val deviceId = authRepository.getDeviceId().first()
                 val now = System.currentTimeMillis()
                 val hlc = hlcClock.generate(deviceId)
-                val userId = authRepository.getAccessToken().filterNotNull().first()
+                val userId = authRepository.getUserId().filterNotNull().first()
                 val rootNode = NodeEntity(
                     id = UUID.randomUUID().toString(),
                     documentId = documentId,
@@ -656,7 +656,7 @@ class NodeEditorViewModel @Inject constructor(
             }
 
             // Build and push local changes
-            val userId = authRepository.getAccessToken().filterNotNull().first()
+            val userId = authRepository.getUserId().filterNotNull().first()
             val pendingNodes = nodeDao.getPendingChanges(lastSyncHlc, deviceId)
             val pendingDocs = documentDao.getPendingChanges(userId, lastSyncHlc, deviceId)
             val pendingBookmarks = bookmarkDao.getPendingChanges(userId, lastSyncHlc, deviceId)

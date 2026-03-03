@@ -68,7 +68,7 @@ class SyncWorker @AssistedInject constructor(
         }
 
         // Step 3: PUSH local changes to server
-        val userId = authRepository.getAccessToken().filterNotNull().first()
+        val userId = authRepository.getUserId().filterNotNull().first()
         val pendingNodes = nodeDao.getPendingChanges(lastSyncHlc, deviceId)
         val pendingDocs = documentDao.getPendingChanges(userId, lastSyncHlc, deviceId)
         val pendingBookmarks = bookmarkDao.getPendingChanges(userId, lastSyncHlc, deviceId)

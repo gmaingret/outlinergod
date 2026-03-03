@@ -13,6 +13,7 @@ import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.ui.common.SyncStatus
 import com.gmaingret.outlinergod.db.entity.DocumentEntity
 import com.gmaingret.outlinergod.db.entity.NodeEntity
+import com.gmaingret.outlinergod.network.model.CreateDocumentRequest
 import com.gmaingret.outlinergod.network.model.SyncPushPayload
 import com.gmaingret.outlinergod.sync.toNodeEntity
 import com.gmaingret.outlinergod.sync.toDocumentEntity
@@ -62,7 +63,7 @@ class DocumentListViewModel @Inject constructor(
     }
 
     fun loadDocuments() = intent {
-        val userId = authRepository.getAccessToken().filterNotNull().first()
+        val userId = authRepository.getUserId().filterNotNull().first()
         documentDao.getAllDocuments(userId).collect { documents ->
             reduce {
                 when (val current = state) {
@@ -107,7 +108,7 @@ class DocumentListViewModel @Inject constructor(
             }
 
             // Build and push local changes
-            val userId = authRepository.getAccessToken().filterNotNull().first()
+            val userId = authRepository.getUserId().filterNotNull().first()
             val pendingNodes = nodeDao.getPendingChanges(lastSyncHlc, deviceId)
             val pendingDocs = documentDao.getPendingChanges(userId, lastSyncHlc, deviceId)
             val pendingBookmarks = bookmarkDao.getPendingChanges(userId, lastSyncHlc, deviceId)
@@ -166,7 +167,7 @@ class DocumentListViewModel @Inject constructor(
 
     fun createDocument(title: String, type: String, parentId: String?, sortOrder: String) = intent {
         try {
-            val userId = authRepository.getAccessToken().filterNotNull().first()
+            val userId = authRepository.getUserId().filterNotNull().first()
             val deviceId = authRepository.getDeviceId().first()
             val now = System.currentTimeMillis()
             val hlc = hlcClock.generate(deviceId)
@@ -194,12 +195,12 @@ class DocumentListViewModel @Inject constructor(
             try {
                 httpClient.post("$baseUrl/api/documents") {
                     contentType(ContentType.Application.Json)
-                    setBody(mapOf(
-                        "id" to doc.id,
-                        "title" to doc.title,
-                        "type" to doc.type,
-                        "parentId" to doc.parentId,
-                        "sortOrder" to doc.sortOrder
+                    setBody(CreateDocumentRequest(
+                        id = doc.id,
+                        title = doc.title,
+                        type = doc.type,
+                        parentId = doc.parentId,
+                        sortOrder = doc.sortOrder
                     ))
                 }
             } catch (_: Exception) {
