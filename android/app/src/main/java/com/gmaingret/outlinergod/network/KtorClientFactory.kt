@@ -32,6 +32,7 @@ object KtorClientFactory {
             json(Json {
                 ignoreUnknownKeys = true
                 isLenient = true
+                encodeDefaults = true
             })
         }
 

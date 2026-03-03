@@ -305,8 +305,6 @@ async function handleSyncPush(
   const conflictNodes: NodeSyncRecord[] = []
 
   for (const incoming of body.nodes ?? []) {
-    // TEMP DEBUG: log first node to diagnose missing 'note' parameter
-    console.error('DEBUG incoming node keys:', Object.keys(incoming as unknown as object), 'note:', JSON.stringify((incoming as unknown as Record<string,unknown>).note))
     incomingHlcs.push(
       incoming.content_hlc, incoming.note_hlc, incoming.parent_id_hlc,
       incoming.sort_order_hlc, incoming.completed_hlc, incoming.color_hlc,
