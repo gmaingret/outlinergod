@@ -34,7 +34,11 @@ Plans:
 **Goal:** Fix the "should" sort-order divergence and remove dead code, missing docs, verification stubs
 **Requirements:** DocumentListScreen fractional index fix, orphaned syncStatus removal, VERIFICATION.md stubs
 **Gap Closure:** Closes non-blocking tech debt from v0.4 audit
-**Status:** Pending
+**Plans:** 2 plans
+Plans:
+- [ ] 06-01-PLAN.md — Fix generateNextSortOrder + remove dead syncStatus entity field
+- [ ] 06-02-PLAN.md — VERIFICATION.md stubs for phases 01-03 + project README
+**Status:** Planned
 
 ---
 
