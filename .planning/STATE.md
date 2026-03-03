@@ -2,12 +2,12 @@
 
 ## Current Position
 
-Phase: 08 of 12 (settings-sync-push) — COMPLETE
+Phase: 09 of 12 (android-ux-polish) — In progress
 Plan: 01 of 1 (complete)
-Status: v0.4 milestone — audit complete (tech_debt, all gaps closed). v0.5 phases added.
-Last activity: 2026-03-03 - v0.4 milestone audited; Phases 09-10 added (ux-polish, node-actions); 11-12 renumbered
+Status: v0.5 in progress — density/logout/drag-handle UX fixes shipped.
+Last activity: 2026-03-03 - Completed 09-01-PLAN.md (density scale fix, logout button, full-row drag handle)
 
-Progress: ████████░░░░ (completed: 01-08 | planned: 09-android-ux-polish, 10-android-node-actions, 11-search-export-bookmarks, 12-integration-e2e)
+Progress: █████████░░░ (completed: 01-09 plan 01 | planned: 09 remaining, 10-android-node-actions, 11-search-export-bookmarks, 12-integration-e2e)
 
 ## Accumulated Decisions
 
@@ -35,6 +35,10 @@ Progress: ████████░░░░ (completed: 01-08 | planned: 09-a
 | D20 | SettingsSyncRecord.id defaults to "" for pull-direction backward compatibility; push-direction always sets id = userId via mapper | 08-01 | Sync.kt, SyncMappers.kt |
 | D21 | getPendingSettings filters by device_id to prevent echo-back (pulled settings must not be re-pushed) | 08-01 | SettingsDao, all push sites |
 | D22 | GAP-B closed: settings flow bidirectionally; SyncPushPayload.settings was always null before this phase | 08-01 | SyncWorker, DocumentListVM, NodeEditorVM |
+| D23 | Density scale direction: compact=1.0f (tightest), comfortable=1.10f, cozy=1.20f (widest) — corrects inverted original | 09-01 | MainActivity densityScale |
+| D24 | getRefreshToken(): Flow<String?> added to AuthRepository interface + impl (reads REFRESH_TOKEN_KEY from DataStore) | 09-01 | SettingsViewModel.logout() |
+| D25 | logout() is fail-open: postSideEffect(NavigateToLogin) on success, failure, and catch — user never stuck on SettingsScreen | 09-01 | SettingsViewModel, SettingsScreen |
+| D26 | longPressDraggableHandle on Surface (full row), not NodeRow glyph — improves DnD discoverability | 09-01 | NodeEditorScreen |
 
 ## Blockers / Concerns
 
@@ -50,6 +54,6 @@ Progress: ████████░░░░ (completed: 01-08 | planned: 09-a
 
 ## Session Continuity
 
-Last session: 2026-03-03T21:00:00Z
-Stopped at: v0.4 milestone audit complete. Phases 09-10 added for v0.5 (ux-polish, node-actions). Ready to plan Phase 09.
+Last session: 2026-03-03T21:13:00Z
+Stopped at: Completed 09-01-PLAN.md (density scale fix, logout button, full-row drag handle). Phase 09 plan 01 of 1 done.
 Resume file: None
