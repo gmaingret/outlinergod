@@ -1,28 +1,33 @@
 ---
 phase: 04-android-core
-verified: 2026-03-03T09:25:21Z
-status: passed
-score: 13/13 must-haves verified
+verified: 2026-03-03T12:00:00Z
+status: human_needed
+score: 15/15 code must-haves verified (2 behavioral truths human_needed)
 re_verification:
-  previous_status: human_needed
-  previous_score: 2/2 code artifacts verified (01 gap closure only)
+  previous_status: passed
+  previous_score: 13/13 must-haves verified
   gaps_closed:
-    - auth persistence (04-02): checkExistingSession, CheckingSession initial state, LaunchedEffect on mount, Credential Manager gated on Idle
-    - gesture fixes (04-03): ZWS sentinel, onIndent/onOutdent params, pointerInput on glyph, context menu on text content area
-    - settings wiring (04-04): LocalDensity CompositionLocalProvider in theme, settingsDao injected in MainActivity, darkTheme+densityScale passed to OutlinerGodTheme
+    - gesture modifier order (04-05): pointerInput placed before then(dragModifier) on both glyph paths
+    - long-press mechanism (04-05): combinedClickable removed; detectTapGestures(onLongPress) on BasicTextField
   gaps_remaining: []
   regressions: []
+human_verification:
+  - test: "Long-press glyph and drag horizontally more than 40dp"
+    expected: "Node indents (drag right) or outdents (drag left); haptic fires at drag start"
+    why_human: "Modifier execution order and gesture conflict resolution can only be confirmed on a physical device with touch input"
+  - test: "Long-press the text area of a node (not the glyph)"
+    expected: "Context menu bottom sheet appears with Add Child, Indent, Outdent, Toggle Completed, Delete options"
+    why_human: "detectTapGestures onLongPress vs BasicTextField internal pointer event consumption can only be confirmed at runtime on device"
 ---
 
 # Phase 04: Android Core - Gap Closure Verification Report
 
-**Phase Goal:** Gap closure for plans 04-02 (auth persistence), 04-03 (gesture fixes), 04-04 (settings wiring)
-**Verified:** 2026-03-03T09:25:21Z
-**Status:** passed
-**Re-verification:** Yes -- verifying gap closure from plans 04-02, 04-03, 04-04
+**Phase Goal:** Gap closure for plans 04-02 (auth persistence), 04-03 (gesture fixes), 04-04 (settings wiring), 04-05 (gesture modifier order + long-press mechanism)
+**Verified:** 2026-03-03T12:00:00Z
+**Status:** human_needed
+**Re-verification:** Yes -- adding plan 04-05 verification atop prior passing 04-02/03/04 results
 
 ---
-
 ## Plan 04-02: Auth Persistence Must-Haves
 
 ### Observable Truths
@@ -53,10 +58,10 @@ re_verification:
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 6 | NodeEditorScreen.kt contains ZWS sentinel (U+200B) | VERIFIED | Line 63: private const val ZWS = "​" -- used at lines 245, 367, 374, 380, 383 |
+| 6 | NodeEditorScreen.kt contains ZWS sentinel (U+200B) | VERIFIED | Line 63: private const val ZWS = U+200B char -- used at lines 245, 367, 374, 380, 383 |
 | 7 | NodeEditorScreen.kt has onIndent/onOutdent parameters in NodeRow | VERIFIED | Lines 239-240 (NodeRow signature): onIndent: () -> Unit and onOutdent: () -> Unit; called at lines 163-164 from the items block |
-| 8 | NodeEditorScreen.kt has pointerInput detectHorizontalDragGestures on glyph | VERIFIED | Both hasChildren (lines 275-293) and dot glyph (lines 311-330) branches have .pointerInput(flatNode.entity.id) blocks with detectHorizontalDragGestures calling onIndent()/onOutdent() at 40dp threshold |
-| 9 | Context menu triggered from text content area (not glyph) | VERIFIED | Lines 349-355: content Column uses .combinedClickable(onClick = {...}, onLongClick = onLongPress) -- glyph uses dragModifier only, no long-press-to-context-menu on glyph |
+| 8 | NodeEditorScreen.kt has pointerInput detectHorizontalDragGestures on glyph | VERIFIED | Both hasChildren (lines 274-293) and dot glyph (lines 310-329) branches have .pointerInput(flatNode.entity.id) blocks with detectHorizontalDragGestures calling onIndent()/onOutdent() at 40dp threshold |
+| 9 | Context menu triggered from text content area (not glyph) | VERIFIED (updated by 04-05) | Mechanism changed from combinedClickable to detectTapGestures -- see Plan 04-05 section for current evidence |
 
 **Score:** 4/4 truths verified
 
@@ -64,7 +69,7 @@ re_verification:
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `ui/screen/nodeeditor/NodeEditorScreen.kt` | ZWS sentinel, onIndent/onOutdent params, pointerInput on glyph, context menu on text area | VERIFIED | 456 lines, all four gesture must-haves present and wired |
+| `ui/screen/nodeeditor/NodeEditorScreen.kt` | ZWS sentinel, onIndent/onOutdent params, pointerInput on glyph, context menu on text area | VERIFIED | 453 lines, all four gesture must-haves present and wired (context menu mechanism updated in 04-05) |
 
 ---
 
@@ -90,41 +95,100 @@ re_verification:
 
 ---
 
-## Key Link Verification
+## Plan 04-05: Gesture Modifier Order + Long-Press Mechanism Must-Haves
+
+### Observable Truths
+
+| # | Truth | Status | Evidence |
+|---|-------|--------|----------|
+| 14 | Long-pressing the glyph and dragging horizontally >40dp indents or outdents the node | HUMAN_NEEDED | Code structure verified (see artifacts below); behavioral correctness requires device testing |
+| 15 | Long-pressing the text area of a node (not the glyph) shows the context menu bottom sheet | HUMAN_NEEDED | Code structure verified (see artifacts below); behavioral correctness requires device testing |
+
+**Score:** 0/2 behavioral truths verified by code alone (both require human testing)
+
+### Code-Level Artifact Verification
+
+| Artifact | Check | Status | Evidence |
+|----------|-------|--------|---------|
+| `NodeEditorScreen.kt` -- hasChildren glyph (IconButton) | pointerInput appears BEFORE then(dragModifier) | VERIFIED | Line 274: .pointerInput(flatNode.entity.id) { detectHorizontalDragGestures(...) } precedes line 294: .then(dragModifier) on the IconButton modifier chain |
+| `NodeEditorScreen.kt` -- dot glyph (Box, hasChildren==false) | pointerInput appears BEFORE then(dragModifier) | VERIFIED | Line 310: .pointerInput(flatNode.entity.id) { detectHorizontalDragGestures(...) } precedes line 330: .then(dragModifier) on the Box modifier chain |
+| `NodeEditorScreen.kt` -- combinedClickable | Must be absent | VERIFIED | No combinedClickable anywhere in the file; content Column at lines 349-351 uses only Modifier.weight(1f) |
+| `NodeEditorScreen.kt` -- detectTapGestures import | Must be present | VERIFIED | Line 7: import androidx.compose.foundation.gestures.detectTapGestures |
+| `NodeEditorScreen.kt` -- detectTapGestures on BasicTextField | Must be wired with onLongPress | VERIFIED | Lines 392-394: .pointerInput(Unit) { detectTapGestures(onLongPress = { onLongPress() }) } in BasicTextField modifier chain, placed before focusRequester and onFocusChanged |
+
+### Key Link Verification (Plan 04-05)
 
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
-| `LoginScreen.kt` | `LoginViewModel.checkExistingSession` | `LaunchedEffect(Unit)` | WIRED | Line 58 calls viewModel.checkExistingSession() |
-| `LoginScreen.kt` | Credential Manager | `LaunchedEffect(state, retryCount)` gated on Idle | WIRED | Lines 63-64 guard with if (state !is LoginUiState.Idle) return@LaunchedEffect |
-| `LoginViewModel.kt` | `authRepository.getAccessToken()` | intent block | WIRED | Line 19: authRepository.getAccessToken().first() |
-| `NodeEditorScreen.kt` (glyph) | onIndent / onOutdent | `detectHorizontalDragGestures` | WIRED | Both glyph branches (hasChildren + dot) wire +/-40dp threshold to onIndent/onOutdent |
-| `NodeEditorScreen.kt` (text area) | onLongPress | `combinedClickable(onLongClick)` | WIRED | Content Column uses combinedClickable; glyph has no long-press handler |
-| `MainActivity.kt` | `SettingsDao.getSettings` | `flatMapLatest` on auth token flow | WIRED | Settings only queried when access token is non-null |
-| `MainActivity.kt` | `OutlinerGodTheme` | darkTheme + densityScale params | WIRED | Line 48 passes both computed values |
-| `OutlinerGodTheme.kt` | `LocalDensity` | `CompositionLocalProvider` | WIRED | Lines 27-29 override LocalDensity for entire content subtree |
+| `NodeEditorScreen.kt` hasChildren glyph (IconButton) | detectHorizontalDragGestures handler | pointerInput(flatNode.entity.id) BEFORE then(dragModifier) | WIRED | Line 274 pointerInput precedes line 294 then(dragModifier); correct order ensures horizontal drag is seen before reorder drag handle consumes the gesture |
+| `NodeEditorScreen.kt` dot glyph (Box, hasChildren==false) | detectHorizontalDragGestures handler | pointerInput(flatNode.entity.id) BEFORE then(dragModifier) | WIRED | Line 310 pointerInput precedes line 330 then(dragModifier); same correct order |
+| BasicTextField modifier | onLongPress callback | detectTapGestures(onLongPress = ...) in pointerInput | WIRED | Lines 392-394 directly on BasicTextField own modifier chain; combinedClickable on wrapping Column has been removed |
+
+### Anti-Patterns (Plan 04-05)
+
+- `NodeEditorScreen.kt`: No TODO/FIXME. No combinedClickable. detectTapGestures import present at line 7. Modifier chain order correct at both glyph sites.
 
 ---
 
-## Anti-Patterns Scan
+## Cumulative Key Link Verification
 
-No blocker anti-patterns found in verified files.
+| From | To | Via | Status | Details |
+|------|----|-----|--------|---------|
+| `LoginScreen.kt` | LoginViewModel.checkExistingSession | LaunchedEffect(Unit) | WIRED | Line 58 calls viewModel.checkExistingSession() |
+| `LoginScreen.kt` | Credential Manager | LaunchedEffect(state, retryCount) gated on Idle | WIRED | Lines 63-64 guard with if (state !is LoginUiState.Idle) return@LaunchedEffect |
+| `LoginViewModel.kt` | authRepository.getAccessToken() | intent block | WIRED | Line 19: authRepository.getAccessToken().first() |
+| `NodeEditorScreen.kt` (hasChildren glyph) | onIndent / onOutdent | detectHorizontalDragGestures via pointerInput BEFORE dragModifier | WIRED | Line 274 pointerInput precedes line 294 then(dragModifier) |
+| `NodeEditorScreen.kt` (dot glyph) | onIndent / onOutdent | detectHorizontalDragGestures via pointerInput BEFORE dragModifier | WIRED | Line 310 pointerInput precedes line 330 then(dragModifier) |
+| BasicTextField | onLongPress | detectTapGestures(onLongPress = ...) | WIRED | Lines 392-394; replaces removed combinedClickable on Column |
+| `MainActivity.kt` | SettingsDao.getSettings | flatMapLatest on auth token flow | WIRED | Settings only queried when access token is non-null |
+| `MainActivity.kt` | OutlinerGodTheme | darkTheme + densityScale params | WIRED | Line 48 passes both computed values |
+| `OutlinerGodTheme.kt` | LocalDensity | CompositionLocalProvider | WIRED | Lines 27-29 override LocalDensity for entire content subtree |
+
+---
+
+## Anti-Patterns Scan (Cumulative)
+
+No blocker anti-patterns found in any verified file.
 
 - `LoginViewModel.kt`: No TODOs, no empty returns, no placeholder text.
-- `LoginScreen.kt`: No TODOs. onGlyphTap lambda (line 156) has a comment noting zoom-in is deferred -- known future feature, not blocking any gap closure goal.
+- `LoginScreen.kt`: No TODOs. onGlyphTap lambda has a comment noting zoom-in is deferred -- known future feature, not blocking any gap closure goal.
 - `LoginViewModelTest.kt`: No skipped tests, 8 substantive test cases.
-- `NodeEditorScreen.kt`: No TODO/FIXME. onGlyphTap deferred stub does not affect indent/outdent or context menu wiring.
+- `NodeEditorScreen.kt`: No TODO/FIXME, no combinedClickable, no empty handlers. onGlyphTap deferred stub does not affect indent/outdent or context menu wiring.
 - `MainActivity.kt`: No TODOs, fully wired.
 - `OutlinerGodTheme.kt`: No TODOs, fully wired.
 
 ---
 
-## Overall Verdict
+## Human Verification Required
 
-All 13 must-haves from gap closure plans 04-02, 04-03, and 04-04 are verified. Every artifact exists, is substantive, and is wired into the system. No gaps remain.
+### 1. UAT Test 13: Horizontal drag on glyph triggers indent / outdent
 
-**Score: 13/13 must-haves verified. Status: passed.**
+**Test:** On a physical device, open a document with at least two nodes. Long-press the glyph (arrow icon or dot) of a child node, then slide your finger more than 40dp to the right (or left).
+**Expected:** Sliding right indents the node (becomes a child of the node above it). Sliding left outdents the node (moves it up one level). Haptic feedback fires at the start of the drag.
+**Why human:** Modifier execution order and gesture conflict resolution between detectHorizontalDragGestures and the reorderable long-press drag handle can only be confirmed at runtime with real touch input on a physical device.
+
+### 2. UAT Test 14: Long-press text area shows context menu
+
+**Test:** On a physical device, open a document. Long-press on the text content of a node (not the glyph area, not the note toggle button).
+**Expected:** A bottom sheet slides up showing: Add Child, Indent, Outdent, Toggle Completed, Delete. Tapping one of those actions performs it. Swiping down or tapping outside dismisses the sheet.
+**Why human:** Whether detectTapGestures(onLongPress = ...) on the BasicTextField modifier successfully fires before BasicTextField internal pointer-event consumption can only be confirmed at runtime on device.
 
 ---
 
-_Verified: 2026-03-03T09:25:21Z_
+## Overall Verdict
+
+Plans 04-02, 04-03, and 04-04 remain fully verified (13/13 code must-haves). Plan 04-05 adds 5 structural code checks, all of which pass:
+
+- Modifier order correct: both glyph paths (hasChildren IconButton at line 274, dot glyph Box at line 310) have pointerInput before then(dragModifier).
+- combinedClickable removed: absent from the file entirely.
+- detectTapGestures(onLongPress = ...) wired directly on BasicTextField at lines 392-394.
+- import androidx.compose.foundation.gestures.detectTapGestures present at line 7.
+
+The two behavioral truths (UAT 13 and UAT 14) cannot be verified from source alone and require device testing.
+
+**Code score: 15/15 structural must-haves verified. Status: human_needed (UAT 13 and 14 require device).**
+
+---
+
+_Verified: 2026-03-03T12:00:00Z_
 _Verifier: Claude (gsd-verifier)_
