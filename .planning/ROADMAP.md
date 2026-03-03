@@ -69,6 +69,8 @@ Plans:
 - Logout: SettingsScreen gets a logout button that calls AuthRepository.logout() and navigates to LoginScreen
 - Full-row drag: reorderable drag handle covers the entire node row, not only the glyph icon
 **Plans:** 1 plan
+Plans:
+- [ ] 09-01-PLAN.md — Density scale fix + logout (AuthRepository, SettingsViewModel, SettingsScreen) + full-row drag handle
 **Status:** Planned
 
 ### Phase 10: android-node-actions
