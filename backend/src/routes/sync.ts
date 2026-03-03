@@ -35,7 +35,7 @@ export interface SettingsSyncRecord {
   show_backlink_badge: number
   show_backlink_badge_hlc: string
   device_id: string
-  created_at: number
+  created_at?: number
   updated_at: number
 }
 
@@ -216,7 +216,7 @@ function mergeSettings(stored: SettingsSyncRecord, incoming: SettingsSyncRecord)
     show_backlink_badge,
     show_backlink_badge_hlc,
     device_id,
-    created_at: Math.min(stored.created_at, incoming.created_at),
+    created_at: Math.min(stored.created_at ?? Date.now(), incoming.created_at ?? stored.created_at ?? Date.now()),
     updated_at: Math.max(stored.updated_at, incoming.updated_at),
   }
 }
