@@ -27,6 +27,8 @@ Progress: ████████████░░░░ (completed: 01, 02, 0
 | D12 | CreateDocumentRequest uses @Serializable + @SerialName for snake_case POST body (parent_id, sort_order) | 05-02 | DocumentListViewModel POST /api/documents |
 | D13 | Phase 01 VERIFICATION status is code_confirmed_unverified (not passed) — UAT tests were never formally run; transitive evidence from Phase 02 confirms code works | 06-02 | Audit trail accuracy |
 | D14 | Phase 02 VERIFICATION status is code_confirmed_doc_gap — 6/7 UAT passed; test 2 failure was documentation gap (pnpm not on Docker host), not a code bug | 06-02 | Audit trail distinguishes code correctness from doc completeness |
+| D15 | FractionalIndex.generateKeyBetween(null, null) returns "aV" not "aP" — DIGITS is 62 chars, midpoint index 31 = 'V' (not 'P' at index 25); tests and code updated | 06-01 | generateNextSortOrder, sort-order tests |
+| D16 | syncStatus field removed from NodeEntity/DocumentEntity/BookmarkEntity using Option B (drop Kotlin field, keep SQLite column); Room ignores unmapped columns, no migration needed | 06-01 | Room entity schema, no autoMigrations entry required |
 
 ## Blockers / Concerns
 
@@ -36,6 +38,6 @@ Progress: ████████████░░░░ (completed: 01, 02, 0
 
 ## Session Continuity
 
-Last session: 2026-03-03T00:00:00Z
-Stopped at: Completed 06-02-PLAN.md — VERIFICATION stubs for phases 01-03 and project README.md
+Last session: 2026-03-03T18:32:49Z
+Stopped at: Completed 06-01-PLAN.md — sort-order fix (FractionalIndex) + syncStatus removal from 3 entities
 Resume file: None
