@@ -29,6 +29,13 @@
       "when": 1772550000000,
       "tag": "0003_bookmarks_schema_update",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1772551000000,
+      "tag": "0004_remove_nodes_parent_fk",
+      "breakpoints": true
     }
   ]
 }
