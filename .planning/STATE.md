@@ -2,12 +2,12 @@
 
 ## Current Position
 
-Phase: 08 of 08 (settings-sync-push) — COMPLETE
+Phase: 08 of 12 (settings-sync-push) — COMPLETE
 Plan: 01 of 1 (complete)
-Status: v0.4 milestone — all audit gaps closed (GAP-A and GAP-B)
-Last activity: 2026-03-03 - Completed 08-01-PLAN.md (GAP-B closed: settings now pushed bidirectionally)
+Status: v0.4 milestone — audit complete (tech_debt, all gaps closed). v0.5 phases added.
+Last activity: 2026-03-03 - v0.4 milestone audited; Phases 09-10 added (ux-polish, node-actions); 11-12 renumbered
 
-Progress: ████████████████████ (completed: 01, 02, 03, 04, 05, 06, 07, 08 | planned: none remaining)
+Progress: ████████░░░░ (completed: 01-08 | planned: 09-android-ux-polish, 10-android-node-actions, 11-search-export-bookmarks, 12-integration-e2e)
 
 ## Accumulated Decisions
 
@@ -50,6 +50,6 @@ Progress: ████████████████████ (complete
 
 ## Session Continuity
 
-Last session: 2026-03-03T19:55:56Z
-Stopped at: Completed 08-01-PLAN.md — GAP-B closed, all v0.4 audit gaps resolved
+Last session: 2026-03-03T21:00:00Z
+Stopped at: v0.4 milestone audit complete. Phases 09-10 added for v0.5 (ux-polish, node-actions). Ready to plan Phase 09.
 Resume file: None

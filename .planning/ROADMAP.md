@@ -62,14 +62,33 @@ Plans:
 
 ## v0.5: android-advanced *(planned)*
 
-### Phase 09: search-export-bookmarks
+### Phase 09: android-ux-polish
+**Goal:** Fix density scale (compact = current size; comfortable/cozy add more spacing); add logout button to SettingsScreen; extend drag handle to full node row instead of glyph-only
+**Requirements:**
+- Density: current font-size/spacing = compact. Comfortable and cozy must add progressively more line height, node padding, and font size so users have room to breathe.
+- Logout: SettingsScreen gets a logout button that calls AuthRepository.logout() and navigates to LoginScreen
+- Full-row drag: reorderable drag handle covers the entire node row, not only the glyph icon
+**Plans:** 1 plan
+**Status:** Planned
+
+### Phase 10: android-node-actions
+**Goal:** Swipe gestures on node rows (swipe right = mark complete, swipe left = delete with undo snackbar); persistent selection toolbar replaces long-press context menu
+**Requirements:**
+- Swipe right on a node row → marks node as complete (visual strike-through or check indicator); swipe again to unmark
+- Swipe left on a node row → deletes node with snackbar undo (restores within ~5 seconds)
+- When a node is selected (tapped/focused), a persistent toolbar appears above the keyboard with: Indent, Outdent, Add Child, Toggle Complete, Delete actions
+- Long-press context menu (ModalBottomSheet) is removed entirely; all its actions move to the toolbar
+**Plans:** 1 plan
+**Status:** Planned
+
+### Phase 11: search-export-bookmarks
 **Goal:** Search (FTS5), export, bookmarks screen
-**Status:** Planned (was Phase 07 before gap closure phases inserted)
+**Status:** Planned (was Phase 09)
 
 ---
 
 ## v0.6: integration-polish *(planned)*
 
-### Phase 10: integration-e2e
+### Phase 12: integration-e2e
 **Goal:** Integration, polish, end-to-end testing
-**Status:** Planned (was Phase 08 before gap closure phases inserted)
+**Status:** Planned (was Phase 10)
