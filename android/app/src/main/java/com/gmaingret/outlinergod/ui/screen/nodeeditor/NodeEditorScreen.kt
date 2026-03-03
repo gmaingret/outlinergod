@@ -271,7 +271,6 @@ private fun NodeRow(
                     onClick = onToggleCollapse,
                     modifier = Modifier
                         .size(24.dp)
-                        .then(dragModifier)
                         .pointerInput(flatNode.entity.id) {
                             var totalDrag = 0f
                             var fired = false
@@ -292,6 +291,7 @@ private fun NodeRow(
                                 }
                             )
                         }
+                        .then(dragModifier)
                 ) {
                     Icon(
                         imageVector = if (flatNode.entity.collapsed == 1)
@@ -307,7 +307,6 @@ private fun NodeRow(
                 Box(
                     modifier = Modifier
                         .size(24.dp)
-                        .then(dragModifier)
                         .pointerInput(flatNode.entity.id) {
                             var totalDrag = 0f
                             var fired = false
@@ -328,6 +327,7 @@ private fun NodeRow(
                                 }
                             )
                         }
+                        .then(dragModifier)
                         .clickable(onClick = onGlyphTap),
                     contentAlignment = Alignment.Center
                 ) {
