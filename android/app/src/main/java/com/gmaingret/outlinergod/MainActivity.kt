@@ -28,8 +28,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val settingsFlow = authRepository.getAccessToken().flatMapLatest { accessToken ->
-            if (accessToken != null) settingsDao.getSettings(accessToken) else flowOf(null)
+        val settingsFlow = authRepository.getUserId().flatMapLatest { userId ->
+            if (userId != null) settingsDao.getSettings(userId) else flowOf(null)
         }
 
         setContent {
