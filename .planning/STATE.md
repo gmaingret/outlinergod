@@ -3,13 +3,13 @@
 ## Current Position
 
 Phase: 05 of 06 (sync-integration-fixes)
-Plan: 01 of 05 (in progress)
+Plan: 02 of 05 (wave 2 complete)
 Status: In progress
-Last activity: 2026-03-03 - Completed 05-01-PLAN.md (HLC decimal format + AuthRepository getUserId)
+Last activity: 2026-03-03 - Completed 05-02-PLAN.md (ViewModel consumer migration + test fixture updates)
 
 Progress: ████████░░░░░░░░ (completed: 01, 02, 03, 04 | pending: 05, 06)
 
-Phase 05 plan progress: █░░░░ (1/5 plans complete)
+Phase 05 plan progress: ██░░░ (2/5 plans complete)
 
 ## Accumulated Decisions
 
@@ -25,15 +25,17 @@ Phase 05 plan progress: █░░░░ (1/5 plans complete)
 | D8 | Long-press on text content uses PointerEventPass.Initial on parent Column (not BasicTextField modifier); Initial pass precedes BasicTextField's text-selection handler (Main pass) | 04-05 | NodeEditorScreen long-press context menu |
 | D9 | HLC format changed from hex to decimal: 13-digit decimal wall + 5-digit decimal counter (matches backend hlc.ts) | 05-01 | HlcClock, all sync records |
 | D10 | Property test for HLC wall length uses range 1_000_000_000_000..9_999_999_999_999 (13-digit epoch window, covers 2001-2286) | 05-01 | HlcClockTest |
+| D11 | getUserId() used for all DAO-facing userId queries; getAccessToken() retained only for JWT token usage (Ktor interceptor, LoginViewModel) | 05-02 | DocumentListViewModel, NodeEditorViewModel, SettingsViewModel, SyncWorker |
+| D12 | CreateDocumentRequest uses @Serializable + @SerialName for snake_case POST body (parent_id, sort_order) | 05-02 | DocumentListViewModel POST /api/documents |
 
 ## Blockers / Concerns
 
-- UAT gap: Empty document has no initial node (root node not created on document creation) - diagnosed in 04-04-UAT
+- UAT gap: Empty document has no initial node (root node not created on document creation) - diagnosed in 04-04-UAT (note: NodeEditorViewModel now creates root node on empty document load as fallback)
 - UAT test 16 (collapse/expand) was previously skipped; now unblocked — use Add Child via context menu to create a child node, then verify
 - BookmarkDaoTest.observeAllActive_excludesOtherUsers has a flaky Robolectric/Room Invalidation Tracker race condition (pre-existing, passes on retry)
 
 ## Session Continuity
 
-Last session: 2026-03-03T12:45:12Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-03-03T13:15:00Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
