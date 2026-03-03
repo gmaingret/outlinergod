@@ -3,8 +3,10 @@ package com.gmaingret.outlinergod.ui.screen.nodeeditor
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -389,8 +391,26 @@ private fun NodeRow(
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .pointerInput(Unit) {
-                            detectTapGestures(onLongPress = { onLongPress() })
+                        .pointerInput(flatNode.entity.id) {
+                            // detectTapGestures(onLongPress) does not work here: it calls
+                            // awaitFirstDown(requireUnconsumed = true) and BasicTextField
+                            // consumes the pointer-down for cursor placement before we see it.
+                            // awaitFirstDown(requireUnconsumed = false) bypasses that.
+                            awaitEachGesture {
+                                val firstDown = awaitFirstDown(requireUnconsumed = false)
+                                var longPressTriggered = false
+                                withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                                    while (true) {
+                                        val event = awaitPointerEvent()
+                                        val change = event.changes.firstOrNull { it.id == firstDown.id } ?: break
+                                        if (!change.pressed) break
+                                        val dx = change.position.x - firstDown.position.x
+                                        val dy = change.position.y - firstDown.position.y
+                                        if (dx * dx + dy * dy > viewConfiguration.touchSlop * viewConfiguration.touchSlop) break
+                                    }
+                                } ?: run { longPressTriggered = true }
+                                if (longPressTriggered) onLongPress()
+                            }
                         }
                         .focusRequester(focusRequester)
                         .onFocusChanged { focusState ->
