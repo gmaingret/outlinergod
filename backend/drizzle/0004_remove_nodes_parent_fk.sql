@@ -2,9 +2,8 @@
 -- parent_id is used as a sentinel: documentId for root nodes, null or a node id otherwise.
 -- The FK (parent_id -> nodes.id) incorrectly rejects root nodes whose parent_id is a document id.
 -- SQLite requires recreating the table to drop a FK constraint.
+-- Note: PRAGMA foreign_keys is a no-op inside Drizzle's transaction wrapper; omitted here.
 
-PRAGMA foreign_keys=OFF;
---> statement-breakpoint
 CREATE TABLE `nodes_new` (
 	`id` text PRIMARY KEY NOT NULL,
 	`document_id` text NOT NULL,
@@ -37,5 +36,3 @@ INSERT INTO `nodes_new` SELECT * FROM `nodes`;
 DROP TABLE `nodes`;
 --> statement-breakpoint
 ALTER TABLE `nodes_new` RENAME TO `nodes`;
---> statement-breakpoint
-PRAGMA foreign_keys=ON;
