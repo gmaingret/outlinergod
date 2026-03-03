@@ -2,42 +2,46 @@
 
 ## Current Position
 
-Phase: 07 of 08 (settings-display-and-techdebt) — PLANNED
-Plan: 00 of 1 (not started)
-Status: v0.4 gap closure in progress — 2 audit gaps remain (GAP-A, GAP-B)
-Last activity: 2026-03-03 - Gap closure phases 07-08 added to roadmap
+Phase: 07 of 08 (settings-display-and-techdebt) — COMPLETE
+Plan: 01 of 1 (complete)
+Status: v0.4 gap closure in progress — 1 audit gap remains (GAP-B)
+Last activity: 2026-03-03 - Completed 07-01-PLAN.md (GAP-A closed, tech debt fixed)
 
-Progress: ████████████████░░░░ (completed: 01, 02, 03, 04, 05, 06 | planned: 07, 08)
+Progress: ██████████████████░░ (completed: 01, 02, 03, 04, 05, 06, 07 | planned: 08)
 
 ## Accumulated Decisions
 
 | ID | Decision | Phase-Plan | Impact |
 |----|----------|------------|--------|
 | D1 | sort_order is always TEXT (fractional indexing) | architecture | all DAOs |
-| D2 | flatMapLatest on getAccessToken() for settings observation | 04-04 | MainActivity theme |
+| D2 | flatMapLatest on getAccessToken() for settings observation | 04-04 | MainActivity theme — SUPERSEDED by D17 |
 | D3 | Default theme null/unknown maps to dark | 04-04 | OutlinerGodTheme |
 | D4 | ViewModel logic in companion object pure functions for JVM testability | 04-07 | all ViewModels |
 | D5 | reorderable 2.5.1 (not 3.0.0 which doesn't exist) | 04-10 | DnD |
 | D6 | Orbit MVI 10.0.0 for all ViewModels | 04-01 | all screens |
-| D7 | Glyph horizontal drag uses PointerEventPass.Initial (capture phase) so it fires before longPressDraggableHandle (Main pass) | 04-05 | NodeEditorScreen gesture arbitration |
-| D8 | Long-press on text content uses PointerEventPass.Initial on parent Column (not BasicTextField modifier); Initial pass precedes BasicTextField's text-selection handler (Main pass) | 04-05 | NodeEditorScreen long-press context menu |
-| D9 | HLC format changed from hex to decimal: 13-digit decimal wall + 5-digit decimal counter (matches backend hlc.ts) | 05-01 | HlcClock, all sync records |
-| D10 | Property test for HLC wall length uses range 1_000_000_000_000..9_999_999_999_999 (13-digit epoch window, covers 2001-2286) | 05-01 | HlcClockTest |
-| D11 | getUserId() used for all DAO-facing userId queries; getAccessToken() retained only for JWT token usage (Ktor interceptor, LoginViewModel) | 05-02 | DocumentListViewModel, NodeEditorViewModel, SettingsViewModel, SyncWorker |
-| D12 | CreateDocumentRequest uses @Serializable + @SerialName for snake_case POST body (parent_id, sort_order) | 05-02 | DocumentListViewModel POST /api/documents |
-| D13 | Phase 01 VERIFICATION status is code_confirmed_unverified (not passed) — UAT tests were never formally run; transitive evidence from Phase 02 confirms code works | 06-02 | Audit trail accuracy |
-| D14 | Phase 02 VERIFICATION status is code_confirmed_doc_gap — 6/7 UAT passed; test 2 failure was documentation gap (pnpm not on Docker host), not a code bug | 06-02 | Audit trail distinguishes code correctness from doc completeness |
-| D15 | FractionalIndex.generateKeyBetween(null, null) returns "aV" not "aP" — DIGITS is 62 chars, midpoint index 31 = 'V' (not 'P' at index 25); tests and code updated | 06-01 | generateNextSortOrder, sort-order tests |
-| D16 | syncStatus field removed from NodeEntity/DocumentEntity/BookmarkEntity using Option B (drop Kotlin field, keep SQLite column); Room ignores unmapped columns, no migration needed | 06-01 | Room entity schema, no autoMigrations entry required |
+| D7 | Glyph horizontal drag uses PointerEventPass.Initial (capture phase) | 04-05 | NodeEditorScreen |
+| D8 | Long-press on text content uses PointerEventPass.Initial on parent Column | 04-05 | NodeEditorScreen |
+| D9 | HLC format: 13-digit decimal wall + 5-digit decimal counter | 05-01 | HlcClock, sync records |
+| D10 | HLC property test wall range: 1_000_000_000_000..9_999_999_999_999 | 05-01 | HlcClockTest |
+| D11 | getUserId() for DAO queries; getAccessToken() only for Ktor/LoginViewModel | 05-02 | ViewModels, SyncWorker |
+| D12 | CreateDocumentRequest uses @SerialName for snake_case POST body | 05-02 | DocumentListViewModel |
+| D13 | Phase 01 VERIFICATION status is code_confirmed_unverified | 06-02 | Audit trail |
+| D14 | Phase 02 VERIFICATION status is code_confirmed_doc_gap | 06-02 | Audit trail |
+| D15 | FractionalIndex.generateKeyBetween(null, null) returns "aV" not "aP" | 06-01 | sort-order tests |
+| D16 | syncStatus field removed from entities (Option B: drop Kotlin field, keep SQLite column) | 06-01 | Room entity schema |
+| D17 | GAP-A fix: MainActivity must call getUserId() (UUID) not getAccessToken() (JWT) for settingsDao.getSettings(); JWT string never matches UUID-keyed settings rows | 07-01 | MainActivity theme/density |
+| D18 | SyncConstants object in sync package holds LAST_SYNC_HLC_KEY; all callers import from SyncConstants — no duplication across companion objects | 07-01 | SyncWorker, DocumentListViewModel, NodeEditorViewModel |
+| D19 | ExistingPeriodicWorkPolicy.UPDATE replaces deprecated KEEP in SyncScheduler | 07-01 | WorkManager periodic sync |
 
 ## Blockers / Concerns
 
-- UAT gap: Empty document has no initial node (root node not created on document creation) - diagnosed in 04-04-UAT (note: NodeEditorViewModel now creates root node on empty document load as fallback)
-- UAT test 16 (collapse/expand) was previously skipped; now unblocked — use Add Child via context menu to create a child node, then verify
-- BookmarkDaoTest.observeAllActive_excludesOtherUsers has a flaky Robolectric/Room Invalidation Tracker race condition (pre-existing, passes on retry)
+- UAT gap: Empty document has no initial node (NodeEditorViewModel now creates root node on empty load as fallback)
+- UAT test 16 (collapse/expand) was previously skipped; now unblocked
+- BookmarkDaoTest.observeAllActive_excludesOtherUsers has a flaky Robolectric/Room race condition (pre-existing, passes on retry)
+- GAP-B: backend audit gap — to be addressed in phase 08
 
 ## Session Continuity
 
-Last session: 2026-03-03T18:40:00Z
-Stopped at: Phase 06 complete — 9/9 must-haves verified, v0.4 milestone done
+Last session: 2026-03-03T19:26:35Z
+Stopped at: Completed 07-01-PLAN.md — GAP-A closed, SyncConstants extracted, WorkManager policy fixed
 Resume file: None
