@@ -52,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gmaingret.outlinergod.db.entity.DocumentEntity
+import com.gmaingret.outlinergod.prototype.FractionalIndex
 import com.gmaingret.outlinergod.ui.common.SyncStatus
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -385,8 +386,10 @@ private fun filterCollapsedChildren(items: List<DocumentEntity>): List<DocumentE
  * Generate the next sort order for a new document.
  */
 internal fun generateNextSortOrder(items: List<DocumentEntity>): String {
-    if (items.isEmpty()) return "a0"
-    val maxSortOrder = items.maxOf { it.sortOrder }
-    // Simple incrementing: append next character
-    return maxSortOrder + "0"
+    return if (items.isEmpty()) {
+        FractionalIndex.generateKeyBetween(null, null) // "aV" (midpoint of 62-char alphabet)
+    } else {
+        val maxSortOrder = items.maxOf { it.sortOrder }
+        FractionalIndex.generateKeyBetween(maxSortOrder, null)
+    }
 }
