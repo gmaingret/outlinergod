@@ -62,7 +62,7 @@ Plans:
 
 ## v0.5: android-advanced *(planned)*
 
-### Phase 09: android-ux-polish
+### Phase 09: android-ux-polish ✅
 **Goal:** Fix density scale (compact = current size; comfortable/cozy add more spacing); add logout button to SettingsScreen; extend drag handle to full node row instead of glyph-only
 **Requirements:**
 - Density: current font-size/spacing = compact. Comfortable and cozy must add progressively more line height, node padding, and font size so users have room to breathe.
@@ -70,8 +70,8 @@ Plans:
 - Full-row drag: reorderable drag handle covers the entire node row, not only the glyph icon
 **Plans:** 1 plan
 Plans:
-- [ ] 09-01-PLAN.md — Density scale fix + logout (AuthRepository, SettingsViewModel, SettingsScreen) + full-row drag handle
-**Status:** Planned
+- [x] 09-01-PLAN.md — Density scale fix + logout (AuthRepository, SettingsViewModel, SettingsScreen) + full-row drag handle
+**Status:** Complete (VERIFICATION.md present, 4/4 must-haves verified, 2026-03-03)
 
 ### Phase 10: android-node-actions
 **Goal:** Swipe gestures on node rows (swipe right = mark complete, swipe left = delete with undo snackbar); persistent selection toolbar replaces long-press context menu

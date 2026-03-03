@@ -2,12 +2,12 @@
 
 ## Current Position
 
-Phase: 09 of 12 (android-ux-polish) — In progress
+Phase: 09 of 12 (android-ux-polish) — COMPLETE
 Plan: 01 of 1 (complete)
-Status: v0.5 in progress — density/logout/drag-handle UX fixes shipped.
-Last activity: 2026-03-03 - Completed 09-01-PLAN.md (density scale fix, logout button, full-row drag handle)
+Status: v0.5 in progress — Phase 09 complete (4/4 must-haves verified)
+Last activity: 2026-03-03 - Phase 09 executed and verified: density scale fix, logout button, full-row drag handle
 
-Progress: █████████░░░ (completed: 01-09 plan 01 | planned: 09 remaining, 10-android-node-actions, 11-search-export-bookmarks, 12-integration-e2e)
+Progress: █████████░░░ (completed: 01-09 | planned: 10-android-node-actions, 11-search-export-bookmarks, 12-integration-e2e)
 
 ## Accumulated Decisions
 
