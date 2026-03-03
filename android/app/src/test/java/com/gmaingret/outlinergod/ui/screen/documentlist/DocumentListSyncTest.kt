@@ -15,14 +15,6 @@ import com.gmaingret.outlinergod.network.model.SyncPushResponse
 import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.headersOf
-import io.ktor.serialization.kotlinx.json.json
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -61,9 +53,7 @@ class DocumentListSyncTest {
     private lateinit var authRepository: AuthRepository
     private lateinit var syncRepository: SyncRepository
     private lateinit var hlcClock: HlcClock
-    private lateinit var httpClient: HttpClient
     private lateinit var dataStore: DataStore<Preferences>
-    private val baseUrl = "http://localhost:3000"
 
     @Before
     fun setUp() {
@@ -82,23 +72,11 @@ class DocumentListSyncTest {
         every { authRepository.getUserId() } returns flowOf("user-1")
         every { authRepository.getDeviceId() } returns flowOf("device-1")
         every { hlcClock.generate(any()) } returns "1636300202430-00000-device-1"
-
-        val mockEngine = MockEngine { _ ->
-            respond(
-                content = """{"id":"doc-new","title":"Doc"}""",
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-        httpClient = HttpClient(mockEngine) {
-            install(ContentNegotiation) { json() }
-        }
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
-        httpClient.close()
     }
 
     private fun fakePullResponse(
@@ -125,8 +103,6 @@ class DocumentListSyncTest {
             authRepository = authRepository,
             syncRepository = syncRepository,
             hlcClock = hlcClock,
-            baseUrl = baseUrl,
-            httpClient = httpClient,
             dataStore = dataStore
         )
     }

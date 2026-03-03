@@ -12,14 +12,7 @@ import com.gmaingret.outlinergod.db.entity.NodeEntity
 import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.headersOf
-import io.ktor.serialization.kotlinx.json.json
+import com.gmaingret.outlinergod.ui.common.SyncStatus
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -59,9 +52,7 @@ class DocumentListViewModelTest {
     private lateinit var authRepository: AuthRepository
     private lateinit var syncRepository: SyncRepository
     private lateinit var hlcClock: HlcClock
-    private lateinit var httpClient: HttpClient
     private lateinit var dataStore: DataStore<Preferences>
-    private val baseUrl = "http://localhost:3000"
 
     @Before
     fun setUp() {
@@ -80,14 +71,13 @@ class DocumentListViewModelTest {
         every { authRepository.getUserId() } returns flowOf("user-1")
         every { authRepository.getDeviceId() } returns flowOf("device-1")
         every { hlcClock.generate(any()) } returns "1636300202430-00000-device-1"
+        // Default: sync fails fast so createDocument tests can consume the resulting state transitions
+        coEvery { syncRepository.pull(any(), any()) } returns Result.failure(RuntimeException("sync not mocked"))
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
-        if (::httpClient.isInitialized) {
-            httpClient.close()
-        }
     }
 
     private fun fakeDocument(
@@ -115,19 +105,6 @@ class DocumentListViewModelTest {
         syncStatus = 0
     )
 
-    private fun createMockHttpClient(statusCode: HttpStatusCode = HttpStatusCode.Created): HttpClient {
-        val mockEngine = MockEngine { _ ->
-            respond(
-                content = """{"id":"doc-new","title":"Doc"}""",
-                status = statusCode,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-        return HttpClient(mockEngine) {
-            install(ContentNegotiation) { json() }
-        }
-    }
-
     private fun createViewModel(): DocumentListViewModel {
         return DocumentListViewModel(
             documentDao = documentDao,
@@ -137,8 +114,6 @@ class DocumentListViewModelTest {
             authRepository = authRepository,
             syncRepository = syncRepository,
             hlcClock = hlcClock,
-            baseUrl = baseUrl,
-            httpClient = httpClient,
             dataStore = dataStore
         )
     }
@@ -147,7 +122,6 @@ class DocumentListViewModelTest {
     fun `initialLoad emits Success with documents`() = runTest {
         val docs = listOf(fakeDocument())
         every { documentDao.getAllDocuments("user-1") } returns flowOf(docs)
-        httpClient = createMockHttpClient()
         val viewModel = createViewModel()
         viewModel.test(this) {
             // Explicitly trigger loadDocuments (init's call went to the real container)
@@ -159,7 +133,6 @@ class DocumentListViewModelTest {
     @Test
     fun `initialLoad with empty list emits Success with empty items`() = runTest {
         every { documentDao.getAllDocuments("user-1") } returns flowOf(emptyList())
-        httpClient = createMockHttpClient()
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.loadDocuments()
@@ -171,10 +144,12 @@ class DocumentListViewModelTest {
     fun `createDocument inserts document locally on success`() = runTest {
         every { documentDao.getAllDocuments("user-1") } returns flowOf(emptyList())
         coEvery { documentDao.insertDocument(any()) } just Runs
-        httpClient = createMockHttpClient()
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.createDocument("Doc", "document", null, "V")
+            // triggerSync is called after insert; pull mock fails → Syncing then Error
+            expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Syncing))
+            expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Error))
         }
         coVerify { documentDao.insertDocument(any()) }
     }
@@ -185,10 +160,12 @@ class DocumentListViewModelTest {
         coEvery { documentDao.insertDocument(any()) } just Runs
         val nodeSlot = slot<NodeEntity>()
         coEvery { nodeDao.insertNode(capture(nodeSlot)) } just Runs
-        httpClient = createMockHttpClient()
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.createDocument("Doc", "document", null, "V")
+            // triggerSync is called after insert; pull mock fails → Syncing then Error
+            expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Syncing))
+            expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Error))
         }
         coVerify { nodeDao.insertNode(any()) }
         assertEquals("a0", nodeSlot.captured.sortOrder)
@@ -199,7 +176,6 @@ class DocumentListViewModelTest {
     fun `createDocument posts ShowError on failure`() = runTest {
         every { documentDao.getAllDocuments("user-1") } returns flowOf(emptyList())
         coEvery { documentDao.insertDocument(any()) } throws RuntimeException("DB error")
-        httpClient = createMockHttpClient()
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.createDocument("Doc", "document", null, "V")
@@ -208,10 +184,9 @@ class DocumentListViewModelTest {
     }
 
     @Test
-    fun `deleteDocument soft deletes immediately before network call`() = runTest {
+    fun `deleteDocument soft deletes locally`() = runTest {
         every { documentDao.getAllDocuments("user-1") } returns flowOf(listOf(fakeDocument()))
         coEvery { documentDao.softDeleteDocument(any(), any(), any(), any()) } just Runs
-        httpClient = createMockHttpClient()
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.deleteDocument("doc-1")
@@ -226,7 +201,6 @@ class DocumentListViewModelTest {
         coEvery { documentDao.getDocumentByIdSync("f1") } returns folder
         val slot = slot<DocumentEntity>()
         coEvery { documentDao.updateDocument(capture(slot)) } just Runs
-        httpClient = createMockHttpClient()
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.toggleFolderCollapse("f1")
@@ -241,7 +215,6 @@ class DocumentListViewModelTest {
         coEvery { documentDao.getDocumentByIdSync("doc-1") } returns doc
         val slot = slot<DocumentEntity>()
         coEvery { documentDao.updateDocument(capture(slot)) } just Runs
-        httpClient = createMockHttpClient()
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.renameDocument("doc-1", "New Name")

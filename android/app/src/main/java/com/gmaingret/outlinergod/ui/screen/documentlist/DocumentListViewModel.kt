@@ -13,7 +13,6 @@ import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.ui.common.SyncStatus
 import com.gmaingret.outlinergod.db.entity.DocumentEntity
 import com.gmaingret.outlinergod.db.entity.NodeEntity
-import com.gmaingret.outlinergod.network.model.CreateDocumentRequest
 import com.gmaingret.outlinergod.network.model.SyncPushPayload
 import com.gmaingret.outlinergod.sync.toNodeEntity
 import com.gmaingret.outlinergod.sync.toDocumentEntity
@@ -26,13 +25,6 @@ import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.ktor.client.HttpClient
-import io.ktor.client.request.delete
-import io.ktor.client.request.patch
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -40,7 +32,6 @@ import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.viewmodel.container
 import javax.inject.Inject
-import javax.inject.Named
 
 @HiltViewModel
 class DocumentListViewModel @Inject constructor(
@@ -51,8 +42,6 @@ class DocumentListViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val syncRepository: SyncRepository,
     private val hlcClock: HlcClock,
-    @Named("baseUrl") private val baseUrl: String,
-    private val httpClient: HttpClient,
     private val dataStore: DataStore<Preferences>
 ) : ViewModel(), ContainerHost<DocumentListUiState, DocumentListSideEffect> {
 
@@ -191,22 +180,6 @@ class DocumentListViewModel @Inject constructor(
                 syncStatus = 0
             )
 
-            // POST to backend
-            try {
-                httpClient.post("$baseUrl/api/documents") {
-                    contentType(ContentType.Application.Json)
-                    setBody(CreateDocumentRequest(
-                        id = doc.id,
-                        title = doc.title,
-                        type = doc.type,
-                        parentId = doc.parentId,
-                        sortOrder = doc.sortOrder
-                    ))
-                }
-            } catch (_: Exception) {
-                // Network failure is non-fatal; sync will reconcile later
-            }
-
             documentDao.insertDocument(doc)
 
             val rootNode = NodeEntity(
@@ -227,6 +200,7 @@ class DocumentListViewModel @Inject constructor(
                 syncStatus = 0
             )
             nodeDao.insertNode(rootNode)
+            triggerSync()
         } catch (e: Exception) {
             postSideEffect(DocumentListSideEffect.ShowError(e.message ?: "Failed to create document"))
         }
@@ -244,18 +218,6 @@ class DocumentListViewModel @Inject constructor(
                 updatedAt = now
             )
             documentDao.updateDocument(updated)
-
-            // PATCH in background — non-fatal on failure
-            viewModelScope.launch {
-                try {
-                    httpClient.patch("$baseUrl/api/documents/$id") {
-                        contentType(ContentType.Application.Json)
-                        setBody(mapOf("title" to title))
-                    }
-                } catch (_: Exception) {
-                    // sync reconciles later
-                }
-            }
         } catch (e: Exception) {
             postSideEffect(DocumentListSideEffect.ShowError(e.message ?: "Failed to rename document"))
         }
@@ -267,15 +229,6 @@ class DocumentListViewModel @Inject constructor(
             val now = System.currentTimeMillis()
             val hlc = hlcClock.generate(deviceId)
             documentDao.softDeleteDocument(id, now, hlc, now)
-
-            // DELETE in background — non-fatal on failure
-            viewModelScope.launch {
-                try {
-                    httpClient.delete("$baseUrl/api/documents/$id")
-                } catch (_: Exception) {
-                    // sync reconciles later
-                }
-            }
         } catch (e: Exception) {
             postSideEffect(DocumentListSideEffect.ShowError(e.message ?: "Failed to delete document"))
         }

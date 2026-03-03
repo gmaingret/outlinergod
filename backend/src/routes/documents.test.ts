@@ -221,6 +221,31 @@ describe('Document routes', () => {
       expect(body.deleted_at).toBeNull()
     })
 
+    it('uses_client_provided_id_when_valid_uuid', async () => {
+      const clientId = randomUUID()
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/documents',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({ id: clientId, title: 'Client ID Doc', type: 'document', sort_order: 'V' }),
+      })
+
+      expect(res.statusCode).toBe(201)
+      expect(res.json().id).toBe(clientId)
+    })
+
+    it('generates_server_id_when_no_id_provided', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/documents',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({ title: 'Server ID Doc', type: 'document', sort_order: 'V' }),
+      })
+
+      expect(res.statusCode).toBe(201)
+      expect(typeof res.json().id).toBe('string')
+    })
+
     it('creates_folder_withType_folder', async () => {
       const res = await app.inject({
         method: 'POST',

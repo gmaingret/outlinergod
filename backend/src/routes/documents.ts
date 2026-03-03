@@ -2,6 +2,9 @@ import { randomUUID } from 'node:crypto'
 import type { FastifyInstance } from 'fastify'
 import type Database from 'better-sqlite3'
 import { requireAuth } from '../middleware/auth.js'
+import { hlcGenerate } from '../hlc/hlc.js'
+
+const SERVER_DEVICE_ID = 'server'
 
 interface DocumentRow {
   id: string
@@ -54,6 +57,7 @@ export function createDocumentRoutes(sqlite: InstanceType<typeof Database>) {
     // -----------------------------------------------------------------------
     fastify.post('/documents', { preHandler: requireAuth }, async (req, reply) => {
       const body = req.body as {
+        id?: string
         title?: string
         type?: string
         sort_order?: string
@@ -82,15 +86,17 @@ export function createDocumentRoutes(sqlite: InstanceType<typeof Database>) {
         }
       }
 
-      const id = randomUUID()
+      // Use client-provided id if it looks like a UUID, otherwise generate one.
+      const id = (body.id && /^[0-9a-f-]{36}$/i.test(body.id)) ? body.id : randomUUID()
       const now = Date.now()
+      const hlc = hlcGenerate(SERVER_DEVICE_ID)
 
       sqlite
         .prepare(
           `INSERT INTO documents (id, user_id, title, title_hlc, type, parent_id, parent_id_hlc, sort_order, sort_order_hlc, collapsed, collapsed_hlc, deleted_at, deleted_hlc, device_id, created_at, updated_at)
-           VALUES (?, ?, ?, '', ?, ?, '', ?, '', 0, '', NULL, '', '', ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, '', ?, ?, 0, ?, NULL, '', ?, ?, ?)`,
         )
-        .run(id, req.user!.id, body.title, body.type, body.parent_id ?? null, body.sort_order, now, now)
+        .run(id, req.user!.id, body.title, hlc, body.type, body.parent_id ?? null, body.sort_order, hlc, hlc, SERVER_DEVICE_ID, now, now)
 
       const row = sqlite.prepare('SELECT * FROM documents WHERE id = ?').get(id) as DocumentRow
 
