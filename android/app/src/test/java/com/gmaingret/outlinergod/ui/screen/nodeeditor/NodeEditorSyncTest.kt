@@ -9,6 +9,7 @@ import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.db.dao.NodeDao
 import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.NodeEntity
+import com.gmaingret.outlinergod.db.entity.SettingsEntity
 import com.gmaingret.outlinergod.network.model.SyncChangesResponse
 import com.gmaingret.outlinergod.network.model.SyncConflicts
 import com.gmaingret.outlinergod.network.model.SyncPushResponse
@@ -295,5 +296,65 @@ class NodeEditorSyncTest {
 
         // Verify the ViewModel is still functional — no crash
         assertEquals(NodeEditorStatus.Success, viewModel.container.stateFlow.value.status)
+    }
+
+    @Test
+    fun `triggerSync includes settings in push when pending`() = runTest {
+        setupSyncSuccess()
+        val nodes = listOf(fakeNode(id = "n1", content = "Hello"))
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
+        val pendingSettings = SettingsEntity(
+            userId = "user-1",
+            theme = "light",
+            themeHlc = "BBBB",
+            densityHlc = "AAAA",
+            showGuideLinesHlc = "AAAA",
+            showBacklinkBadgeHlc = "AAAA",
+            deviceId = "device-1",
+            updatedAt = 1000L
+        )
+        coEvery { settingsDao.getPendingSettings(any(), any(), any()) } returns pendingSettings
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes))
+
+            containerHost.onScreenResumed()
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Syncing))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Idle))
+        }
+        coVerify {
+            syncRepository.push(match { payload ->
+                payload.settings != null && payload.settings!!.id == "user-1"
+            })
+        }
+    }
+
+    @Test
+    fun `triggerSync omits settings from push when no pending`() = runTest {
+        setupSyncSuccess()
+        val nodes = listOf(fakeNode(id = "n1", content = "Hello"))
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
+        coEvery { settingsDao.getPendingSettings(any(), any(), any()) } returns null
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes))
+
+            containerHost.onScreenResumed()
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Syncing))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Idle))
+        }
+        coVerify {
+            syncRepository.push(match { payload ->
+                payload.settings == null
+            })
+        }
     }
 }

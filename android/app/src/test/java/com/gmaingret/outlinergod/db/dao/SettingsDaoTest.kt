@@ -41,11 +41,21 @@ class SettingsDaoTest {
     private fun makeSettings(
         userId: String = "u1",
         theme: String = "dark",
-        density: String = "cozy"
+        density: String = "cozy",
+        themeHlc: String = "",
+        densityHlc: String = "",
+        showGuideLinesHlc: String = "",
+        showBacklinkBadgeHlc: String = "",
+        deviceId: String = "device-1"
     ) = SettingsEntity(
         userId = userId,
         theme = theme,
         density = density,
+        themeHlc = themeHlc,
+        densityHlc = densityHlc,
+        showGuideLinesHlc = showGuideLinesHlc,
+        showBacklinkBadgeHlc = showBacklinkBadgeHlc,
+        deviceId = deviceId,
         updatedAt = 0L
     )
 
@@ -79,5 +89,46 @@ class SettingsDaoTest {
         val result = dao.getSettings("u1").first()
         assertNotNull(result)
         assertEquals("dark", result!!.theme)
+    }
+
+    @Test
+    fun getPendingSettings_returnsRow_whenAnyHlcAboveSince() = runTest {
+        dao.upsertSettings(makeSettings(
+            theme = "light",
+            themeHlc = "BBBB",
+            densityHlc = "AAAA",
+            showGuideLinesHlc = "AAAA",
+            showBacklinkBadgeHlc = "AAAA",
+            deviceId = "device-1"
+        ))
+        val result = dao.getPendingSettings("u1", "AAAA", "device-1")
+        assertNotNull(result)
+        assertEquals("light", result!!.theme)
+    }
+
+    @Test
+    fun getPendingSettings_returnsNull_whenAllHlcsAtOrBelowSince() = runTest {
+        dao.upsertSettings(makeSettings(
+            themeHlc = "AAAA",
+            densityHlc = "AAAA",
+            showGuideLinesHlc = "AAAA",
+            showBacklinkBadgeHlc = "AAAA",
+            deviceId = "device-1"
+        ))
+        val result = dao.getPendingSettings("u1", "BBBB", "device-1")
+        assertNull(result)
+    }
+
+    @Test
+    fun getPendingSettings_returnsNull_whenDifferentDevice() = runTest {
+        dao.upsertSettings(makeSettings(
+            themeHlc = "CCCC",
+            densityHlc = "AAAA",
+            showGuideLinesHlc = "AAAA",
+            showBacklinkBadgeHlc = "AAAA",
+            deviceId = "device-other"
+        ))
+        val result = dao.getPendingSettings("u1", "AAAA", "device-1")
+        assertNull(result)
     }
 }

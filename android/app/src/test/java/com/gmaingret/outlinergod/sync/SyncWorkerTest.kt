@@ -14,6 +14,7 @@ import com.gmaingret.outlinergod.db.dao.BookmarkDao
 import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.db.dao.NodeDao
 import com.gmaingret.outlinergod.db.dao.SettingsDao
+import com.gmaingret.outlinergod.db.entity.SettingsEntity
 import com.gmaingret.outlinergod.network.model.NodeSyncRecord
 import com.gmaingret.outlinergod.network.model.SyncChangesResponse
 import com.gmaingret.outlinergod.network.model.SyncPushResponse
@@ -226,5 +227,57 @@ class SyncWorkerTest {
         val result = runSyncWorker()
 
         assertEquals(ListenableWorker.Result.retry(), result)
+    }
+
+    @Test
+    fun doWork_includesSettings_whenPendingSettingsExist() = runTest {
+        val pendingSettings = SettingsEntity(
+            userId = "user-1",
+            theme = "light",
+            themeHlc = "BBBB",
+            densityHlc = "AAAA",
+            showGuideLinesHlc = "AAAA",
+            showBacklinkBadgeHlc = "AAAA",
+            deviceId = "device-1",
+            updatedAt = 1000L
+        )
+        coEvery { settingsDao.getPendingSettings(any(), any(), any()) } returns pendingSettings
+        coEvery { syncRepository.pull(any(), any()) } returns Result.success(
+            SyncChangesResponse(serverHlc = "hlc1")
+        )
+        coEvery { syncRepository.push(any()) } returns Result.success(
+            SyncPushResponse(serverHlc = "hlc1")
+        )
+
+        val result = runSyncWorker()
+
+        assertEquals(ListenableWorker.Result.success(), result)
+        coVerify {
+            syncRepository.push(match { payload ->
+                payload.settings != null &&
+                payload.settings!!.theme == "light" &&
+                payload.settings!!.id == "user-1"
+            })
+        }
+    }
+
+    @Test
+    fun doWork_omitsSettings_whenNoPendingSettings() = runTest {
+        coEvery { settingsDao.getPendingSettings(any(), any(), any()) } returns null
+        coEvery { syncRepository.pull(any(), any()) } returns Result.success(
+            SyncChangesResponse(serverHlc = "hlc1")
+        )
+        coEvery { syncRepository.push(any()) } returns Result.success(
+            SyncPushResponse(serverHlc = "hlc1")
+        )
+
+        val result = runSyncWorker()
+
+        assertEquals(ListenableWorker.Result.success(), result)
+        coVerify {
+            syncRepository.push(match { payload ->
+                payload.settings == null
+            })
+        }
     }
 }

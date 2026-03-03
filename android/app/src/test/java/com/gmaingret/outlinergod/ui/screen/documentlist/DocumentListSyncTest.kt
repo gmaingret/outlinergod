@@ -3,6 +3,7 @@ package com.gmaingret.outlinergod.ui.screen.documentlist
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import com.gmaingret.outlinergod.db.entity.SettingsEntity
 import com.gmaingret.outlinergod.ui.common.SyncStatus
 import com.gmaingret.outlinergod.db.dao.BookmarkDao
 import com.gmaingret.outlinergod.db.dao.DocumentDao
@@ -188,6 +189,56 @@ class DocumentListSyncTest {
             // If triggerSync was called, we should see the Syncing then Idle states
             expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Syncing))
             expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Idle))
+        }
+    }
+
+    @Test
+    fun `triggerSync includes settings in push payload when pending`() = runTest {
+        every { documentDao.getAllDocuments("user-1") } returns flowOf(emptyList())
+        val pendingSettings = SettingsEntity(
+            userId = "user-1",
+            theme = "light",
+            themeHlc = "BBBB",
+            densityHlc = "AAAA",
+            showGuideLinesHlc = "AAAA",
+            showBacklinkBadgeHlc = "AAAA",
+            deviceId = "device-1",
+            updatedAt = 1000L
+        )
+        coEvery { settingsDao.getPendingSettings(any(), any(), any()) } returns pendingSettings
+        coEvery { syncRepository.pull(any(), any()) } returns Result.success(fakePullResponse())
+        coEvery { syncRepository.push(any()) } returns Result.success(fakePushResponse())
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.triggerSync()
+            expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Syncing))
+            expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Idle))
+        }
+        coVerify {
+            syncRepository.push(match { payload ->
+                payload.settings != null && payload.settings!!.id == "user-1"
+            })
+        }
+    }
+
+    @Test
+    fun `triggerSync omits settings from push payload when no pending`() = runTest {
+        every { documentDao.getAllDocuments("user-1") } returns flowOf(emptyList())
+        coEvery { settingsDao.getPendingSettings(any(), any(), any()) } returns null
+        coEvery { syncRepository.pull(any(), any()) } returns Result.success(fakePullResponse())
+        coEvery { syncRepository.push(any()) } returns Result.success(fakePushResponse())
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.triggerSync()
+            expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Syncing))
+            expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Idle))
+        }
+        coVerify {
+            syncRepository.push(match { payload ->
+                payload.settings == null
+            })
         }
     }
 }
