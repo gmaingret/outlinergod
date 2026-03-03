@@ -233,7 +233,7 @@ private fun NodeRow(
     dragModifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
-    var textFieldValue by remember(flatNode.entity.id, flatNode.entity.content) {
+    var textFieldValue by remember(flatNode.entity.id) {
         mutableStateOf(TextFieldValue(flatNode.entity.content))
     }
 
