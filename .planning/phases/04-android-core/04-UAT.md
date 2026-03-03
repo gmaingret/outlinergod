@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: complete
 phase: 04-android-core
-source: PLAN_PHASE4.md
+source: PLAN_PHASE4.md, 04-01-SUMMARY.md
 started: 2026-03-03T00:00:00Z
-updated: 2026-03-03T01:00:00Z
+updated: 2026-03-03T02:00:00Z
 ---
 
 ## Current Test
@@ -39,105 +39,123 @@ result: pass
 
 ### 7. Node Editor Opens
 expected: Tapping a document navigates to the Node Editor screen. An empty document shows at least one empty node ready to type in.
-result: issue
-reported: "Tapping a document navigates to the Node Editor screen. An empty document shows, but there is no node to type in"
-severity: major
+result: pass
+note: Fixed by gap closure plan 04-01 (createDocument inserts root NodeEntity)
 
 ### 8. Typing in a Node
-expected: Tapping a node and typing text updates the node content. The text appears inline in real time.
-result: issue
-reported: "can't tap a node, there is no node, and I can't add node, I can't type"
-severity: major
+expected: Tapping a node and typing text updates the node content. The text appears inline in real time. Characters appear in correct left-to-right order.
+result: pass
+note: Fixed by gap closure (root node created) + cursor fix (remember key no longer includes content)
 
 ### 9. Enter Key Creates New Node
 expected: Pressing Enter in a node's content field creates a new sibling node below it. Focus moves to the new node. Enter does NOT insert a newline.
-result: skipped
-reason: blocked by no-node issue (tests 7-8)
+result: pass
 
 ### 10. Backspace on Empty Node Deletes It
 expected: Pressing Backspace in an empty node deletes the node and moves focus to the previous node.
-result: skipped
-reason: blocked by no-node issue (tests 7-8)
+result: issue
+reported: "pressing backspace in an empty node does nothing"
+severity: major
 
 ### 11. Inline Markdown Formatting
 expected: Typing **bold** shows text with bold markers visible (asterisks may be shown or hidden). Typing _italic_ similarly shows italic-style text. Formatting renders visually distinct from plain text.
-result: skipped
-reason: blocked by no-node issue (tests 7-8)
+result: pass
+note: Markers remain visible by design — Phase 1 per architecture. Marker-hiding deferred to future phase.
 
 ### 12. Drag-and-Drop Reorder
 expected: Long-pressing a node activates drag mode. Dragging up/down reorders nodes in the list. Releasing drops the node in the new position. The reorder persists after releasing.
-result: skipped
-reason: blocked by no-node issue (tests 7-8)
+result: pass
 
 ### 13. Indent / Outdent (Horizontal Drag)
 expected: Dragging a node horizontally to the right indents it (makes it a child of the node above). Dragging left outdents it. The tree nesting is visually reflected by indentation.
-result: skipped
-reason: blocked by no-node issue (tests 7-8)
+result: issue
+reported: "doesn't work. Can't drag horizontally"
+severity: major
 
 ### 14. Node Context Menu
 expected: Long-pressing and releasing (without dragging) shows a context menu bottom sheet with options like "Add Child". Tapping "Add Child" adds a nested child node.
-result: skipped
-reason: blocked by no-node issue (tests 7-8)
+result: issue
+reported: "Long press doesn't show bottom sheet. It directly enters the drag&drop mode"
+severity: major
 
 ### 15. Node Note Editor
 expected: A node with a note field can be expanded to show the note. Tapping the note area allows typing multi-line text (Enter = newline in notes, not a new node). A node with a non-blank note shows the note area by default.
-result: skipped
-reason: blocked by no-node issue (tests 7-8)
+result: pass
 
 ### 16. Collapse and Expand Nodes
 expected: A node with children shows a directional arrow. Tapping the arrow collapses the children (hides them). Tapping again expands them. Tapping the node glyph (bullet/circle) zooms into that subtree rather than collapsing.
 result: skipped
-reason: blocked by no-node issue (tests 7-8)
+reason: blocked by context menu issue (test 14) — can't create child nodes without "Add Child"
 
 ### 17. Settings Screen
 expected: Navigating to Settings shows options for Theme (e.g., System/Light/Dark chips), Density (Normal/Compact chips), and toggles for Guide Lines and Backlink Badge. Changing a setting reflects immediately or after navigation.
-result: skipped
-reason: user requested early diagnosis
+result: issue
+reported: "I see this content with these buttons, but they do nothing. Theme doesn't change, etc."
+severity: major
 
-### 18. Background Sync
+### 18. Background Sync / Data Persistence
 expected: With the app installed and network connected, sync happens automatically in the background (approximately every 15 minutes via WorkManager). A sync status indicator is visible somewhere in the Node Editor or Document List while sync is in progress.
-result: skipped
-reason: user requested early diagnosis
+result: issue
+reported: "doesn't work. If I kill the app and restart it, I have to login again and it's empty: no more document, no nodes"
+severity: blocker
 
 ## Summary
 
 total: 18
-passed: 6
-issues: 2
+passed: 12
+issues: 5
 pending: 0
-skipped: 10
+skipped: 1
 skipped: 0
 
 ## Gaps
 
-- truth: "An empty document shows at least one empty node ready to type in"
+- truth: "Pressing Backspace in an empty node deletes the node and moves focus to the previous node"
   status: failed
-  reason: "User reported: Tapping a document navigates to the Node Editor screen. An empty document shows, but there is no node to type in"
+  reason: "User reported: pressing backspace in an empty node does nothing"
   severity: major
-  test: 7
-  root_cause: "createDocument() in DocumentListViewModel inserts only a DocumentEntity and never creates a root NodeEntity. loadDocument() in NodeEditorViewModel has no empty-list guard, so it renders an empty LazyColumn with no affordance to add content."
-  artifacts:
-    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/documentlist/DocumentListViewModel.kt"
-      issue: "createDocument() never inserts a root NodeEntity after inserting the DocumentEntity (lines 166-212)"
-    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/nodeeditor/NodeEditorViewModel.kt"
-      issue: "loadDocument() collect block has no flatNodes.isEmpty() guard (lines 57-68)"
-    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/nodeeditor/NodeEditorScreen.kt"
-      issue: "Success branch renders empty LazyColumn with no empty-state UI or affordance (lines 127-168)"
-  missing:
-    - "In createDocument(), after insertDocument(), insert a root NodeEntity with parentId=documentId and sortOrder='a0'"
-    - "In loadDocument(), add isEmpty() guard to insert an initial node if none exist (safety net)"
-    - "Optional: add empty-state text in NodeEditorScreen Success branch"
-  debug_session: ".planning/debug/empty-document-no-initial-node.md"
+  test: 10
+  root_cause: ""
+  artifacts: []
+  missing: []
+  debug_session: ""
 
-- truth: "Tapping a node and typing text updates the node content"
+- truth: "Dragging a node horizontally indents or outdents it"
   status: failed
-  reason: "User reported: can't tap a node, there is no node, and I can't add node, I can't type"
+  reason: "User reported: doesn't work. Can't drag horizontally"
   severity: major
-  test: 8
-  root_cause: "Downstream of gap 1 — no nodes rendered in the LazyColumn, so all node interaction is unreachable"
-  artifacts:
-    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/documentlist/DocumentListViewModel.kt"
-      issue: "Same root cause as test 7 — no root node created on document creation"
-  missing:
-    - "Fix is the same as test 7 — once a root node exists, typing works"
-  debug_session: ".planning/debug/empty-document-no-initial-node.md"
+  test: 13
+  root_cause: ""
+  artifacts: []
+  missing: []
+  debug_session: ""
+
+- truth: "Long-pressing and releasing shows a context menu bottom sheet"
+  status: failed
+  reason: "User reported: Long press doesn't show bottom sheet. It directly enters the drag&drop mode"
+  severity: major
+  test: 14
+  root_cause: ""
+  artifacts: []
+  missing: []
+  debug_session: ""
+
+- truth: "Settings screen controls change the app theme, density, and toggles"
+  status: failed
+  reason: "User reported: I see this content with these buttons, but they do nothing. Theme doesn't change, etc."
+  severity: major
+  test: 17
+  root_cause: ""
+  artifacts: []
+  missing: []
+  debug_session: ""
+
+- truth: "After app restart, user remains logged in and all documents and nodes are intact"
+  status: failed
+  reason: "User reported: If I kill the app and restart it, I have to login again and it's empty: no more document, no nodes"
+  severity: blocker
+  test: 18
+  root_cause: ""
+  artifacts: []
+  missing: []
+  debug_session: ""
