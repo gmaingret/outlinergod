@@ -1,8 +1,8 @@
 # OutlinerGod — Roadmap
 
-## v0.4: android-core *(in progress)*
+## v0.4: android-core *(complete)*
 
-Phases 01-06 complete. Phases 07-08 close remaining audit gaps before milestone is archived.
+All 8 phases complete. All audit gaps (GAP-A, GAP-B) closed. Ready for milestone audit.
 
 ### Phase 01: backend-foundation ✅
 **Goal:** Fastify scaffold, SQLite + Drizzle, HLC, JWT, Docker
@@ -49,14 +49,14 @@ Plans:
 - [x] 07-01-PLAN.md — MainActivity getUserId() fix + SyncStatus deletion + KEEP→UPDATE + LAST_SYNC_HLC_KEY constant
 **Status:** Complete (VERIFICATION.md present, 6/6 must-haves verified, 2026-03-03)
 
-### Phase 08: settings-sync-push
+### Phase 08: settings-sync-push ✅
 **Goal:** Wire settings into the sync push pipeline so Android-originating settings changes reach the backend
 **Requirements:** GAP-B (settings never pushed to server)
 **Gap Closure:** Closes GAP-B from v0.4 re-audit — final gap before v0.4 complete
 **Plans:** 1 plan
 Plans:
-- [ ] 08-01-PLAN.md — SettingsDao.getPendingSettings + toSettingsSyncRecord mapper + SyncPushPayload.settings + SyncWorker/ViewModel wiring + tests
-**Status:** Planned
+- [x] 08-01-PLAN.md — SettingsDao.getPendingSettings + toSettingsSyncRecord mapper + SyncPushPayload.settings + SyncWorker/ViewModel wiring + tests
+**Status:** Complete (VERIFICATION.md present, 5/5 must-haves verified, 2026-03-03)
 
 ---
 
