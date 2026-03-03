@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 04-android-core
 source: PLAN_PHASE4.md
 started: 2026-03-03T00:00:00Z
@@ -115,13 +115,29 @@ skipped: 0
   reason: "User reported: Tapping a document navigates to the Node Editor screen. An empty document shows, but there is no node to type in"
   severity: major
   test: 7
-  artifacts: []
-  missing: []
+  root_cause: "createDocument() in DocumentListViewModel inserts only a DocumentEntity and never creates a root NodeEntity. loadDocument() in NodeEditorViewModel has no empty-list guard, so it renders an empty LazyColumn with no affordance to add content."
+  artifacts:
+    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/documentlist/DocumentListViewModel.kt"
+      issue: "createDocument() never inserts a root NodeEntity after inserting the DocumentEntity (lines 166-212)"
+    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/nodeeditor/NodeEditorViewModel.kt"
+      issue: "loadDocument() collect block has no flatNodes.isEmpty() guard (lines 57-68)"
+    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/nodeeditor/NodeEditorScreen.kt"
+      issue: "Success branch renders empty LazyColumn with no empty-state UI or affordance (lines 127-168)"
+  missing:
+    - "In createDocument(), after insertDocument(), insert a root NodeEntity with parentId=documentId and sortOrder='a0'"
+    - "In loadDocument(), add isEmpty() guard to insert an initial node if none exist (safety net)"
+    - "Optional: add empty-state text in NodeEditorScreen Success branch"
+  debug_session: ".planning/debug/empty-document-no-initial-node.md"
 
 - truth: "Tapping a node and typing text updates the node content"
   status: failed
   reason: "User reported: can't tap a node, there is no node, and I can't add node, I can't type"
   severity: major
   test: 8
-  artifacts: []
-  missing: []
+  root_cause: "Downstream of gap 1 — no nodes rendered in the LazyColumn, so all node interaction is unreachable"
+  artifacts:
+    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/documentlist/DocumentListViewModel.kt"
+      issue: "Same root cause as test 7 — no root node created on document creation"
+  missing:
+    - "Fix is the same as test 7 — once a root node exists, typing works"
+  debug_session: ".planning/debug/empty-document-no-initial-node.md"
