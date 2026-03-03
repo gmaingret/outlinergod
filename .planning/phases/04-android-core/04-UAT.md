@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: complete
 phase: 04-android-core
 source: 04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md
 started: 2026-03-03T10:00:00Z
-updated: 2026-03-03T11:00:00Z
+updated: 2026-03-03T20:00:00Z
 ---
 
 ## Current Test
@@ -78,8 +78,7 @@ result: pass
 
 ### 16. Collapse and Expand Nodes
 expected: A node with children shows a directional arrow. Tapping the arrow collapses the children (hides them). Tapping again expands them. Tapping the node glyph (bullet/circle) zooms into that subtree rather than collapsing. (Previously skipped — now testable after context menu fix.)
-result: unblocked
-note: Context menu (test 14) now works; use Add Child to create a child node, then verify collapse/expand arrow behavior
+result: pass
 
 ### 17. Settings Screen Controls Work
 expected: Navigating to Settings shows Theme chips (System/Light/Dark), Density chips (Normal/Compact), and toggles for Guide Lines and Backlink Badge. Selecting Dark theme makes the app go dark. Selecting Light makes it light. Density chips visibly affect spacing. (Previously broken — OutlinerGodTheme now wired to SettingsDao in 04-04.)
@@ -92,11 +91,10 @@ result: pass
 ## Summary
 
 total: 18
-passed: 17
+passed: 18
 issues: 0
 pending: 0
 skipped: 0
-unblocked: 1 (test 16 — collapse/expand, needs manual follow-up)
 
 ## Gaps
 
