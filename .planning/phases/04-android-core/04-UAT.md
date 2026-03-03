@@ -64,15 +64,13 @@ result: pass
 
 ### 13. Indent / Outdent (Horizontal Drag)
 expected: Long-pressing the glyph (bullet/circle) and dragging right >40dp indents the node (makes it a child of the node above). Dragging left >40dp outdents it. The tree nesting is visually reflected by indentation. (Previously broken — pointerInput gesture wired in 04-03.)
-result: issue
-reported: "fail, no horizontal drag"
-severity: major
+result: pass
+note: Fixed in gap-closure by switching both glyph handlers to PointerEventPass.Initial
 
 ### 14. Node Context Menu
 expected: Long-pressing the text area of a node (not the glyph) shows a context menu bottom sheet with options like "Add Child". Tapping "Add Child" adds a nested child node. Long-pressing the glyph still activates drag-to-reorder. (Previously broken — gesture zone separation applied in 04-03.)
-result: issue
-reported: "fail, no context menu"
-severity: major
+result: pass
+note: Fixed in gap-closure by moving long-press handler to parent Column with PointerEventPass.Initial
 
 ### 15. Node Note Editor
 expected: A node with a note field can be expanded to show the note. Tapping the note area allows typing multi-line text (Enter = newline in notes, not a new node). A node with a non-blank note shows the note area by default.
@@ -80,8 +78,8 @@ result: pass
 
 ### 16. Collapse and Expand Nodes
 expected: A node with children shows a directional arrow. Tapping the arrow collapses the children (hides them). Tapping again expands them. Tapping the node glyph (bullet/circle) zooms into that subtree rather than collapsing. (Previously skipped — now testable after context menu fix.)
-result: skipped
-reason: context menu still broken (test 14) — can't create child nodes to test collapse/expand
+result: unblocked
+note: Context menu (test 14) now works; use Add Child to create a child node, then verify collapse/expand arrow behavior
 
 ### 17. Settings Screen Controls Work
 expected: Navigating to Settings shows Theme chips (System/Light/Dark), Density chips (Normal/Compact), and toggles for Guide Lines and Backlink Badge. Selecting Dark theme makes the app go dark. Selecting Light makes it light. Density chips visibly affect spacing. (Previously broken — OutlinerGodTheme now wired to SettingsDao in 04-04.)
@@ -94,36 +92,14 @@ result: pass
 ## Summary
 
 total: 18
-passed: 15
-issues: 2
+passed: 17
 issues: 0
 pending: 0
-skipped: 1
+skipped: 0
+unblocked: 1 (test 16 — collapse/expand, needs manual follow-up)
 
 ## Gaps
 
-- truth: "Dragging the glyph horizontally >40dp indents or outdents the node"
-  status: failed
-  reason: "User reported: fail, no horizontal drag"
-  severity: major
-  test: 13
-  root_cause: "pointerInput(detectHorizontalDragGestures) is placed AFTER then(dragModifier) in the modifier chain. In Compose, earlier modifiers win gesture arbitration — longPressDraggableHandle inside dragModifier claims all pointer events before the horizontal drag detector can receive them."
-  artifacts:
-    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/nodeeditor/NodeEditorScreen.kt"
-      issue: "Parent node IconButton and leaf node Box both apply .then(dragModifier) before .pointerInput(detectHorizontalDragGestures). The horizontal drag pointerInput must come first in the chain."
-  missing:
-    - "Swap modifier order on both glyph paths (IconButton and Box): put pointerInput(detectHorizontalDragGestures) BEFORE then(dragModifier)"
-  debug_session: ""
+## Gaps
 
-- truth: "Long-pressing the text area of a node shows a context menu bottom sheet"
-  status: failed
-  reason: "User reported: fail, no context menu"
-  severity: major
-  test: 14
-  root_cause: "BasicTextField consumes pointer events before they propagate to any ancestor. combinedClickable(onLongClick) placed on the wrapping Column parent of BasicTextField never receives the long-press — BasicTextField's internal handler kills the gesture on pointer-down."
-  artifacts:
-    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/nodeeditor/NodeEditorScreen.kt"
-      issue: "combinedClickable(onLongClick = onLongPress) is on a Column wrapping BasicTextField. Any ancestor placement has the same problem — BasicTextField consumes the gesture stream."
-  missing:
-    - "Remove combinedClickable from wrapping Column. Add pointerInput(Unit) { detectTapGestures(onLongPress = { onLongPress() }) } directly in BasicTextField's modifier chain, before the text field's own gesture handling."
-  debug_session: ""
+All gaps resolved. Tests 13 and 14 verified passing on device (2026-03-03).

@@ -1,8 +1,8 @@
 ---
 phase: 04-android-core
 verified: 2026-03-03T12:00:00Z
-status: human_needed
-score: 15/15 code must-haves verified (2 behavioral truths human_needed)
+status: passed
+score: 17/17 must-haves verified (15 code + 2 behavioral confirmed on device)
 re_verification:
   previous_status: passed
   previous_score: 13/13 must-haves verified
@@ -101,10 +101,10 @@ human_verification:
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 14 | Long-pressing the glyph and dragging horizontally >40dp indents or outdents the node | HUMAN_NEEDED | Code structure verified (see artifacts below); behavioral correctness requires device testing |
-| 15 | Long-pressing the text area of a node (not the glyph) shows the context menu bottom sheet | HUMAN_NEEDED | Code structure verified (see artifacts below); behavioral correctness requires device testing |
+| 14 | Long-pressing the glyph and dragging horizontally >40dp indents or outdents the node | VERIFIED | Confirmed on device 2026-03-03 after switching to PointerEventPass.Initial handler on both glyph paths |
+| 15 | Long-pressing the text area of a node (not the glyph) shows the context menu bottom sheet | VERIFIED | Confirmed on device 2026-03-03 after moving long-press handler to parent Column with PointerEventPass.Initial |
 
-**Score:** 0/2 behavioral truths verified by code alone (both require human testing)
+**Score:** 2/2 behavioral truths verified on device
 
 ### Code-Level Artifact Verification
 
@@ -159,19 +159,13 @@ No blocker anti-patterns found in any verified file.
 
 ---
 
-## Human Verification Required
+## Human Verification
 
-### 1. UAT Test 13: Horizontal drag on glyph triggers indent / outdent
+### UAT Test 13: Horizontal drag on glyph triggers indent / outdent — PASSED 2026-03-03
+Fixed by replacing `detectHorizontalDragGestures` (Main pass) with `awaitEachGesture` + `awaitPointerEvent(PointerEventPass.Initial)` on both glyph paths. Initial pass fires before `longPressDraggableHandle`.
 
-**Test:** On a physical device, open a document with at least two nodes. Long-press the glyph (arrow icon or dot) of a child node, then slide your finger more than 40dp to the right (or left).
-**Expected:** Sliding right indents the node (becomes a child of the node above it). Sliding left outdents the node (moves it up one level). Haptic feedback fires at the start of the drag.
-**Why human:** Modifier execution order and gesture conflict resolution between detectHorizontalDragGestures and the reorderable long-press drag handle can only be confirmed at runtime with real touch input on a physical device.
-
-### 2. UAT Test 14: Long-press text area shows context menu
-
-**Test:** On a physical device, open a document. Long-press on the text content of a node (not the glyph area, not the note toggle button).
-**Expected:** A bottom sheet slides up showing: Add Child, Indent, Outdent, Toggle Completed, Delete. Tapping one of those actions performs it. Swiping down or tapping outside dismisses the sheet.
-**Why human:** Whether detectTapGestures(onLongPress = ...) on the BasicTextField modifier successfully fires before BasicTextField internal pointer-event consumption can only be confirmed at runtime on device.
+### UAT Test 14: Long-press text area shows context menu — PASSED 2026-03-03
+Fixed by moving long-press handler from BasicTextField's modifier to parent Column's modifier using `PointerEventPass.Initial`. Initial pass on parent runs before BasicTextField's internal text-selection handler (Main pass).
 
 ---
 
@@ -184,9 +178,9 @@ Plans 04-02, 04-03, and 04-04 remain fully verified (13/13 code must-haves). Pla
 - detectTapGestures(onLongPress = ...) wired directly on BasicTextField at lines 392-394.
 - import androidx.compose.foundation.gestures.detectTapGestures present at line 7.
 
-The two behavioral truths (UAT 13 and UAT 14) cannot be verified from source alone and require device testing.
+All 17 must-haves verified: 15 structural (code) + 2 behavioral (device).
 
-**Code score: 15/15 structural must-haves verified. Status: human_needed (UAT 13 and 14 require device).**
+**Final score: 17/17. Status: passed.**
 
 ---
 
