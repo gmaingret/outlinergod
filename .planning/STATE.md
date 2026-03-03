@@ -2,12 +2,12 @@
 
 ## Current Position
 
-Phase: 06 of 06 (tech-debt-cleanup)
-Plan: 02 of 2 (complete)
-Status: In progress
-Last activity: 2026-03-03 - Completed 06-02-PLAN.md (VERIFICATION stubs + README)
+Phase: 06 of 06 (tech-debt-cleanup) — COMPLETE
+Plan: 02 of 2 (all complete)
+Status: v0.4 milestone complete — ready for audit or v0.5
+Last activity: 2026-03-03 - Phase 06 complete — 9/9 must-haves verified (VERIFICATION.md passed)
 
-Progress: ████████████░░░░ (completed: 01, 02, 03, 04, 05, 06-01, 06-02 | pending: none in 06)
+Progress: ████████████████ (completed: 01, 02, 03, 04, 05, 06 | v0.4 milestone done)
 
 ## Accumulated Decisions
 
@@ -38,6 +38,6 @@ Progress: ████████████░░░░ (completed: 01, 02, 0
 
 ## Session Continuity
 
-Last session: 2026-03-03T18:32:49Z
-Stopped at: Completed 06-01-PLAN.md — sort-order fix (FractionalIndex) + syncStatus removal from 3 entities
+Last session: 2026-03-03T18:40:00Z
+Stopped at: Phase 06 complete — 9/9 must-haves verified, v0.4 milestone done
 Resume file: None

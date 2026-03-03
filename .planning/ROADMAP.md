@@ -1,8 +1,8 @@
 # OutlinerGod — Roadmap
 
-## v0.4: android-core *(gap closure in progress)*
+## v0.4: android-core *(complete)*
 
-Phases 01–05 are complete. Phase 06 closes non-blocking tech debt before advancing to v0.5.
+All 6 phases complete.
 
 ### Phase 01: backend-foundation ✅
 **Goal:** Fastify scaffold, SQLite + Drizzle, HLC, JWT, Docker
@@ -30,15 +30,15 @@ Plans:
 - [x] 05-02-PLAN.md — ViewModel consumer migration + test fixture updates
 **Status:** Complete (VERIFICATION.md present, 10/10 must-haves verified)
 
-### Phase 06: tech-debt-cleanup
+### Phase 06: tech-debt-cleanup ✅
 **Goal:** Fix the "should" sort-order divergence and remove dead code, missing docs, verification stubs
 **Requirements:** DocumentListScreen fractional index fix, orphaned syncStatus removal, VERIFICATION.md stubs
 **Gap Closure:** Closes non-blocking tech debt from v0.4 audit
 **Plans:** 2 plans
 Plans:
-- [ ] 06-01-PLAN.md — Fix generateNextSortOrder + remove dead syncStatus entity field
-- [ ] 06-02-PLAN.md — VERIFICATION.md stubs for phases 01-03 + project README
-**Status:** Planned
+- [x] 06-01-PLAN.md — Fix generateNextSortOrder + remove dead syncStatus entity field
+- [x] 06-02-PLAN.md — VERIFICATION.md stubs for phases 01-03 + project README
+**Status:** Complete (VERIFICATION.md present, 9/9 must-haves verified, 2026-03-03)
 
 ---
 
