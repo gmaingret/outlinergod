@@ -8,6 +8,7 @@ import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.db.dao.NodeDao
 import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.DocumentEntity
+import com.gmaingret.outlinergod.db.entity.NodeEntity
 import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
@@ -175,6 +176,22 @@ class DocumentListViewModelTest {
             containerHost.createDocument("Doc", "document", null, "V")
         }
         coVerify { documentDao.insertDocument(any()) }
+    }
+
+    @Test
+    fun `createDocument also inserts a root node with parentId equal to documentId`() = runTest {
+        every { documentDao.getAllDocuments("user-1") } returns flowOf(emptyList())
+        coEvery { documentDao.insertDocument(any()) } just Runs
+        val nodeSlot = slot<NodeEntity>()
+        coEvery { nodeDao.insertNode(capture(nodeSlot)) } just Runs
+        httpClient = createMockHttpClient()
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.createDocument("Doc", "document", null, "V")
+        }
+        coVerify { nodeDao.insertNode(any()) }
+        assertEquals("a0", nodeSlot.captured.sortOrder)
+        assertEquals(nodeSlot.captured.documentId, nodeSlot.captured.parentId)
     }
 
     @Test

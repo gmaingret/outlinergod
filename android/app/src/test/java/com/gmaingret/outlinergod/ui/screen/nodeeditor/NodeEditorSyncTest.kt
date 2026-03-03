@@ -131,17 +131,19 @@ class NodeEditorSyncTest {
     @Test
     fun `onScreenResumed triggersSyncImmediately`() = runTest {
         setupSyncSuccess()
-        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(emptyList())
+        val nodes = listOf(fakeNode(id = "n1", content = "Hello"))
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
 
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.loadDocument(testDocumentId)
             expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes))
 
             containerHost.onScreenResumed()
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, syncStatus = SyncStatus.Syncing))
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, syncStatus = SyncStatus.Idle))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Syncing))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Idle))
         }
 
         coVerify(atLeast = 1) { syncRepository.pull(any(), any()) }
@@ -150,18 +152,20 @@ class NodeEditorSyncTest {
     @Test
     fun `onScreenResumed startsInactivityTimer 30s`() = runTest {
         setupSyncSuccess()
-        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(emptyList())
+        val nodes = listOf(fakeNode(id = "n1", content = "Hello"))
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
 
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.loadDocument(testDocumentId)
             expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes))
 
             containerHost.onScreenResumed()
             // Initial sync states
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, syncStatus = SyncStatus.Syncing))
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, syncStatus = SyncStatus.Idle))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Syncing))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Idle))
         }
 
         // After initial sync, verify pull was called once
@@ -222,17 +226,19 @@ class NodeEditorSyncTest {
     @Test
     fun `onScreenPaused cancelsInactivityTimer`() = runTest {
         setupSyncSuccess()
-        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(emptyList())
+        val nodes = listOf(fakeNode(id = "n1", content = "Hello"))
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
 
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.loadDocument(testDocumentId)
             expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes))
 
             containerHost.onScreenResumed()
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, syncStatus = SyncStatus.Syncing))
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, syncStatus = SyncStatus.Idle))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Syncing))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Idle))
         }
 
         coVerify(exactly = 1) { syncRepository.pull(any(), any()) }
@@ -251,35 +257,39 @@ class NodeEditorSyncTest {
     @Test
     fun `triggerSync setsSyncingThenIdle inUiState`() = runTest {
         setupSyncSuccess()
-        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(emptyList())
+        val nodes = listOf(fakeNode(id = "n1", content = "Hello"))
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
 
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.loadDocument(testDocumentId)
             expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes))
 
             containerHost.onScreenResumed()
             // Verify state transitions: Syncing then Idle
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, syncStatus = SyncStatus.Syncing))
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, syncStatus = SyncStatus.Idle))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Syncing))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Idle))
         }
     }
 
     @Test
     fun `syncFailure setsSyncStatusError noCrash`() = runTest {
         coEvery { syncRepository.pull(any(), any()) } returns Result.failure(IOException("Network error"))
-        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(emptyList())
+        val nodes = listOf(fakeNode(id = "n1", content = "Hello"))
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
 
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.loadDocument(testDocumentId)
             expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes))
 
             containerHost.onScreenResumed()
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, syncStatus = SyncStatus.Syncing))
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, syncStatus = SyncStatus.Error))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Syncing))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, syncStatus = SyncStatus.Error))
         }
 
         // Verify the ViewModel is still functional — no crash

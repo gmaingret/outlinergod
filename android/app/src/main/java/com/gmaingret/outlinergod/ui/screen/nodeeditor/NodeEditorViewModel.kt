@@ -57,6 +57,30 @@ class NodeEditorViewModel @Inject constructor(
     fun loadDocument(documentId: String) = intent {
         reduce { state.copy(documentId = documentId, status = NodeEditorStatus.Loading) }
         nodeDao.getNodesByDocument(documentId).collect { nodes ->
+            if (nodes.isEmpty()) {
+                val deviceId = authRepository.getDeviceId().first()
+                val now = System.currentTimeMillis()
+                val hlc = hlcClock.generate(deviceId)
+                val userId = authRepository.getAccessToken().filterNotNull().first()
+                val rootNode = NodeEntity(
+                    id = UUID.randomUUID().toString(),
+                    documentId = documentId,
+                    userId = userId,
+                    content = "",
+                    contentHlc = hlc,
+                    note = "",
+                    noteHlc = "",
+                    parentId = documentId,
+                    parentIdHlc = hlc,
+                    sortOrder = "a0",
+                    sortOrderHlc = hlc,
+                    deviceId = deviceId,
+                    createdAt = now,
+                    updatedAt = now,
+                )
+                nodeDao.insertNode(rootNode)
+                return@collect
+            }
             val flatNodes = mapToFlatList(nodes, documentId)
             reduce {
                 state.copy(

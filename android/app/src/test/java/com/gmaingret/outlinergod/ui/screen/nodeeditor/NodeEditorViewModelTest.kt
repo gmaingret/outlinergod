@@ -128,15 +128,19 @@ class NodeEditorViewModelTest {
     }
 
     @Test
-    fun `loadDocument empty setsSuccessStatus withEmptyFlatNodes`() = runTest {
+    fun `loadDocument empty inserts root node and does not emit empty success`() = runTest {
         every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(emptyList())
+        every { authRepository.getAccessToken() } returns flowOf("user-1")
+        coEvery { nodeDao.insertNode(any()) } just Runs
 
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.loadDocument(testDocumentId)
             expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = emptyList()))
+            expectNoItems()
         }
+
+        coVerify { nodeDao.insertNode(any()) }
     }
 
     @Test
