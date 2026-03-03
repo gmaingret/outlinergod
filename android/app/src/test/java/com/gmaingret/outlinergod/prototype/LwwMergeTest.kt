@@ -64,8 +64,8 @@ class LwwMergeTest {
 
     @Test
     fun lwwMerge_higherHlcWins() {
-        val lowHlc = "0000017b05a3a1be-0000-device-a"
-        val highHlc = "0000017b05a3a1be-0001-device-b"
+        val lowHlc = "1636300202430-00000-device-a"
+        val highHlc = "1636300202430-00001-device-b"
 
         val a = makeNode(content = "old content", contentHlc = lowHlc)
         val b = makeNode(content = "new content", contentHlc = highHlc)
@@ -203,7 +203,7 @@ class LwwMergeTest {
 
     @Test
     fun lwwMerge_deleteWins() {
-        val editHlc = "0000017b05a3a1be-0001-device-a"
+        val editHlc = "1636300202430-00001-device-a"
         val deleteHlc = "ffffffffffffffff-ffff-device-b" // highest possible HLC
 
         // A edited the content; B deleted the node with a very high deleted_hlc
@@ -216,7 +216,7 @@ class LwwMergeTest {
         )
         val b = makeNode(
             content = "original",
-            contentHlc = "0000017b05a3a1be-0000-device-b", // B has older content
+            contentHlc = "1636300202430-00000-device-b", // B has older content
             deletedAt = System.currentTimeMillis(),
             deletedHlc = deleteHlc, // B deleted with highest possible HLC
             deviceId = "device-b",

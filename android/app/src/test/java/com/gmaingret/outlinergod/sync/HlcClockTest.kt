@@ -16,7 +16,7 @@ class HlcClockTest : StringSpec({
     "generate_matchesFormat" {
         val clock = HlcClock()
         val hlc = clock.generate("d1")
-        assertTrue(hlc.matches(Regex("^[0-9a-f]{16}-[0-9a-f]{4}-d1$")))
+        assertTrue(hlc.matches(Regex("^\\d{13}-\\d{5}-d1$")))
     }
 
     "generate_isMonotonicallyIncreasing" {
@@ -36,17 +36,17 @@ class HlcClockTest : StringSpec({
         val second = clock.generate("d")
         val firstCounter = first.split("-")[1]
         val secondCounter = second.split("-")[1]
-        assertEquals("0000", firstCounter)
-        assertEquals("0001", secondCounter)
+        assertEquals("00000", firstCounter)
+        assertEquals("00001", secondCounter)
     }
 
     "receive_advancesWallPastIncoming" {
         val t = 1000L
         val incomingWall = t + 5000L
-        val incomingHlc = "${incomingWall.toString(16).padStart(16, '0')}-0000-other"
+        val incomingHlc = "${incomingWall.toString().padStart(13, '0')}-00000-other"
         val clock = HlcClock(clock = { t })
         val result = clock.receive(incomingHlc, "d")
-        val resultWall = result.split("-")[0].toLong(16)
+        val resultWall = result.split("-")[0].toLong()
         assertTrue(resultWall >= incomingWall)
     }
 
@@ -54,39 +54,40 @@ class HlcClockTest : StringSpec({
         // Build up a non-zero counter at wall=1000
         var now = 1000L
         val clock = HlcClock(clock = { now })
-        clock.generate("d") // counter = 0000
-        clock.generate("d") // counter = 0001
+        clock.generate("d") // counter = 00000
+        clock.generate("d") // counter = 00001
         // Advance physical clock past both local wall and incoming wall
         now = 3000L
-        val incomingHlc = "${2000L.toString(16).padStart(16, '0')}-0000-other"
+        val incomingHlc = "${2000L.toString().padStart(13, '0')}-00000-other"
         val result = clock.receive(incomingHlc, "d")
         val counter = result.split("-")[1]
-        assertEquals("0000", counter)
+        assertEquals("00000", counter)
     }
 
     "compare_higherTimestamp_returnsPositive" {
         val t1 = 1000L
         val t2 = 2000L
-        val hlcT1 = "${t1.toString(16).padStart(16, '0')}-0000-d"
-        val hlcT2 = "${t2.toString(16).padStart(16, '0')}-0000-d"
+        val hlcT1 = "${t1.toString().padStart(13, '0')}-00000-d"
+        val hlcT2 = "${t2.toString().padStart(13, '0')}-00000-d"
         val clock = HlcClock()
         assertTrue(clock.compare(hlcT2, hlcT1) > 0)
     }
 
     "compare_higherCounter_returnsPositive" {
-        val wall = "0000000000000001"
-        val hlcLow = "$wall-0000-d"
-        val hlcHigh = "$wall-0001-d"
+        val wall = "0000000000001"
+        val hlcLow = "$wall-00000-d"
+        val hlcHigh = "$wall-00001-d"
         val clock = HlcClock()
         assertTrue(clock.compare(hlcHigh, hlcLow) > 0)
     }
 
-    "wallHex_isExactlySixteenChars (property-based)" {
-        checkAll(Arb.long(0L..Long.MAX_VALUE / 2)) { wallMs ->
+    "wallDecimal_isExactlyThirteenChars (property-based)" {
+        // 13-digit decimal range: 1_000_000_000_000L..9_999_999_999_999L
+        checkAll(Arb.long(1_000_000_000_000L..9_999_999_999_999L)) { wallMs ->
             val clock = HlcClock(clock = { wallMs })
             val hlc = clock.generate("d")
             val wallPart = hlc.split("-")[0]
-            assertEquals(16, wallPart.length)
+            assertEquals(13, wallPart.length)
         }
     }
 
