@@ -24,7 +24,11 @@ Phases 01–04 are complete. Phase 05–06 close critical integration gaps found
 **Goal:** Fix all three critical integration blockers so Android↔backend sync works end-to-end
 **Requirements:** GAP-1 (HLC format), GAP-2 (userId = JWT), GAP-3 (camelCase POST body)
 **Gap Closure:** Closes all gaps from v0.4 audit — must complete before v0.5 work begins
-**Status:** Pending
+**Plans:** 2 plans
+Plans:
+- [ ] 05-01-PLAN.md — HLC decimal format + AuthRepository getUserId() infrastructure
+- [ ] 05-02-PLAN.md — ViewModel consumer migration + test fixture updates
+**Status:** Planned
 
 ### Phase 06: tech-debt-cleanup
 **Goal:** Fix the "should" sort-order divergence and remove dead code, missing docs, verification stubs
