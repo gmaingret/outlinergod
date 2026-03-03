@@ -300,6 +300,35 @@ async function handleSyncPush(
   const now = Date.now()
   const incomingHlcs: string[] = []
 
+  // --- Documents (must come before nodes due to FK: nodes.document_id -> documents.id) ---
+  const acceptedDocumentIds: string[] = []
+  const conflictDocuments: DocumentSyncRecord[] = []
+
+  for (const incoming of body.documents ?? []) {
+    incomingHlcs.push(
+      incoming.title_hlc, incoming.parent_id_hlc, incoming.sort_order_hlc,
+      incoming.collapsed_hlc, incoming.deleted_hlc,
+    )
+
+    const stored = sqlite
+      .prepare('SELECT * FROM documents WHERE id = ? AND user_id = ?')
+      .get(incoming.id, userId) as DocumentSyncRecord | undefined
+
+    if (!stored) {
+      upsertDocument(sqlite, { ...incoming, user_id: userId, created_at: incoming.created_at ?? now, updated_at: now })
+      acceptedDocumentIds.push(incoming.id)
+    } else {
+      const merged = mergeDocuments(stored, incoming)
+      upsertDocument(sqlite, { ...merged, user_id: userId, updated_at: now })
+
+      if (isDocumentFullyAccepted(incoming, stored)) {
+        acceptedDocumentIds.push(incoming.id)
+      } else {
+        conflictDocuments.push(merged)
+      }
+    }
+  }
+
   // --- Nodes ---
   const acceptedNodeIds: string[] = []
   const conflictNodes: NodeSyncRecord[] = []
@@ -331,35 +360,6 @@ async function handleSyncPush(
         acceptedNodeIds.push(incoming.id)
       } else {
         conflictNodes.push(merged)
-      }
-    }
-  }
-
-  // --- Documents ---
-  const acceptedDocumentIds: string[] = []
-  const conflictDocuments: DocumentSyncRecord[] = []
-
-  for (const incoming of body.documents ?? []) {
-    incomingHlcs.push(
-      incoming.title_hlc, incoming.parent_id_hlc, incoming.sort_order_hlc,
-      incoming.collapsed_hlc, incoming.deleted_hlc,
-    )
-
-    const stored = sqlite
-      .prepare('SELECT * FROM documents WHERE id = ? AND user_id = ?')
-      .get(incoming.id, userId) as DocumentSyncRecord | undefined
-
-    if (!stored) {
-      upsertDocument(sqlite, { ...incoming, user_id: userId, created_at: incoming.created_at ?? now, updated_at: now })
-      acceptedDocumentIds.push(incoming.id)
-    } else {
-      const merged = mergeDocuments(stored, incoming)
-      upsertDocument(sqlite, { ...merged, user_id: userId, updated_at: now })
-
-      if (isDocumentFullyAccepted(incoming, stored)) {
-        acceptedDocumentIds.push(incoming.id)
-      } else {
-        conflictDocuments.push(merged)
       }
     }
   }
