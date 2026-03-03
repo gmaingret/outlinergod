@@ -79,8 +79,9 @@ class DocumentListSyncTest {
             tempDir.newFile("test_prefs.preferences_pb")
         }
         every { authRepository.getAccessToken() } returns flowOf("user-1")
+        every { authRepository.getUserId() } returns flowOf("user-1")
         every { authRepository.getDeviceId() } returns flowOf("device-1")
-        every { hlcClock.generate(any()) } returns "0000017b05a3a1be-0000-device-1"
+        every { hlcClock.generate(any()) } returns "1636300202430-00000-device-1"
 
         val mockEngine = MockEngine { _ ->
             respond(

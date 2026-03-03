@@ -77,8 +77,9 @@ class DocumentListViewModelTest {
             tempDir.newFile("test_prefs.preferences_pb")
         }
         every { authRepository.getAccessToken() } returns flowOf("user-1")
+        every { authRepository.getUserId() } returns flowOf("user-1")
         every { authRepository.getDeviceId() } returns flowOf("device-1")
-        every { hlcClock.generate(any()) } returns "0000017b05a3a1be-0000-device-1"
+        every { hlcClock.generate(any()) } returns "1636300202430-00000-device-1"
     }
 
     @After
@@ -98,7 +99,7 @@ class DocumentListViewModelTest {
         id = id,
         userId = "user-1",
         title = title,
-        titleHlc = "0000017b05a3a1be-0000-device-1",
+        titleHlc = "1636300202430-00000-device-1",
         type = "document",
         parentId = null,
         parentIdHlc = "",
@@ -247,7 +248,7 @@ class DocumentListViewModelTest {
         }
         assertTrue(
             "Expected HLC format but got '${slot.captured.titleHlc}'",
-            slot.captured.titleHlc.matches(Regex("^[0-9a-f]{16}-[0-9a-f]{4}-.*"))
+            slot.captured.titleHlc.matches(Regex("^[0-9]{13}-[0-9]{5}-.*"))
         )
         assertEquals("New Name", slot.captured.title)
     }

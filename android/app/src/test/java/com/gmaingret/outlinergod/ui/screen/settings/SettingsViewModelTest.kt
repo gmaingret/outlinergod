@@ -42,13 +42,13 @@ class SettingsViewModelTest {
     ) = SettingsEntity(
         userId = userId,
         theme = theme,
-        themeHlc = "0000017b05a3a1be-0000-device-1",
+        themeHlc = "1636300202430-00000-device-1",
         density = density,
-        densityHlc = "0000017b05a3a1be-0000-device-1",
+        densityHlc = "1636300202430-00000-device-1",
         showGuideLines = showGuideLines,
-        showGuideLinesHlc = "0000017b05a3a1be-0000-device-1",
+        showGuideLinesHlc = "1636300202430-00000-device-1",
         showBacklinkBadge = showBacklinkBadge,
-        showBacklinkBadgeHlc = "0000017b05a3a1be-0000-device-1",
+        showBacklinkBadgeHlc = "1636300202430-00000-device-1",
         deviceId = "device-1",
         updatedAt = 1000L
     )
@@ -60,8 +60,9 @@ class SettingsViewModelTest {
         authRepository = mockk()
         hlcClock = mockk()
         every { authRepository.getAccessToken() } returns flowOf("u1")
+        every { authRepository.getUserId() } returns flowOf("u1")
         every { authRepository.getDeviceId() } returns flowOf("device-1")
-        every { hlcClock.generate(any()) } returns "0000017b05a3a1be-0001-device-1"
+        every { hlcClock.generate(any()) } returns "1636300202430-00001-device-1"
     }
 
     @After
@@ -217,12 +218,12 @@ class SettingsViewModelTest {
         assertTrue("Expected at least 4 upsert calls, got ${captured.size}", captured.size >= 4)
         // Check each mutation stamped HLC on its field
         val themeUpdate = captured.find { it.theme == "light" }!!
-        assertTrue(themeUpdate.themeHlc.matches(Regex("^[0-9a-f]{16}-[0-9a-f]{4}-.*")))
+        assertTrue(themeUpdate.themeHlc.matches(Regex("^[0-9]{13}-[0-9]{5}-.*")))
         val densityUpdate = captured.find { it.density == "compact" }!!
-        assertTrue(densityUpdate.densityHlc.matches(Regex("^[0-9a-f]{16}-[0-9a-f]{4}-.*")))
+        assertTrue(densityUpdate.densityHlc.matches(Regex("^[0-9]{13}-[0-9]{5}-.*")))
         val guidelinesUpdate = captured.find { it.showGuideLines == 0 }!!
-        assertTrue(guidelinesUpdate.showGuideLinesHlc.matches(Regex("^[0-9a-f]{16}-[0-9a-f]{4}-.*")))
+        assertTrue(guidelinesUpdate.showGuideLinesHlc.matches(Regex("^[0-9]{13}-[0-9]{5}-.*")))
         val backlinkUpdate = captured.find { it.showBacklinkBadge == 0 }!!
-        assertTrue(backlinkUpdate.showBacklinkBadgeHlc.matches(Regex("^[0-9a-f]{16}-[0-9a-f]{4}-.*")))
+        assertTrue(backlinkUpdate.showBacklinkBadgeHlc.matches(Regex("^[0-9]{13}-[0-9]{5}-.*")))
     }
 }

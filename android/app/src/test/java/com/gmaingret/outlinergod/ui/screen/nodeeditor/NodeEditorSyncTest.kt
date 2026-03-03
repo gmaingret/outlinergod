@@ -57,7 +57,7 @@ class NodeEditorSyncTest {
     private lateinit var dataStore: DataStore<Preferences>
 
     private val testDeviceId = "device-1"
-    private val testHlcValue = "0000017b05a3a1be-0000-device-1"
+    private val testHlcValue = "1636300202430-00000-device-1"
     private val testDocumentId = "doc-1"
 
     @Before
@@ -76,6 +76,7 @@ class NodeEditorSyncTest {
         savedStateHandle = SavedStateHandle(mapOf("documentId" to testDocumentId))
         every { authRepository.getDeviceId() } returns flowOf(testDeviceId)
         every { authRepository.getAccessToken() } returns flowOf("user-1")
+        every { authRepository.getUserId() } returns flowOf("user-1")
         every { hlcClock.generate(any()) } returns testHlcValue
     }
 
