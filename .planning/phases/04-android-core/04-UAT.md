@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 04-android-core
 source: 04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md
 started: 2026-03-03T10:00:00Z
@@ -107,9 +107,12 @@ skipped: 1
   reason: "User reported: fail, no horizontal drag"
   severity: major
   test: 13
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "pointerInput(detectHorizontalDragGestures) is placed AFTER then(dragModifier) in the modifier chain. In Compose, earlier modifiers win gesture arbitration — longPressDraggableHandle inside dragModifier claims all pointer events before the horizontal drag detector can receive them."
+  artifacts:
+    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/nodeeditor/NodeEditorScreen.kt"
+      issue: "Parent node IconButton and leaf node Box both apply .then(dragModifier) before .pointerInput(detectHorizontalDragGestures). The horizontal drag pointerInput must come first in the chain."
+  missing:
+    - "Swap modifier order on both glyph paths (IconButton and Box): put pointerInput(detectHorizontalDragGestures) BEFORE then(dragModifier)"
   debug_session: ""
 
 - truth: "Long-pressing the text area of a node shows a context menu bottom sheet"
@@ -117,7 +120,10 @@ skipped: 1
   reason: "User reported: fail, no context menu"
   severity: major
   test: 14
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "BasicTextField consumes pointer events before they propagate to any ancestor. combinedClickable(onLongClick) placed on the wrapping Column parent of BasicTextField never receives the long-press — BasicTextField's internal handler kills the gesture on pointer-down."
+  artifacts:
+    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/nodeeditor/NodeEditorScreen.kt"
+      issue: "combinedClickable(onLongClick = onLongPress) is on a Column wrapping BasicTextField. Any ancestor placement has the same problem — BasicTextField consumes the gesture stream."
+  missing:
+    - "Remove combinedClickable from wrapping Column. Add pointerInput(Unit) { detectTapGestures(onLongPress = { onLongPress() }) } directly in BasicTextField's modifier chain, before the text field's own gesture handling."
   debug_session: ""
