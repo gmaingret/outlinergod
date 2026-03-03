@@ -3,6 +3,7 @@ package com.gmaingret.outlinergod.ui.screen.login
 import androidx.lifecycle.ViewModel
 import com.gmaingret.outlinergod.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.viewmodel.container
 import javax.inject.Inject
@@ -12,7 +13,17 @@ class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel(), ContainerHost<LoginUiState, LoginSideEffect> {
 
-    override val container = container<LoginUiState, LoginSideEffect>(LoginUiState.Idle)
+    override val container = container<LoginUiState, LoginSideEffect>(LoginUiState.CheckingSession)
+
+    fun checkExistingSession() = intent {
+        val token = authRepository.getAccessToken().first()
+        if (token != null) {
+            reduce { LoginUiState.Success }
+            postSideEffect(LoginSideEffect.NavigateToDocumentList)
+        } else {
+            reduce { LoginUiState.Idle }
+        }
+    }
 
     fun handleSignInError(message: String) = intent {
         reduce { LoginUiState.Error(message) }
@@ -37,6 +48,7 @@ class LoginViewModel @Inject constructor(
 }
 
 sealed class LoginUiState {
+    data object CheckingSession : LoginUiState()
     data object Idle : LoginUiState()
     data object Loading : LoginUiState()
     data object Success : LoginUiState()
