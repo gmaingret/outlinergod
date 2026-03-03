@@ -1,8 +1,8 @@
 # OutlinerGod — Roadmap
 
-## v0.4: android-core *(complete)*
+## v0.4: android-core *(in progress)*
 
-All 6 phases complete.
+Phases 01-06 complete. Phases 07-08 close remaining audit gaps before milestone is archived.
 
 ### Phase 01: backend-foundation ✅
 **Goal:** Fastify scaffold, SQLite + Drizzle, HLC, JWT, Docker
@@ -40,18 +40,36 @@ Plans:
 - [x] 06-02-PLAN.md — VERIFICATION.md stubs for phases 01-03 + project README
 **Status:** Complete (VERIFICATION.md present, 9/9 must-haves verified, 2026-03-03)
 
+### Phase 07: settings-display-and-techdebt
+**Goal:** Fix MainActivity JWT-as-userId bug so settings visually apply; remove orphaned SyncStatus enum; fix WorkManager policy; extract LAST_SYNC_HLC_KEY to shared constant
+**Requirements:** GAP-A (MainActivity reads settings with wrong key), tech debt cleanup
+**Gap Closure:** Closes GAP-A from v0.4 re-audit + 3 non-blocking tech debt items
+**Plans:** 1 plan
+Plans:
+- [ ] 07-01-PLAN.md — MainActivity getUserId() fix + SyncStatus deletion + KEEP→REPLACE + LAST_SYNC_HLC_KEY constant
+**Status:** Planned
+
+### Phase 08: settings-sync-push
+**Goal:** Wire settings into the sync push pipeline so Android-originating settings changes reach the backend
+**Requirements:** GAP-B (settings never pushed to server)
+**Gap Closure:** Closes GAP-B from v0.4 re-audit — final gap before v0.4 complete
+**Plans:** 1 plan
+Plans:
+- [ ] 08-01-PLAN.md — SettingsDao.getPendingSettings + toSettingsSyncRecord mapper + SyncPushPayload.settings + SyncWorker/ViewModel wiring + tests
+**Status:** Planned
+
 ---
 
 ## v0.5: android-advanced *(planned)*
 
-### Phase 07: search-export-bookmarks
+### Phase 09: search-export-bookmarks
 **Goal:** Search (FTS5), export, bookmarks screen
-**Status:** Planned (was Phase 5 in legacy PLAN.md)
+**Status:** Planned (was Phase 07 before gap closure phases inserted)
 
 ---
 
 ## v0.6: integration-polish *(planned)*
 
-### Phase 08: integration-e2e
+### Phase 10: integration-e2e
 **Goal:** Integration, polish, end-to-end testing
-**Status:** Planned (was Phase 6 in legacy PLAN.md)
+**Status:** Planned (was Phase 08 before gap closure phases inserted)

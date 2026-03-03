@@ -2,12 +2,12 @@
 
 ## Current Position
 
-Phase: 06 of 06 (tech-debt-cleanup) — COMPLETE
-Plan: 02 of 2 (all complete)
-Status: v0.4 milestone complete — ready for audit or v0.5
-Last activity: 2026-03-03 - Phase 06 complete — 9/9 must-haves verified (VERIFICATION.md passed)
+Phase: 07 of 08 (settings-display-and-techdebt) — PLANNED
+Plan: 00 of 1 (not started)
+Status: v0.4 gap closure in progress — 2 audit gaps remain (GAP-A, GAP-B)
+Last activity: 2026-03-03 - Gap closure phases 07-08 added to roadmap
 
-Progress: ████████████████ (completed: 01, 02, 03, 04, 05, 06 | v0.4 milestone done)
+Progress: ████████████████░░░░ (completed: 01, 02, 03, 04, 05, 06 | planned: 07, 08)
 
 ## Accumulated Decisions
 
