@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify'
 import { SignJWT } from 'jose'
 import { OAuth2Client } from 'google-auth-library'
 import type Database from 'better-sqlite3'
+import rateLimit from '@fastify/rate-limit'
 import { requireAuth } from '../middleware/auth.js'
 import type { User, RefreshToken } from '../db/schema.js'
 
@@ -56,6 +57,13 @@ export function createAuthRoutes(
   verifyGoogle: (idToken: string) => Promise<GooglePayload> = defaultVerifyGoogle,
 ) {
   return async function authRoutes(fastify: FastifyInstance) {
+    // Rate-limit auth routes only (10 requests per minute per IP).
+    // Scoped to this plugin — sync/document routes remain unlimited.
+    await fastify.register(rateLimit, {
+      max: 10,
+      timeWindow: '1 minute',
+    })
+
     // -----------------------------------------------------------------------
     // POST /auth/google
     // Exchange a Google ID token for a backend JWT + refresh token.

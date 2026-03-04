@@ -1,5 +1,5 @@
 /**
- * P1-3 Auth route tests (13 cases)
+ * P1-3 Auth route tests (13 cases) + rate-limit test (1 case)
  *
  * Uses dependency-injected verifyGoogle to avoid real network calls to Google.
  * DB: in-memory SQLite via createTestDb() — never touches /data.
@@ -441,5 +441,51 @@ describe('Auth routes', () => {
 
     expect(res.statusCode).toBe(401)
     expect(res.json()).toEqual({ error: 'Unauthorized' })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Rate limit tests — isolated app instance to avoid consuming shared budget
+// ---------------------------------------------------------------------------
+
+describe('Auth rate limiting', () => {
+  let rateLimitApp: ReturnType<typeof buildApp>
+  let rateLimitSqlite: InstanceType<typeof Database>
+
+  beforeEach(async () => {
+    process.env.JWT_SECRET = TEST_SECRET
+    process.env.GOOGLE_CLIENT_ID = 'test-google-client-id'
+
+    const testDb = createTestDb()
+    rateLimitSqlite = testDb.sqlite
+    rateLimitApp = buildApp(rateLimitSqlite, mockVerifyGoogle)
+    await rateLimitApp.ready()
+  })
+
+  afterEach(async () => {
+    await rateLimitApp.close()
+    rateLimitSqlite.close()
+  })
+
+  it('google_429_afterExceedingRateLimit', async () => {
+    // Fire 10 requests to consume the rate limit budget
+    for (let i = 0; i < 10; i++) {
+      await rateLimitApp.inject({
+        method: 'POST',
+        url: '/api/auth/google',
+        headers: { 'content-type': 'application/json', 'x-forwarded-for': '1.2.3.4' },
+        body: JSON.stringify({ id_token: 'valid-google-token' }),
+      })
+    }
+
+    // The 11th request must be rate-limited
+    const res = await rateLimitApp.inject({
+      method: 'POST',
+      url: '/api/auth/google',
+      headers: { 'content-type': 'application/json', 'x-forwarded-for': '1.2.3.4' },
+      body: JSON.stringify({ id_token: 'valid-google-token' }),
+    })
+
+    expect(res.statusCode).toBe(429)
   })
 })
