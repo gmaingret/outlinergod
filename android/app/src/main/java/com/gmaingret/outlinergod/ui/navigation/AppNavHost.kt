@@ -5,7 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.gmaingret.outlinergod.ui.screen.BookmarksScreen
+import com.gmaingret.outlinergod.ui.screen.bookmarks.BookmarksScreen
 import com.gmaingret.outlinergod.ui.screen.DocumentDetailScreen
 import com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreen
 import com.gmaingret.outlinergod.ui.screen.login.LoginScreen
@@ -63,7 +63,15 @@ fun AppNavHost(
             )
         }
         composable(AppRoutes.BOOKMARKS) {
-            BookmarksScreen()
+            BookmarksScreen(
+                onNavigateToDocument = { documentId ->
+                    navController.navigate("node_editor/$documentId")
+                },
+                onNavigateToNodeEditor = { documentId ->
+                    navController.navigate("node_editor/$documentId")
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }
