@@ -97,14 +97,14 @@ Plans:
 
 ---
 
-## v0.6: integration-polish *(planned)*
+## v0.6: integration-polish *(complete)*
 
-### Phase 12: integration-e2e
+### Phase 12: integration-e2e ✅
 **Goal:** Close remaining tech debt (TD-2, TD-4), wire zoom-in navigation, harden backend (rate limiting, tombstone purge), and add SyncWorker integration test with real Room DB
 **Plans:** 4 plans
 Plans:
-- [ ] 12-01-PLAN.md — Delete dead CreateDocumentRequest.kt (TD-2) + add userId to NodeDao.getPendingChanges (TD-4)
-- [ ] 12-02-PLAN.md — Wire zoom-in on glyph tap (navigation with rootNodeId)
-- [ ] 12-03-PLAN.md — Backend hardening: auth rate limiting + tombstone purge
-- [ ] 12-04-PLAN.md — SyncWorker integration test (real Room DB) + LazyColumn contentType
-**Status:** Planned
+- [x] 12-01-PLAN.md — Delete dead CreateDocumentRequest.kt (TD-2) + add userId to NodeDao.getPendingChanges (TD-4)
+- [x] 12-02-PLAN.md — Wire zoom-in on glyph tap (navigation with rootNodeId)
+- [x] 12-03-PLAN.md — Backend hardening: auth rate limiting + tombstone purge
+- [x] 12-04-PLAN.md — SyncWorker integration test (real Room DB) + LazyColumn contentType
+**Status:** Complete (VERIFICATION.md present, 14/14 must-haves verified, 2026-03-04)
