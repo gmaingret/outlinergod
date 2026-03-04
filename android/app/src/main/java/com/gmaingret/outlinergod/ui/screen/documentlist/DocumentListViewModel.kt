@@ -100,7 +100,7 @@ class DocumentListViewModel @Inject constructor(
 
             // Build and push local changes
             val userId = authRepository.getUserId().filterNotNull().first()
-            val pendingNodes = nodeDao.getPendingChanges(lastSyncHlc, deviceId)
+            val pendingNodes = nodeDao.getPendingChanges(userId, lastSyncHlc, deviceId)
             val pendingDocs = documentDao.getPendingChanges(userId, lastSyncHlc, deviceId)
             val pendingBookmarks = bookmarkDao.getPendingChanges(userId, lastSyncHlc, deviceId)
             val pendingSettings = settingsDao.getPendingSettings(userId, lastSyncHlc, deviceId)

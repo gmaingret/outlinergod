@@ -3,8 +3,10 @@ package com.gmaingret.outlinergod.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.gmaingret.outlinergod.ui.screen.bookmarks.BookmarksScreen
 import com.gmaingret.outlinergod.ui.screen.DocumentDetailScreen
 import com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreen
@@ -35,7 +37,7 @@ fun AppNavHost(
         composable(AppRoutes.DOCUMENT_LIST) {
             DocumentListScreen(
                 onNavigateToNodeEditor = { documentId ->
-                    navController.navigate("node_editor/$documentId")
+                    navController.navigate(AppRoutes.nodeEditor(documentId))
                 },
                 onNavigateToSettings = {
                     navController.navigate(AppRoutes.SETTINGS)
@@ -52,11 +54,25 @@ fun AppNavHost(
             val documentId = backStackEntry.arguments?.getString("documentId") ?: ""
             DocumentDetailScreen(documentId = documentId)
         }
-        composable(AppRoutes.NODE_EDITOR) { backStackEntry ->
+        composable(
+            route = AppRoutes.NODE_EDITOR,
+            arguments = listOf(
+                navArgument("documentId") { type = NavType.StringType },
+                navArgument("rootNodeId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) { backStackEntry ->
             val documentId = backStackEntry.arguments?.getString("documentId") ?: ""
+            val rootNodeId = backStackEntry.arguments?.getString("rootNodeId")?.ifEmpty { null }
             NodeEditorScreen(
                 documentId = documentId,
-                onNavigateUp = { navController.navigateUp() }
+                rootNodeId = rootNodeId,
+                onNavigateUp = { navController.navigateUp() },
+                onZoomIn = { nodeId ->
+                    navController.navigate(AppRoutes.nodeEditor(documentId, nodeId))
+                }
             )
         }
         composable(AppRoutes.SETTINGS) {
@@ -72,10 +88,10 @@ fun AppNavHost(
         composable(AppRoutes.BOOKMARKS) {
             BookmarksScreen(
                 onNavigateToDocument = { documentId ->
-                    navController.navigate("node_editor/$documentId")
+                    navController.navigate(AppRoutes.nodeEditor(documentId))
                 },
                 onNavigateToNodeEditor = { documentId ->
-                    navController.navigate("node_editor/$documentId")
+                    navController.navigate(AppRoutes.nodeEditor(documentId))
                 },
                 onNavigateBack = { navController.popBackStack() }
             )
@@ -83,7 +99,7 @@ fun AppNavHost(
         composable(AppRoutes.SEARCH) {
             SearchScreen(
                 onNavigateToNodeEditor = { documentId ->
-                    navController.navigate("node_editor/$documentId")
+                    navController.navigate(AppRoutes.nodeEditor(documentId))
                 },
                 onNavigateBack = { navController.popBackStack() }
             )

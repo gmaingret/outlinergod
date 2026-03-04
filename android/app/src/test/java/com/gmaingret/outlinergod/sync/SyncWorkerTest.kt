@@ -80,7 +80,7 @@ class SyncWorkerTest {
         coEvery { authRepository.getDeviceId() } returns flowOf("device-1")
         coEvery { authRepository.getAccessToken() } returns flowOf("user-1")
         coEvery { authRepository.getUserId() } returns flowOf("user-1")
-        coEvery { nodeDao.getPendingChanges(any(), any()) } returns emptyList()
+        coEvery { nodeDao.getPendingChanges(any(), any(), any()) } returns emptyList()
         coEvery { documentDao.getPendingChanges(any(), any(), any()) } returns emptyList()
         coEvery { bookmarkDao.getPendingChanges(any(), any(), any()) } returns emptyList()
     }

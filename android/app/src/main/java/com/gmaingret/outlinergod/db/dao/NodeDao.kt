@@ -33,7 +33,8 @@ interface NodeDao {
 
     @Query("""
         SELECT * FROM nodes
-        WHERE device_id = :deviceId
+        WHERE user_id = :userId
+        AND device_id = :deviceId
         AND (content_hlc > :sinceHlc
           OR note_hlc > :sinceHlc
           OR parent_id_hlc > :sinceHlc
@@ -43,7 +44,7 @@ interface NodeDao {
           OR collapsed_hlc > :sinceHlc
           OR deleted_hlc > :sinceHlc)
     """)
-    suspend fun getPendingChanges(sinceHlc: String, deviceId: String): List<NodeEntity>
+    suspend fun getPendingChanges(userId: String, sinceHlc: String, deviceId: String): List<NodeEntity>
 
     @RawQuery
     suspend fun searchFts(query: SupportSQLiteQuery): List<NodeEntity>
