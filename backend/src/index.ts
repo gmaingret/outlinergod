@@ -14,6 +14,7 @@ import { createExportRoutes } from './routes/export.js'
 import { createHealthRoute } from './routes/health.js'
 import { runMigrations } from './db/migrate.js'
 import { createConnection } from './db/connection.js'
+import { purgeTombstones } from './tombstone.js'
 
 /**
  * Application factory. Builds and returns a Fastify instance without calling
@@ -110,6 +111,10 @@ export async function startServer(port: number, dbPath: string): Promise<void> {
     console.error('Migration failed — cannot start server:', err)
     process.exit(1)
   }
+
+  // Purge tombstones older than 90 days. Keeps the SQLite database size
+  // manageable over time without requiring manual maintenance.
+  purgeTombstones(sqlite)
 
   // Routes are registered inside buildApp() — migrations have already run above.
   const app = buildApp(sqlite)
