@@ -14,27 +14,46 @@ class SearchRepositoryImpl @Inject constructor(
     override suspend fun searchNodes(query: String, userId: String): List<NodeEntity> {
         val parsed = SearchQueryParser.parse(query)
 
-        // Guard: if there are no FTS terms, running an empty MATCH throws SQLite exception
-        if (parsed.ftsTerms.isBlank()) return emptyList()
+        val hasFilters = parsed.isCompleted != null || parsed.color != null
 
-        val sql = buildString {
-            append(
-                """SELECT n.* FROM nodes n
+        // If no text terms and no filters, nothing to search
+        if (parsed.ftsTerms.isBlank() && !hasFilters) return emptyList()
+
+        val (sql, args) = if (parsed.ftsTerms.isBlank()) {
+            // Filter-only query (e.g. "is:completed") — skip FTS, query nodes directly
+            val filterSql = buildString {
+                append("SELECT * FROM nodes WHERE user_id = ? AND deleted_at IS NULL")
+                if (parsed.isCompleted != null) {
+                    append(" AND completed = ${if (parsed.isCompleted) 1 else 0}")
+                }
+                if (parsed.color != null) {
+                    append(" AND color = ${parsed.color}")
+                }
+                append(" ORDER BY updated_at DESC")
+            }
+            Pair(filterSql, arrayOf<Any>(userId))
+        } else {
+            // Full FTS + filter query
+            val ftsSql = buildString {
+                append(
+                    """SELECT n.* FROM nodes n
                    JOIN nodes_fts fts ON n.rowid = fts.rowid
                    WHERE nodes_fts MATCH ?
                    AND n.user_id = ?
                    AND n.deleted_at IS NULL"""
-            )
-            if (parsed.isCompleted != null) {
-                append(" AND n.completed = ${if (parsed.isCompleted) 1 else 0}")
+                )
+                if (parsed.isCompleted != null) {
+                    append(" AND n.completed = ${if (parsed.isCompleted) 1 else 0}")
+                }
+                if (parsed.color != null) {
+                    append(" AND n.color = ${parsed.color}")
+                }
+                append(" ORDER BY n.updated_at DESC")
             }
-            if (parsed.color != null) {
-                append(" AND n.color = ${parsed.color}")
-            }
-            append(" ORDER BY n.updated_at DESC")
+            Pair(ftsSql, arrayOf<Any>(parsed.ftsTerms, userId))
         }
 
-        val rawQuery = SimpleSQLiteQuery(sql, arrayOf(parsed.ftsTerms, userId))
+        val rawQuery = SimpleSQLiteQuery(sql, args)
         val results = nodeDao.searchFts(rawQuery)
 
         // Post-filter for in:note and in:title

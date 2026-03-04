@@ -68,10 +68,19 @@ class SearchRepositoryTest {
     }
 
     @Test
-    fun operatorOnly_noFtsTerms_returnsEmptyList_withoutCallingDao() = runTest {
+    fun operatorOnly_noFtsTerms_callsDao_withFilterSql() = runTest {
+        val querySlot = slot<SupportSQLiteQuery>()
+        val completedNode = makeNode(id = "n1", content = "done task", completed = 1)
+        coEvery { nodeDao.searchFts(capture(querySlot)) } returns listOf(completedNode)
+
         val results = repo.searchNodes("is:completed", "user1")
-        assertTrue(results.isEmpty())
-        coVerify(exactly = 0) { nodeDao.searchFts(any()) }
+
+        assertEquals(1, results.size)
+        val sql = querySlot.captured.sql
+        // Filter-only path: no FTS JOIN, direct nodes query
+        assertFalse("Filter-only SQL must not use FTS MATCH", sql.contains("nodes_fts MATCH"))
+        assertTrue("Filter-only SQL must filter by completed=1", sql.contains("completed = 1"))
+        assertTrue("Filter-only SQL must filter by user_id", sql.contains("user_id = ?"))
     }
 
     @Test
