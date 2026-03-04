@@ -51,7 +51,27 @@
       "Bash(sed 's/\"\"//')",
       "Bash(sed 's/.*failures=\"\"//')",
       "Bash(sed 's/\"\".*//')",
-      "Bash(read f:*)"
+      "Bash(read f:*)",
+      "Skill(gsd:verify-work)",
+      "Bash(xargs head:*)",
+      "Bash(/c/Users/gmain/Dev/OutlinerGod/android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/login/LoginViewModel.kt:*)",
+      "Bash(/c/Users/gmain/Dev/OutlinerGod/android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/login/LoginScreen.kt:*)",
+      "Bash(/c/Users/gmain/Dev/OutlinerGod/android/app/src/test/java/com/gmaingret/outlinergod/ui/screen/login/LoginViewModelTest.kt:*)",
+      "Bash(taskkill:*)",
+      "Bash(tasklist:*)",
+      "Bash(/c/Users/gmain/Dev/OutlinerGod/.planning/phases/04-android-core/04-02-SUMMARY.md:*)",
+      "Bash(\"C:/Users/gmain/Dev/OutlinerGod/.planning/phases/04-android-core/04-VERIFICATION.md\":*)",
+      "Bash(printf %s:*)",
+      "Bash(python3:*)",
+      "Bash(where python:*)",
+      "Bash(/c/Users/gmain/AppData/Local/Microsoft/WindowsApps/python3:*)",
+      "Bash(mkdir:*)",
+      "WebSearch",
+      "Bash(adb devices:*)",
+      "Bash(\"/c/Users/gmain/AppData/Local/Android/Sdk/platform-tools/adb.exe\" devices:*)",
+      "Bash(adb logcat:*)",
+      "Bash(/mnt/c/Users/gmain/AppData/Local/Android/Sdk/platform-tools/adb.exe logcat:*)",
+      "Bash(powershell.exe:*)"
     ]
   }
 }
