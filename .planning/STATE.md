@@ -47,6 +47,8 @@ Progress: ████████████ (completed: 01-11, 12-01, 12-02, 
 | D32 | Rate limit scoped inside auth plugin (not buildApp global) — sync push sends large batches that must never be throttled | 12-03 | auth.ts plugin registration |
 | D33 | purgeTombstones called after runMigrations() and before buildApp() in startServer() — schema must exist before purge runs | 12-03 | index.ts startup order |
 | D34 | NodeDao.getPendingChanges requires userId as first parameter (matches DocumentDao/BookmarkDao); prevents nodes from user B polluting user A's sync push on shared device | 12-01 | NodeDao, SyncWorker, DocumentListViewModel, NodeEditorViewModel |
+| D35 | filterSubtree collects descendants only (not rootNodeId itself) before mapToFlatList — avoids orphan-handling pollution when zooming in | 12-02 | NodeEditorViewModel.filterSubtree |
+| D36 | Zoom-in uses Navigation back stack (each zoom = separate NavBackStackEntry); System Back naturally zooms out — no in-screen state needed | 12-02 | AppNavHost, NodeEditorScreen |
 
 ## Blockers / Concerns
 
@@ -62,6 +64,6 @@ Progress: ████████████ (completed: 01-11, 12-01, 12-02, 
 
 ## Session Continuity
 
-Last session: 2026-03-04T20:30:00Z
-Stopped at: Completed 12-01-PLAN.md (retroactively, after 12-02/12-03 were already done). TD-2 + TD-4 closed. 292 Android tests, 0 failures.
+Last session: 2026-03-04T21:00:00Z
+Stopped at: Completed 12-02-PLAN.md. Zoom-in via glyph tap: rootNodeId navigation + filterSubtree + onZoomIn wired. 292 Android tests, 0 failures.
 Resume file: None
