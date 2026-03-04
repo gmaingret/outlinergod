@@ -225,8 +225,10 @@ class NoteEditorTest {
             awaitState()
             expectSideEffect(NodeEditorSideEffect.FocusNote("n1"))
 
-            // Second call: note is in expandedNoteIds → should post FocusContent
+            // Second call: note is in expandedNoteIds → removes from expandedNoteIds + posts FocusContent
             containerHost.switchToNote("n1")
+            val toggledState = awaitState()
+            assertTrue("n1 should be removed from expandedNoteIds", "n1" !in toggledState.expandedNoteIds)
             expectSideEffect(NodeEditorSideEffect.FocusContent("n1"))
         }
     }

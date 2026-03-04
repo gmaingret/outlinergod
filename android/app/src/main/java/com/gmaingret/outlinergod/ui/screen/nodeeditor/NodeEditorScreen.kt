@@ -6,9 +6,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.ui.input.pointer.PointerEventPass
-import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -70,11 +67,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gmaingret.outlinergod.ui.common.MarkdownVisualTransformation
@@ -152,7 +149,21 @@ fun NodeEditorScreen(
             Scaffold(
                 topBar = {
                     TopAppBar(
-                        title = { Text("Editor") },
+                        title = {
+                            val breadcrumb = buildString {
+                                if (state.documentTitle.isNotEmpty()) append(state.documentTitle)
+                                else append(state.documentId.take(8))
+                                state.rootNodeContent?.let { content ->
+                                    append(" > ")
+                                    append(content.ifEmpty { "…" })
+                                }
+                            }
+                            Text(
+                                text = breadcrumb,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
                         navigationIcon = {
                             IconButton(onClick = onNavigateUp) {
                                 Icon(
@@ -170,6 +181,7 @@ fun NodeEditorScreen(
                         NodeActionToolbar(
                             canUndo = state.canUndo,
                             canRedo = state.canRedo,
+                            isNoteActive = focusedNode.entity.id in state.expandedNoteIds,
                             onIndent = { viewModel.indentNode(focusedNode.entity.id) },
                             onOutdent = { viewModel.outdentNode(focusedNode.entity.id) },
                             onMoveUp = { viewModel.moveUp(focusedNode.entity.id) },
@@ -278,13 +290,10 @@ fun NodeEditorScreen(
                                         onBackspaceOnEmpty = { viewModel.onBackspaceOnEmptyNode(flatNode.entity.id) },
                                         onFocusLost = { viewModel.onNodeFocusLost(flatNode.entity.id) },
                                         onNoteChanged = { viewModel.onNoteChanged(flatNode.entity.id, it) },
-                                        onToggleNote = { viewModel.toggleNote(flatNode.entity.id) },
                                         onGlyphTap = { onZoomIn(flatNode.entity.id) },
                                         onToggleCollapse = {
                                             viewModel.toggleCollapsed(flatNode.entity.id)
                                         },
-                                        onIndent = { viewModel.indentNode(flatNode.entity.id) },
-                                        onOutdent = { viewModel.outdentNode(flatNode.entity.id) },
                                     )
                                 }
                             }
@@ -312,11 +321,8 @@ private fun NodeRow(
     onBackspaceOnEmpty: () -> Unit,
     onFocusLost: () -> Unit,
     onNoteChanged: (String) -> Unit,
-    onToggleNote: () -> Unit,
     onGlyphTap: () -> Unit,
     onToggleCollapse: () -> Unit,
-    onIndent: () -> Unit,
-    onOutdent: () -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
     val noteFocusRequester = remember { FocusRequester() }
@@ -356,78 +362,20 @@ private fun NodeRow(
             // Indentation
             Spacer(modifier = Modifier.width((flatNode.depth * 24).dp))
 
-            // Glyph: filled dot, or directional arrow if has children
-            if (flatNode.hasChildren) {
-                IconButton(
-                    onClick = onToggleCollapse,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .pointerInput(flatNode.entity.id) {
-                            awaitEachGesture {
-                                val down = awaitPointerEvent(PointerEventPass.Initial)
-                                    .changes.firstOrNull { it.pressed } ?: return@awaitEachGesture
-                                var totalDrag = 0f
-                                var fired = false
-                                while (!fired) {
-                                    val event = awaitPointerEvent(PointerEventPass.Initial)
-                                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                                    if (!change.pressed) break
-                                    totalDrag += change.position.x - change.previousPosition.x
-                                    val threshPx = 40.dp.toPx()
-                                    if (totalDrag > threshPx) {
-                                        onIndent(); fired = true; change.consume()
-                                    } else if (totalDrag < -threshPx) {
-                                        onOutdent(); fired = true; change.consume()
-                                    }
-                                }
-                            }
-                        }
-                ) {
-                    Icon(
-                        imageVector = if (flatNode.entity.collapsed == 1)
-                            Icons.AutoMirrored.Filled.KeyboardArrowRight
-                        else
-                            Icons.Default.KeyboardArrowDown,
-                        contentDescription = if (flatNode.entity.collapsed == 1) "Expand" else "Collapse",
-                        modifier = Modifier.size(18.dp)
+            // Glyph: filled dot — tap = zoom in
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable { onGlyphTap() },
+                contentAlignment = Alignment.Center
+            ) {
+                val color = MaterialTheme.colorScheme.onSurface
+                Canvas(modifier = Modifier.size(6.dp)) {
+                    drawCircle(
+                        color = color,
+                        radius = size.minDimension / 2,
+                        center = Offset(size.width / 2, size.height / 2)
                     )
-                }
-            } else {
-                // Filled dot glyph -- tap = zoom in, horizontal drag = indent/outdent
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .pointerInput(flatNode.entity.id) {
-                            awaitEachGesture {
-                                val down = awaitPointerEvent(PointerEventPass.Initial)
-                                    .changes.firstOrNull { it.pressed } ?: return@awaitEachGesture
-                                var totalDrag = 0f
-                                var fired = false
-                                while (!fired) {
-                                    val event = awaitPointerEvent(PointerEventPass.Initial)
-                                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                                    if (!change.pressed) break
-                                    totalDrag += change.position.x - change.previousPosition.x
-                                    val threshPx = 40.dp.toPx()
-                                    if (totalDrag > threshPx) {
-                                        onIndent(); fired = true; change.consume()
-                                    } else if (totalDrag < -threshPx) {
-                                        onOutdent(); fired = true; change.consume()
-                                    }
-                                }
-                            }
-                        }
-                        .clickable(onClick = onGlyphTap),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val color = MaterialTheme.colorScheme.onSurface
-                    Canvas(modifier = Modifier.size(6.dp)) {
-                        drawCircle(
-                            color = color,
-                            radius = size.minDimension / 2,
-                            center = Offset(size.width / 2, size.height / 2)
-                        )
-                    }
                 }
             }
 
@@ -493,20 +441,21 @@ private fun NodeRow(
                 )
             }
 
-            // Note toggle button
-            IconButton(
-                onClick = onToggleNote,
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Toggle note",
-                    modifier = Modifier.size(16.dp),
-                    tint = if (isNoteExpanded || flatNode.entity.note.isNotBlank())
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                )
+            // Collapse/expand arrow: right-aligned, only shown for nodes with children
+            if (flatNode.hasChildren) {
+                IconButton(
+                    onClick = onToggleCollapse,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = if (flatNode.entity.collapsed == 1)
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight
+                        else
+                            Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (flatNode.entity.collapsed == 1) "Expand" else "Collapse",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
 
@@ -549,6 +498,7 @@ private fun NodeRow(
 private fun NodeActionToolbar(
     canUndo: Boolean,
     canRedo: Boolean,
+    isNoteActive: Boolean,
     onIndent: () -> Unit,
     onOutdent: () -> Unit,
     onMoveUp: () -> Unit,
@@ -582,7 +532,12 @@ private fun NodeActionToolbar(
             Icon(Icons.Default.AttachFile, contentDescription = "Add attachment")
         }
         IconButton(onClick = onSwitchToNote) {
-            Icon(Icons.Default.Edit, contentDescription = "Switch to note")
+            Icon(
+                Icons.Default.Edit,
+                contentDescription = if (isNoteActive) "Hide note" else "Show note",
+                tint = if (isNoteActive) MaterialTheme.colorScheme.primary
+                       else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
         }
     }
 }

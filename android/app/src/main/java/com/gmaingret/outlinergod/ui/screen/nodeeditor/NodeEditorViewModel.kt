@@ -55,6 +55,7 @@ class NodeEditorViewModel @Inject constructor(
 
     override val container = container<NodeEditorUiState, NodeEditorSideEffect>(NodeEditorUiState())
 
+    private var titleJob: Job? = null
     private val undoStack = ArrayDeque<List<FlatNode>>()
     private val redoStack = ArrayDeque<List<FlatNode>>()
 
@@ -66,6 +67,12 @@ class NodeEditorViewModel @Inject constructor(
 
     fun loadDocument(documentId: String, rootNodeId: String? = null) = intent {
         reduce { state.copy(documentId = documentId, rootNodeId = rootNodeId, status = NodeEditorStatus.Loading) }
+        titleJob?.cancel()
+        titleJob = viewModelScope.launch {
+            documentDao.getDocumentById(documentId).filterNotNull().collect { doc ->
+                intent { reduce { state.copy(documentTitle = doc.title) } }
+            }
+        }
         nodeDao.getNodesByDocument(documentId).collect { nodes ->
             // Only auto-create empty root node when not zoomed in to a sub-node
             if (nodes.isEmpty() && rootNodeId == null) {
@@ -102,10 +109,14 @@ class NodeEditorViewModel @Inject constructor(
                 nodes
             }
             val flatNodes = mapToFlatList(nodesForMapper, treeRoot)
+            val rootContent = if (rootNodeId != null) {
+                nodes.firstOrNull { it.id == rootNodeId }?.content
+            } else null
             reduce {
                 state.copy(
                     status = NodeEditorStatus.Success,
                     flatNodes = flatNodes,
+                    rootNodeContent = rootContent,
                 )
             }
         }
@@ -462,7 +473,7 @@ class NodeEditorViewModel @Inject constructor(
 
     fun switchToNote(nodeId: String) = intent {
         if (nodeId in state.expandedNoteIds) {
-            // Note already visible; toggle back to content
+            reduce { state.copy(expandedNoteIds = state.expandedNoteIds - nodeId) }
             postSideEffect(NodeEditorSideEffect.FocusContent(nodeId))
         } else {
             reduce { state.copy(expandedNoteIds = state.expandedNoteIds + nodeId) }
@@ -920,6 +931,8 @@ data class NodeEditorUiState(
     val focusedNodeId: String? = null,
     val documentId: String = "",
     val rootNodeId: String? = null,
+    val documentTitle: String = "",
+    val rootNodeContent: String? = null,
     val expandedNoteIds: Set<String> = emptySet(),
     val syncStatus: SyncStatus = SyncStatus.Idle,
     val canUndo: Boolean = false,
