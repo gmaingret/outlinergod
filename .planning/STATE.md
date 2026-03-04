@@ -2,12 +2,12 @@
 
 ## Current Position
 
-Phase: 10 of 12 (android-node-actions) — COMPLETE
-Plan: 01 of 1 (complete)
-Status: v0.5 in progress — Phase 10 complete (6/6 must-haves verified)
-Last activity: 2026-03-04 - Phase 10 executed and verified: swipe gestures, NodeActionToolbar, snackbar undo, ModalBottomSheet removed
+Phase: 11 of 12 (search-export-bookmarks) — In progress
+Plan: 04 of 6 (complete)
+Status: v0.5 in progress — Phase 11 plans 01-04 complete
+Last activity: 2026-03-04 - Completed 11-04-PLAN.md: SearchViewModel + SearchScreen + navigation wiring + 6 tests
 
-Progress: ██████████░░ (completed: 01-10 | planned: 11-search-export-bookmarks, 12-integration-e2e)
+Progress: ██████████░░ (completed: 01-11.04 | planned: 11.05-11.06, 12-integration-e2e)
 
 ## Accumulated Decisions
 
@@ -41,6 +41,9 @@ Progress: ██████████░░ (completed: 01-10 | planned: 11-s
 | D26 | longPressDraggableHandle on Surface (full row), not NodeRow glyph — improves DnD discoverability | 09-01 | NodeEditorScreen |
 | D27 | NodeContextMenuTest updated to remove showContextMenu/dismissContextMenu tests; context-menu functionality completely replaced by swipe gestures and NodeActionToolbar | 10-01 | NodeContextMenuTest |
 | D28 | Use testDispatcher.scheduler.advanceUntilIdle() in orbit-test DSL to flush intent coroutines before asserting slot captures (advanceUntilIdle() top-level not in scope) | 10-01 | NodeEditorViewModelTest |
+| D29 | viewModelScope.launch in init{} for infinite queryFlow collection — orbit-test joinIntents has 1s wall-clock timeout; repeatOnSubscription in onCreate causes OrbitTimeoutCancellationException | 11-04 | SearchViewModel |
+| D30 | Shared TestCoroutineScheduler pattern: create scheduler explicitly, pass to StandardTestDispatcher(testScheduler) AND runTest(testDispatcher) — viewModelScope and orbit TestScope share one virtual clock | 11-04 | SearchViewModelTest |
+| D31 | intent { reduce { newState } } from viewModelScope.launch — short-lived intents complete immediately; outer launch is non-orbit and not tracked by joinIntents | 11-04 | SearchViewModel |
 
 ## Blockers / Concerns
 
@@ -56,6 +59,6 @@ Progress: ██████████░░ (completed: 01-10 | planned: 11-s
 
 ## Session Continuity
 
-Last session: 2026-03-04T08:13:00Z
-Stopped at: Completed 10-01-PLAN.md (swipe gestures, NodeActionToolbar, SnackbarHost, removed ModalBottomSheet context menu). Phase 10 plan 01 done.
+Last session: 2026-03-04T09:15:00Z
+Stopped at: Completed 11-04-PLAN.md (SearchViewModel + SearchScreen + navigation wiring + SearchViewModelTest 6 tests passing). Phase 11 plan 04 done.
 Resume file: None
