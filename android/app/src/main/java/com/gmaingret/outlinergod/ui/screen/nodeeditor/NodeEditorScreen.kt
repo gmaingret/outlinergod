@@ -191,7 +191,8 @@ fun NodeEditorScreen(
                 ) {
                     items(
                         items = state.flatNodes,
-                        key = { it.entity.id }
+                        key = { it.entity.id },
+                        contentType = { "node" }
                     ) { flatNode ->
                         ReorderableItem(reorderState, key = flatNode.entity.id) { isDragging ->
                             val currentNodeId = flatNode.entity.id
