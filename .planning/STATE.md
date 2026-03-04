@@ -46,6 +46,7 @@ Progress: ████████████ (completed: 01-11, 12-01, 12-02, 
 | D31 | intent { reduce { newState } } from viewModelScope.launch — short-lived intents complete immediately; outer launch is non-orbit and not tracked by joinIntents | 11-04 | SearchViewModel |
 | D32 | Rate limit scoped inside auth plugin (not buildApp global) — sync push sends large batches that must never be throttled | 12-03 | auth.ts plugin registration |
 | D33 | purgeTombstones called after runMigrations() and before buildApp() in startServer() — schema must exist before purge runs | 12-03 | index.ts startup order |
+| D34 | NodeDao.getPendingChanges requires userId as first parameter (matches DocumentDao/BookmarkDao); prevents nodes from user B polluting user A's sync push on shared device | 12-01 | NodeDao, SyncWorker, DocumentListViewModel, NodeEditorViewModel |
 
 ## Blockers / Concerns
 
@@ -61,6 +62,6 @@ Progress: ████████████ (completed: 01-11, 12-01, 12-02, 
 
 ## Session Continuity
 
-Last session: 2026-03-04T17:19:00Z
-Stopped at: Completed 12-03-PLAN.md. Auth rate limiting + tombstone purge. 267 backend tests, 0 failures.
+Last session: 2026-03-04T20:30:00Z
+Stopped at: Completed 12-01-PLAN.md (retroactively, after 12-02/12-03 were already done). TD-2 + TD-4 closed. 292 Android tests, 0 failures.
 Resume file: None
