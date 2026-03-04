@@ -21,6 +21,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -62,6 +64,7 @@ fun DocumentListScreen(
     onNavigateToNodeEditor: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToSearch: () -> Unit = {},
+    onNavigateToBookmarks: () -> Unit = {},
     viewModel: DocumentListViewModel = hiltViewModel()
 ) {
     val state by viewModel.container.stateFlow.collectAsState()
@@ -81,6 +84,9 @@ fun DocumentListScreen(
             when (sideEffect) {
                 is DocumentListSideEffect.ShowError -> {
                     snackbarHostState.showSnackbar(sideEffect.message)
+                }
+                DocumentListSideEffect.ShowBookmarkAdded -> {
+                    snackbarHostState.showSnackbar("Bookmark added")
                 }
             }
         }
@@ -145,6 +151,12 @@ fun DocumentListScreen(
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search"
+                        )
+                    }
+                    IconButton(onClick = onNavigateToBookmarks) {
+                        Icon(
+                            imageVector = Icons.Default.Bookmark,
+                            contentDescription = "Bookmarks"
                         )
                     }
                     IconButton(onClick = onNavigateToSettings) {
@@ -245,7 +257,8 @@ fun DocumentListScreen(
                                     onTap = { onNavigateToNodeEditor(document.id) },
                                     onDelete = { viewModel.deleteDocument(document.id) },
                                     onRename = { newTitle -> viewModel.renameDocument(document.id, newTitle) },
-                                    onToggleCollapse = { viewModel.toggleFolderCollapse(document.id) }
+                                    onToggleCollapse = { viewModel.toggleFolderCollapse(document.id) },
+                                    onBookmark = { viewModel.addBookmark(document.id, document.title.ifEmpty { "Untitled" }) }
                                 )
                             }
                         }
@@ -264,7 +277,8 @@ private fun DocumentListItem(
     onTap: () -> Unit,
     onDelete: () -> Unit,
     onRename: (String) -> Unit,
-    onToggleCollapse: () -> Unit
+    onToggleCollapse: () -> Unit,
+    onBookmark: () -> Unit = {}
 ) {
     var showContextMenu by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -362,6 +376,16 @@ private fun DocumentListItem(
                 },
                 leadingIcon = {
                     Icon(Icons.Default.Edit, contentDescription = "Rename")
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Bookmark") },
+                onClick = {
+                    showContextMenu = false
+                    onBookmark()
+                },
+                leadingIcon = {
+                    Icon(Icons.Default.BookmarkBorder, contentDescription = "Bookmark")
                 }
             )
             DropdownMenuItem(

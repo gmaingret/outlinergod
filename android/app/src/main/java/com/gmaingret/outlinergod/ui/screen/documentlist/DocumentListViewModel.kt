@@ -220,6 +220,7 @@ class DocumentListViewModel @Inject constructor(
                 updatedAt = now
             )
             documentDao.updateDocument(updated)
+            triggerSync()
         } catch (e: Exception) {
             postSideEffect(DocumentListSideEffect.ShowError(e.message ?: "Failed to rename document"))
         }
@@ -233,6 +234,35 @@ class DocumentListViewModel @Inject constructor(
             documentDao.softDeleteDocument(id, now, hlc, now)
         } catch (e: Exception) {
             postSideEffect(DocumentListSideEffect.ShowError(e.message ?: "Failed to delete document"))
+        }
+    }
+
+    fun addBookmark(documentId: String, title: String) = intent {
+        try {
+            val userId = authRepository.getUserId().filterNotNull().first()
+            val deviceId = authRepository.getDeviceId().first()
+            val now = System.currentTimeMillis()
+            val hlc = hlcClock.generate(deviceId)
+            bookmarkDao.insertBookmark(
+                com.gmaingret.outlinergod.db.entity.BookmarkEntity(
+                    id = java.util.UUID.randomUUID().toString(),
+                    userId = userId,
+                    title = title,
+                    titleHlc = hlc,
+                    targetType = "document",
+                    targetTypeHlc = hlc,
+                    targetDocumentId = documentId,
+                    targetDocumentIdHlc = hlc,
+                    sortOrder = "aV",
+                    sortOrderHlc = hlc,
+                    deviceId = deviceId,
+                    createdAt = now,
+                    updatedAt = now
+                )
+            )
+            postSideEffect(DocumentListSideEffect.ShowBookmarkAdded)
+        } catch (e: Exception) {
+            postSideEffect(DocumentListSideEffect.ShowError(e.message ?: "Failed to add bookmark"))
         }
     }
 
@@ -261,4 +291,5 @@ sealed class DocumentListUiState {
 
 sealed class DocumentListSideEffect {
     data class ShowError(val message: String) : DocumentListSideEffect()
+    data object ShowBookmarkAdded : DocumentListSideEffect()
 }

@@ -208,7 +208,7 @@ class DocumentListViewModelTest {
     }
 
     @Test
-    fun `renameDocument updates HLC timestamp`() = runTest {
+    fun `renameDocument updates HLC timestamp and triggers sync`() = runTest {
         val doc = fakeDocument(id = "doc-1")
         every { documentDao.getAllDocuments("user-1") } returns flowOf(listOf(doc))
         coEvery { documentDao.getDocumentByIdSync("doc-1") } returns doc
@@ -217,11 +217,26 @@ class DocumentListViewModelTest {
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.renameDocument("doc-1", "New Name")
+            // triggerSync is called after rename; pull mock fails → Syncing then Error
+            expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Syncing))
+            expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Error))
         }
         assertTrue(
             "Expected HLC format but got '${slot.captured.titleHlc}'",
             slot.captured.titleHlc.matches(Regex("^[0-9]{13}-[0-9]{5}-.*"))
         )
         assertEquals("New Name", slot.captured.title)
+    }
+
+    @Test
+    fun `addBookmark inserts bookmark and posts ShowBookmarkAdded`() = runTest {
+        every { documentDao.getAllDocuments("user-1") } returns flowOf(emptyList())
+        coEvery { bookmarkDao.insertBookmark(any()) } just Runs
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.addBookmark("doc-1", "My Doc")
+            expectSideEffect(DocumentListSideEffect.ShowBookmarkAdded)
+        }
+        coVerify(exactly = 1) { bookmarkDao.insertBookmark(any()) }
     }
 }

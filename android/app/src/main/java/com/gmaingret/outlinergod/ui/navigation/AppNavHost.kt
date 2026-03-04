@@ -42,6 +42,9 @@ fun AppNavHost(
                 },
                 onNavigateToSearch = {
                     navController.navigate(AppRoutes.SEARCH)
+                },
+                onNavigateToBookmarks = {
+                    navController.navigate(AppRoutes.BOOKMARKS)
                 }
             )
         }
