@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 12-integration-e2e
 source: [12-01-SUMMARY.md, 12-02-SUMMARY.md, 12-03-SUMMARY.md, 12-04-SUMMARY.md]
 started: 2026-03-04T18:00:00Z
@@ -42,5 +42,10 @@ skipped: 1
   reason: "User reported: fail"
   severity: major
   test: 1
-  artifacts: []
-  missing: []
+  root_cause: "In NodeEditorScreen.kt, the hasChildren==true branch renders only an IconButton(onClick=onToggleCollapse) with no zoom-in wiring. The clickable dot glyph (onGlyphTap) only exists in the else (leaf node) branch — so zoom-in is never triggerable on nodes that have children, which is the only case it matters."
+  artifacts:
+    - path: "android/app/src/main/java/com/gmaingret/outlinergod/ui/screen/nodeeditor/NodeEditorScreen.kt"
+      issue: "hasChildren branch (lines 360-394) missing tappable dot glyph; onGlyphTap only wired in leaf branch (line 420)"
+  missing:
+    - "Add tappable dot (Canvas circle + clickable onGlyphTap) to the hasChildren branch alongside the existing collapse arrow IconButton"
+  debug_session: ".planning/debug/zoom-in-glyph-tap.md"
