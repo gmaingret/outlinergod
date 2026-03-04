@@ -7,4 +7,5 @@ object AppRoutes {
     const val NODE_EDITOR = "node_editor/{documentId}"
     const val SETTINGS = "settings"
     const val BOOKMARKS = "bookmarks"
+    const val SEARCH = "search"
 }

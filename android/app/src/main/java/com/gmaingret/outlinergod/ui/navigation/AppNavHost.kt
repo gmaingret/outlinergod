@@ -10,6 +10,7 @@ import com.gmaingret.outlinergod.ui.screen.DocumentDetailScreen
 import com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreen
 import com.gmaingret.outlinergod.ui.screen.login.LoginScreen
 import com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorScreen
+import com.gmaingret.outlinergod.ui.screen.search.SearchScreen
 import com.gmaingret.outlinergod.ui.screen.settings.SettingsScreen
 
 @Composable
@@ -38,6 +39,9 @@ fun AppNavHost(
                 },
                 onNavigateToSettings = {
                     navController.navigate(AppRoutes.SETTINGS)
+                },
+                onNavigateToSearch = {
+                    navController.navigate(AppRoutes.SEARCH)
                 }
             )
         }
@@ -67,6 +71,14 @@ fun AppNavHost(
                 onNavigateToDocument = { documentId ->
                     navController.navigate("node_editor/$documentId")
                 },
+                onNavigateToNodeEditor = { documentId ->
+                    navController.navigate("node_editor/$documentId")
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(AppRoutes.SEARCH) {
+            SearchScreen(
                 onNavigateToNodeEditor = { documentId ->
                     navController.navigate("node_editor/$documentId")
                 },
