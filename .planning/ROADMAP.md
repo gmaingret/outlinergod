@@ -85,15 +85,15 @@ Plans:
 - [x] 10-01-PLAN.md — Swipe gestures (SwipeToDismissBox), persistent NodeActionToolbar, snackbar undo, remove ModalBottomSheet
 **Status:** Complete (VERIFICATION.md present, 6/6 must-haves verified, 2026-03-04)
 
-### Phase 11: search-export-bookmarks
+### Phase 11: search-export-bookmarks ✅
 **Goal:** Client-side FTS5 search with structured operators, full-account ZIP export via ShareSheet, and functional bookmarks screen with CRUD
 **Plans:** 4 plans
 Plans:
-- [ ] 11-01-PLAN.md — FTS5 database migration + SearchRepository + SearchQueryParser
-- [ ] 11-02-PLAN.md — Export (FileProvider + ExportRepository + SettingsScreen button)
-- [ ] 11-03-PLAN.md — Bookmarks screen (BookmarkListViewModel + BookmarksScreen UI + navigation)
-- [ ] 11-04-PLAN.md — Search screen (SearchViewModel + SearchScreen + DocumentList search button)
-**Status:** Planned
+- [x] 11-01-PLAN.md — FTS5 database migration + SearchRepository + SearchQueryParser
+- [x] 11-02-PLAN.md — Export (FileProvider + ExportRepository + SettingsScreen button)
+- [x] 11-03-PLAN.md — Bookmarks screen (BookmarkListViewModel + BookmarksScreen UI + navigation)
+- [x] 11-04-PLAN.md — Search screen (SearchViewModel + SearchScreen + DocumentList search button)
+**Status:** Complete (VERIFICATION.md present, 13/13 must-haves verified, 2026-03-04)
 
 ---
 
