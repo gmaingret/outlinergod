@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.SettingsEntity
 import com.gmaingret.outlinergod.repository.AuthRepository
+import com.gmaingret.outlinergod.repository.ExportRepository
 import com.gmaingret.outlinergod.sync.HlcClock
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.filterNotNull
@@ -16,7 +17,8 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val settingsDao: SettingsDao,
     private val authRepository: AuthRepository,
-    private val hlcClock: HlcClock
+    private val hlcClock: HlcClock,
+    private val exportRepository: ExportRepository
 ) : ViewModel(), ContainerHost<SettingsUiState, SettingsSideEffect> {
 
     override val container = container<SettingsUiState, SettingsSideEffect>(SettingsUiState.Loading)
@@ -114,15 +116,32 @@ class SettingsViewModel @Inject constructor(
             postSideEffect(SettingsSideEffect.NavigateToLogin)
         }
     }
+
+    fun exportAllData() = intent {
+        reduce { (state as? SettingsUiState.Success)?.copy(isExporting = true) ?: state }
+        try {
+            val result = exportRepository.exportAll()
+            val file = result.getOrThrow()
+            postSideEffect(SettingsSideEffect.ShareFile(filePath = file.absolutePath))
+        } catch (e: Exception) {
+            postSideEffect(SettingsSideEffect.ShowError(e.message ?: "Export failed"))
+        } finally {
+            reduce { (state as? SettingsUiState.Success)?.copy(isExporting = false) ?: state }
+        }
+    }
 }
 
 sealed class SettingsUiState {
     data object Loading : SettingsUiState()
-    data class Success(val settings: SettingsEntity) : SettingsUiState()
+    data class Success(
+        val settings: SettingsEntity,
+        val isExporting: Boolean = false
+    ) : SettingsUiState()
     data class Error(val message: String) : SettingsUiState()
 }
 
 sealed class SettingsSideEffect {
     data object NavigateToLogin : SettingsSideEffect()
     data class ShowError(val message: String) : SettingsSideEffect()
+    data class ShareFile(val filePath: String) : SettingsSideEffect()
 }
