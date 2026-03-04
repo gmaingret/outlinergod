@@ -1,21 +1,22 @@
 package com.gmaingret.outlinergod.ui.screen.search
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.SearchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.viewmodel.container
 import javax.inject.Inject
@@ -28,12 +29,14 @@ class SearchViewModel @Inject constructor(
     private val documentDao: DocumentDao
 ) : ViewModel(), ContainerHost<SearchUiState, SearchSideEffect> {
 
-    override val container = container<SearchUiState, SearchSideEffect>(SearchUiState.Idle)
+    val queryFlow = MutableStateFlow("")
 
-    private val queryFlow = MutableStateFlow("")
+    override val container = container<SearchUiState, SearchSideEffect>(
+        initialState = SearchUiState.Idle
+    )
 
     init {
-        intent {
+        viewModelScope.launch {
             val userId = authRepository.getUserId().filterNotNull().first()
             queryFlow
                 .debounce(400L)
@@ -67,7 +70,9 @@ class SearchViewModel @Inject constructor(
                         }
                     }
                 }
-                .collect { newState -> reduce { newState } }
+                .collect { newState ->
+                    intent { reduce { newState } }
+                }
         }
     }
 
