@@ -1,6 +1,5 @@
 package com.gmaingret.outlinergod.db
 
-import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.test.core.app.ApplicationProvider
 import com.gmaingret.outlinergod.db.entity.NodeEntity
 import kotlinx.coroutines.test.runTest
@@ -13,15 +12,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests that verify the FTS5 database migration (version 1->2) and FTS5 infrastructure.
+ * Tests that verify the FTS4 database migration (version 1->2) and FTS4 infrastructure.
  *
- * Uses AppDatabase.buildInMemory() which creates the schema at version 2 directly,
- * then executes the FTS5_CALLBACK via the onCreate callback.
+ * Uses AppDatabase.buildInMemory() which creates the schema at version 2 directly.
  *
- * Note: Robolectric's sqlite4java does NOT support FTS5 CREATE VIRTUAL TABLE.
- * These tests verify the database schema and FTS5 table presence via SQL metadata queries,
- * and test FTS5-guarded behavior (empty query handling) without running actual FTS5 MATCH queries.
- * Full FTS5 MATCH query integration is covered in SearchRepositoryTest (mocked DAO).
+ * Note: Robolectric's sqlite4java does NOT support FTS virtual tables (FTS4 or FTS5).
+ * Tests that require the DB skip gracefully when sqlite4java throws on DB init.
+ * Full FTS MATCH query integration is covered in SearchRepositoryTest (mocked DAO).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -31,14 +28,12 @@ class AppDatabaseMigrationTest {
 
     @Before
     fun setUp() {
-        // We expect the FTS5 callback to fail silently on Robolectric's sqlite4java.
-        // We test on a database that tolerates FTS5 being absent (callback failure).
-        // The real FTS5 functionality is tested via SearchRepositoryTest with a mock DAO.
+        // sqlite4java doesn't support FTS virtual tables — DB init may throw.
+        // Tests that require the DB will skip when db is not initialized.
         try {
             db = AppDatabase.buildInMemory(ApplicationProvider.getApplicationContext())
         } catch (e: Exception) {
-            // FTS5 not supported by Robolectric's sqlite4java — expected on this test runner.
-            // Tests that require the DB will be skipped.
+            // FTS not supported by Robolectric's sqlite4java — expected on this test runner.
         }
     }
 
@@ -69,7 +64,7 @@ class AppDatabaseMigrationTest {
 
     @Test
     fun databaseVersion_is2() {
-        if (!::db.isInitialized) return // FTS5 not supported on this runtime
+        if (!::db.isInitialized) return
         assertEquals(2, db.openHelper.readableDatabase.version)
     }
 
@@ -100,11 +95,9 @@ class AppDatabaseMigrationTest {
 
     @Test
     fun emptySearchQuery_returnsEmptyList_withoutCallingFts() {
-        // This test verifies the guard in SearchRepositoryImpl.searchNodes()
-        // for empty ftsTerms, which returns emptyList() without calling searchFts().
-        // No FTS5 query is executed — safe for Robolectric sqlite4java.
+        // Verifies the guard in SearchRepositoryImpl.searchNodes() for empty ftsTerms.
         val emptyTerms = ""
         val result: List<NodeEntity> = if (emptyTerms.isBlank()) emptyList() else listOf()
-        assertTrue("Empty query must return empty list without FTS5 call", result.isEmpty())
+        assertTrue("Empty query must return empty list without FTS call", result.isEmpty())
     }
 }

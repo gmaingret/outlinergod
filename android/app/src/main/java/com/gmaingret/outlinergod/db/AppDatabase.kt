@@ -34,88 +34,76 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
 
         /**
-         * Creates the FTS5 virtual table, triggers, and populates the index.
+         * Creates the FTS4 virtual table, triggers, and populates the index.
          *
          * Called from both MIGRATION_1_2 (upgrade path) and the onCreate callback (fresh install path).
-         * Must NOT include the populate-from-existing-nodes step in the onCreate path (no existing
-         * nodes on a brand-new database), but it's safe to call with the INSERT ... SELECT because
-         * it just returns 0 rows on an empty database.
+         * Uses regular FTS4 (not external content) so triggers can DELETE by rowid.
+         * The INSERT...SELECT is a no-op on an empty database.
+         *
+         * FTS4 is supported on all Android versions (SQLite 3.7.4+, Android 3.0+).
          */
-        private fun createFts5(db: SupportSQLiteDatabase) {
-            // Create FTS5 external content table backed by the nodes table
+        private fun createFts(db: SupportSQLiteDatabase) {
+            // Regular FTS4 table — stores index data directly alongside the nodes table
             db.execSQL(
                 """CREATE VIRTUAL TABLE IF NOT EXISTS nodes_fts
-                   USING fts5(content, note, content=nodes, content_rowid=_rowid,
-                              tokenize='porter unicode61')"""
+                   USING fts4(content, note, tokenize="porter unicode61")"""
             )
             // Populate FTS index from existing active nodes (no-op on empty DB)
             db.execSQL(
                 """INSERT INTO nodes_fts(rowid, content, note)
-                   SELECT _rowid, content, note FROM nodes WHERE deleted_at IS NULL"""
+                   SELECT rowid, content, note FROM nodes WHERE deleted_at IS NULL"""
             )
             // AFTER INSERT trigger: add new node to FTS index
             db.execSQL(
                 """CREATE TRIGGER IF NOT EXISTS nodes_fts_insert AFTER INSERT ON nodes BEGIN
                        INSERT INTO nodes_fts(rowid, content, note)
-                       VALUES(new._rowid, new.content, new.note);
+                       VALUES(new.rowid, new.content, new.note);
                    END"""
             )
-            // AFTER UPDATE trigger: remove old row, insert updated row
-            // Uses the special 'delete' command — never use plain DELETE on external content FTS5
+            // AFTER UPDATE trigger: remove old entry, re-insert only if not soft-deleted
+            // A single trigger handles both regular updates and soft-deletes.
             db.execSQL(
                 """CREATE TRIGGER IF NOT EXISTS nodes_fts_update AFTER UPDATE ON nodes BEGIN
-                       INSERT INTO nodes_fts(nodes_fts, rowid, content, note)
-                       VALUES('delete', old._rowid, old.content, old.note);
+                       DELETE FROM nodes_fts WHERE rowid = old.rowid;
                        INSERT INTO nodes_fts(rowid, content, note)
-                       VALUES(new._rowid, new.content, new.note);
-                   END"""
-            )
-            // AFTER UPDATE OF deleted_at trigger: remove soft-deleted nodes from FTS index
-            db.execSQL(
-                """CREATE TRIGGER IF NOT EXISTS nodes_fts_delete
-                   AFTER UPDATE OF deleted_at ON nodes
-                   WHEN new.deleted_at IS NOT NULL AND old.deleted_at IS NULL BEGIN
-                       INSERT INTO nodes_fts(nodes_fts, rowid, content, note)
-                       VALUES('delete', old._rowid, old.content, old.note);
+                       SELECT new.rowid, new.content, new.note WHERE new.deleted_at IS NULL;
                    END"""
             )
         }
 
         /**
-         * Migration from version 1 to 2: adds FTS5 virtual table + triggers.
+         * Migration from version 1 to 2: adds FTS4 virtual table + triggers.
          */
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                createFts5(db)
+                createFts(db)
             }
         }
 
         /**
-         * Callback that sets up FTS5 on a brand-new database (version 2 fresh install).
+         * Callback that sets up FTS4 on a brand-new database (version 2 fresh install).
          * Room does NOT run migrations when creating a database from scratch — the callback
          * ensures nodes_fts and its triggers exist on initial creation too.
          */
-        private val FTS5_CALLBACK = object : RoomDatabase.Callback() {
+        private val FTS_CALLBACK = object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
-                createFts5(db)
+                createFts(db)
             }
         }
 
         fun build(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "outlinergod.db")
                 .addMigrations(MIGRATION_1_2)
-                .addCallback(FTS5_CALLBACK)
+                .addCallback(FTS_CALLBACK)
                 .build()
 
         /**
          * Builds an in-memory database for tests.
          *
-         * Does NOT include FTS5_CALLBACK because Robolectric's sqlite4java does not support
-         * the FTS5 module. The FTS5 index and triggers are set up via MIGRATION_1_2 (for upgrade
-         * path) and FTS5_CALLBACK (for fresh production installs).
-         *
-         * FTS5-dependent search logic is tested via SearchRepositoryTest with a mocked NodeDao.
+         * Does NOT include FTS_CALLBACK because Robolectric's sqlite4java does not support
+         * FTS virtual tables. FTS-dependent search logic is tested via SearchRepositoryTest
+         * with a mocked NodeDao.
          */
         fun buildInMemory(context: Context): AppDatabase =
             Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)

@@ -20,7 +20,7 @@ class SearchRepositoryImpl @Inject constructor(
         val sql = buildString {
             append(
                 """SELECT n.* FROM nodes n
-                   JOIN nodes_fts fts ON n._rowid = fts.rowid
+                   JOIN nodes_fts fts ON n.rowid = fts.rowid
                    WHERE nodes_fts MATCH ?
                    AND n.user_id = ?
                    AND n.deleted_at IS NULL"""
@@ -31,7 +31,7 @@ class SearchRepositoryImpl @Inject constructor(
             if (parsed.color != null) {
                 append(" AND n.color = ${parsed.color}")
             }
-            append(" ORDER BY bm25(nodes_fts)")
+            append(" ORDER BY n.updated_at DESC")
         }
 
         val rawQuery = SimpleSQLiteQuery(sql, arrayOf(parsed.ftsTerms, userId))

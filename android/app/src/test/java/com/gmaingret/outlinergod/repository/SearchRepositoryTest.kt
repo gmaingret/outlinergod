@@ -84,12 +84,12 @@ class SearchRepositoryTest {
 
         assertEquals(1, results.size)
         assertEquals("n1", results[0].id)
-        // Verify the SQL contains FTS MATCH, user_id filter, and bm25 ordering
+        // Verify the SQL contains FTS MATCH, user_id filter, and updated_at ordering
         val sql = querySlot.captured.sql
         assertTrue("SQL must include nodes_fts MATCH", sql.contains("nodes_fts MATCH"))
         assertTrue("SQL must filter by user_id", sql.contains("n.user_id = ?"))
         assertTrue("SQL must exclude deleted nodes", sql.contains("n.deleted_at IS NULL"))
-        assertTrue("SQL must order by bm25", sql.contains("bm25(nodes_fts)"))
+        assertTrue("SQL must order by updated_at", sql.contains("n.updated_at DESC"))
     }
 
     @Test
