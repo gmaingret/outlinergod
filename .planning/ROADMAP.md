@@ -86,8 +86,14 @@ Plans:
 **Status:** Complete (VERIFICATION.md present, 6/6 must-haves verified, 2026-03-04)
 
 ### Phase 11: search-export-bookmarks
-**Goal:** Search (FTS5), export, bookmarks screen
-**Status:** Planned (was Phase 09)
+**Goal:** Client-side FTS5 search with structured operators, full-account ZIP export via ShareSheet, and functional bookmarks screen with CRUD
+**Plans:** 4 plans
+Plans:
+- [ ] 11-01-PLAN.md — FTS5 database migration + SearchRepository + SearchQueryParser
+- [ ] 11-02-PLAN.md — Export (FileProvider + ExportRepository + SettingsScreen button)
+- [ ] 11-03-PLAN.md — Bookmarks screen (BookmarkListViewModel + BookmarksScreen UI + navigation)
+- [ ] 11-04-PLAN.md — Search screen (SearchViewModel + SearchScreen + DocumentList search button)
+**Status:** Planned
 
 ---
 
