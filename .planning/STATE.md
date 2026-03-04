@@ -2,12 +2,12 @@
 
 ## Current Position
 
-Phase: 11 of 12 (search-export-bookmarks) — COMPLETE
-Plan: 04 of 4 (all complete)
-Status: v0.5 complete — Phase 11 complete (13/13 must-haves verified, 289 tests passing)
-Last activity: 2026-03-04 - Phase 11 executed and verified: FTS5 search, ZIP export, bookmarks screen, search screen UI
+Phase: 12 of 12 (integration-e2e) — In progress
+Plan: 03 of 4 complete
+Status: Phase 12 plan 03 complete — auth rate limiting + tombstone purge (267 backend tests passing)
+Last activity: 2026-03-04 - Completed 12-03-PLAN.md: @fastify/rate-limit on auth routes, purgeTombstones on startup
 
-Progress: ███████████░ (completed: 01-11 | planned: 12-integration-e2e)
+Progress: ████████████ (completed: 01-11, 12-01, 12-02, 12-03 | remaining: 12-04)
 
 ## Accumulated Decisions
 
@@ -44,6 +44,8 @@ Progress: ███████████░ (completed: 01-11 | planned: 12-i
 | D29 | viewModelScope.launch in init{} for infinite queryFlow collection — orbit-test joinIntents has 1s wall-clock timeout; repeatOnSubscription in onCreate causes OrbitTimeoutCancellationException | 11-04 | SearchViewModel |
 | D30 | Shared TestCoroutineScheduler pattern: create scheduler explicitly, pass to StandardTestDispatcher(testScheduler) AND runTest(testDispatcher) — viewModelScope and orbit TestScope share one virtual clock | 11-04 | SearchViewModelTest |
 | D31 | intent { reduce { newState } } from viewModelScope.launch — short-lived intents complete immediately; outer launch is non-orbit and not tracked by joinIntents | 11-04 | SearchViewModel |
+| D32 | Rate limit scoped inside auth plugin (not buildApp global) — sync push sends large batches that must never be throttled | 12-03 | auth.ts plugin registration |
+| D33 | purgeTombstones called after runMigrations() and before buildApp() in startServer() — schema must exist before purge runs | 12-03 | index.ts startup order |
 
 ## Blockers / Concerns
 
@@ -59,6 +61,6 @@ Progress: ███████████░ (completed: 01-11 | planned: 12-i
 
 ## Session Continuity
 
-Last session: 2026-03-04T13:30:00Z
-Stopped at: Completed Phase 11 (4/4 plans, 13/13 must-haves verified). FTS5 search, ZIP export, bookmarks screen, search screen all shipped. 289 tests, 0 failures.
+Last session: 2026-03-04T17:19:00Z
+Stopped at: Completed 12-03-PLAN.md. Auth rate limiting + tombstone purge. 267 backend tests, 0 failures.
 Resume file: None
