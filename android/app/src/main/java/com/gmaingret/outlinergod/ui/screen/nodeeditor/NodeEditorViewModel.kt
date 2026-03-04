@@ -496,15 +496,7 @@ class NodeEditorViewModel @Inject constructor(
         reduce { state.copy(expandedNoteIds = updated) }
     }
 
-    // --- P4-11: Context menu actions ---
-
-    fun showContextMenu(nodeId: String) = intent {
-        reduce { state.copy(contextMenuNodeId = nodeId) }
-    }
-
-    fun dismissContextMenu() = intent {
-        reduce { state.copy(contextMenuNodeId = null) }
-    }
+    // --- P4-11: Node actions ---
 
     fun addChildNode(parentNodeId: String) = intent {
         val deviceId = authRepository.getDeviceId().first()
@@ -550,10 +542,33 @@ class NodeEditorViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         val hlc = hlcClock.generate(deviceId)
 
-        nodeDao.softDeleteNode(nodeId, now, hlc, now)
+        // Collect the node and all its descendants (contiguous in DFS flat list)
+        val nodeDepth = flatNodes[index].depth
+        val idsToDelete = mutableListOf(nodeId)
+        for (i in index + 1 until flatNodes.size) {
+            if (flatNodes[i].depth > nodeDepth) idsToDelete.add(flatNodes[i].entity.id)
+            else break
+        }
+        nodeDao.softDeleteNodes(idsToDelete, now, hlc, now)
 
         val precedingNodeId = if (index > 0) flatNodes[index - 1].entity.id else null
         reduce { state.copy(focusedNodeId = precedingNodeId) }
+    }
+
+    fun restoreNode(nodeId: String) = intent {
+        val node = nodeDao.getNodeById(nodeId).first() ?: return@intent
+        val deviceId = authRepository.getDeviceId().first()
+        val hlc = hlcClock.generate(deviceId)
+        val now = System.currentTimeMillis()
+        nodeDao.updateNode(
+            node.copy(
+                deletedAt = null,
+                deletedHlc = hlc,
+                updatedAt = now,
+                deviceId = deviceId,
+            )
+        )
+        resetInactivityTimer()
     }
 
     private val colorDebounceJobs = mutableMapOf<String, Job>()
@@ -747,7 +762,6 @@ data class NodeEditorUiState(
     val flatNodes: List<FlatNode> = emptyList(),
     val focusedNodeId: String? = null,
     val documentId: String = "",
-    val contextMenuNodeId: String? = null,
     val expandedNoteIds: Set<String> = emptySet(),
     val syncStatus: SyncStatus = SyncStatus.Idle,
 )

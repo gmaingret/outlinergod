@@ -28,6 +28,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -336,5 +337,62 @@ class NodeEditorViewModelTest {
 
         // Double-check via stateFlow
         assertEquals("n0", viewModel.container.stateFlow.value.focusedNodeId)
+    }
+
+    @Test
+    fun `restoreNode clearsDeletedAt andSetsNewHlc`() = runTest {
+        val deletedNode = fakeNode(id = "n1", content = "Deleted").copy(
+            deletedAt = 999L,
+            deletedHlc = "old-hlc",
+        )
+        val nodes = listOf(
+            fakeNode(id = "n0", content = "First", sortOrder = "a0"),
+        )
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        every { nodeDao.getNodeById("n1") } returns flowOf(deletedNode)
+        val updateSlot = slot<NodeEntity>()
+        coEvery { nodeDao.updateNode(capture(updateSlot)) } just Runs
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            // Consume Loading + Success states
+            awaitState()
+            awaitState()
+
+            containerHost.restoreNode("n1")
+            testDispatcher.scheduler.advanceUntilIdle()
+        }
+
+        // Verify updateNode was called with deletedAt = null and new HLC
+        val restored = updateSlot.captured
+        assertEquals(null, restored.deletedAt)
+        assertEquals(testHlcValue, restored.deletedHlc)
+        assertNotEquals("old-hlc", restored.deletedHlc)
+        assertEquals("n1", restored.id)
+    }
+
+    @Test
+    fun `deleteNode softDeletesAndSetsFocusToPrecedingNode`() = runTest {
+        val nodes = listOf(
+            fakeNode(id = "n0", content = "First", sortOrder = "a0"),
+            fakeNode(id = "n1", content = "Second", sortOrder = "a1"),
+        )
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
+        coEvery { nodeDao.softDeleteNode(any(), any(), any(), any()) } just Runs
+        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any()) } just Runs
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes))
+
+            containerHost.deleteNode("n1")
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, focusedNodeId = "n0"))
+        }
+
+        coVerify { nodeDao.softDeleteNodes(any(), any(), any(), any()) }
     }
 }
