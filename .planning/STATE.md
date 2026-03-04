@@ -2,12 +2,12 @@
 
 ## Current Position
 
-Phase: 09 of 12 (android-ux-polish) — COMPLETE
-Plan: 01 of 1 (complete)
-Status: v0.5 in progress — Phase 09 complete (4/4 must-haves verified)
-Last activity: 2026-03-03 - Phase 09 executed and verified: density scale fix, logout button, full-row drag handle
+Phase: 10 of 12 (android-node-actions) — In progress
+Plan: 01 of ? (complete)
+Status: v0.5 in progress — Phase 10 plan 01 complete (6/6 must-haves verified)
+Last activity: 2026-03-04 - Completed 10-01-PLAN.md: swipe gestures, NodeActionToolbar, SnackbarHost, removed ModalBottomSheet
 
-Progress: █████████░░░ (completed: 01-09 | planned: 10-android-node-actions, 11-search-export-bookmarks, 12-integration-e2e)
+Progress: ██████████░░ (completed: 01-10.01 | planned: 10-android-node-actions remainder, 11-search-export-bookmarks, 12-integration-e2e)
 
 ## Accumulated Decisions
 
@@ -39,6 +39,8 @@ Progress: █████████░░░ (completed: 01-09 | planned: 10-a
 | D24 | getRefreshToken(): Flow<String?> added to AuthRepository interface + impl (reads REFRESH_TOKEN_KEY from DataStore) | 09-01 | SettingsViewModel.logout() |
 | D25 | logout() is fail-open: postSideEffect(NavigateToLogin) on success, failure, and catch — user never stuck on SettingsScreen | 09-01 | SettingsViewModel, SettingsScreen |
 | D26 | longPressDraggableHandle on Surface (full row), not NodeRow glyph — improves DnD discoverability | 09-01 | NodeEditorScreen |
+| D27 | NodeContextMenuTest updated to remove showContextMenu/dismissContextMenu tests; context-menu functionality completely replaced by swipe gestures and NodeActionToolbar | 10-01 | NodeContextMenuTest |
+| D28 | Use testDispatcher.scheduler.advanceUntilIdle() in orbit-test DSL to flush intent coroutines before asserting slot captures (advanceUntilIdle() top-level not in scope) | 10-01 | NodeEditorViewModelTest |
 
 ## Blockers / Concerns
 
@@ -54,6 +56,6 @@ Progress: █████████░░░ (completed: 01-09 | planned: 10-a
 
 ## Session Continuity
 
-Last session: 2026-03-03T21:13:00Z
-Stopped at: Completed 09-01-PLAN.md (density scale fix, logout button, full-row drag handle). Phase 09 plan 01 of 1 done.
+Last session: 2026-03-04T08:13:00Z
+Stopped at: Completed 10-01-PLAN.md (swipe gestures, NodeActionToolbar, SnackbarHost, removed ModalBottomSheet context menu). Phase 10 plan 01 done.
 Resume file: None
