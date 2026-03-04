@@ -14,6 +14,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import com.gmaingret.outlinergod.util.SyncLogger
 
 object KtorClientFactory {
 
@@ -48,16 +49,26 @@ object KtorClientFactory {
     }.apply {
         plugin(HttpSend).intercept { request ->
             val token = tokenProvider()
+            val urlStr = request.url.buildString()
+            val method = request.method.value
+            SyncLogger.log("Ktor", "→ $method $urlStr token=${if (token != null) "present" else "MISSING"}")
             if (token != null) {
                 request.headers[HttpHeaders.Authorization] = "Bearer $token"
             }
             val call = execute(request)
-            if (call.response.status == HttpStatusCode.Unauthorized) {
+            val status = call.response.status
+            SyncLogger.log("Ktor", "← ${status.value} ${status.description} ($method $urlStr)")
+            if (status == HttpStatusCode.Unauthorized) {
+                SyncLogger.log("Ktor", "401 received — attempting token refresh for $urlStr")
                 val newToken = tokenRefresher()
                 if (newToken != null) {
+                    SyncLogger.log("Ktor", "Token refreshed OK, retrying $method $urlStr")
                     request.headers[HttpHeaders.Authorization] = "Bearer $newToken"
-                    execute(request)
+                    val retryCall = execute(request)
+                    SyncLogger.log("Ktor", "← (retry) ${retryCall.response.status.value} ${retryCall.response.status.description}")
+                    retryCall
                 } else {
+                    SyncLogger.log("Ktor", "Token refresh returned null — giving up on $urlStr")
                     call
                 }
             } else {
