@@ -97,14 +97,15 @@ Plans:
 
 ---
 
-## v0.6: integration-polish *(complete)*
+## v0.6: integration-polish *(gap closure in progress)*
 
-### Phase 12: integration-e2e ✅
+### Phase 12: integration-e2e
 **Goal:** Close remaining tech debt (TD-2, TD-4), wire zoom-in navigation, harden backend (rate limiting, tombstone purge), and add SyncWorker integration test with real Room DB
-**Plans:** 4 plans
+**Plans:** 5 plans
 Plans:
 - [x] 12-01-PLAN.md — Delete dead CreateDocumentRequest.kt (TD-2) + add userId to NodeDao.getPendingChanges (TD-4)
 - [x] 12-02-PLAN.md — Wire zoom-in on glyph tap (navigation with rootNodeId)
 - [x] 12-03-PLAN.md — Backend hardening: auth rate limiting + tombstone purge
 - [x] 12-04-PLAN.md — SyncWorker integration test (real Room DB) + LazyColumn contentType
-**Status:** Complete (VERIFICATION.md present, 14/14 must-haves verified, 2026-03-04)
+- [ ] 12-05-PLAN.md — Gap closure: add tappable dot glyph to hasChildren branch in NodeEditorScreen
+**Status:** Gap closure in progress (UAT gap: dot glyph missing from parent node branch)
