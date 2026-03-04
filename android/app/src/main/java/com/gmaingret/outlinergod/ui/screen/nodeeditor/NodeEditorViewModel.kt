@@ -55,10 +55,20 @@ class NodeEditorViewModel @Inject constructor(
 
     override val container = container<NodeEditorUiState, NodeEditorSideEffect>(NodeEditorUiState())
 
-    fun loadDocument(documentId: String) = intent {
-        reduce { state.copy(documentId = documentId, status = NodeEditorStatus.Loading) }
+    private val undoStack = ArrayDeque<List<FlatNode>>()
+    private val redoStack = ArrayDeque<List<FlatNode>>()
+
+    private fun pushUndoSnapshot(current: List<FlatNode>) {
+        if (undoStack.size >= 50) undoStack.removeFirst()
+        undoStack.addLast(current)
+        redoStack.clear()
+    }
+
+    fun loadDocument(documentId: String, rootNodeId: String? = null) = intent {
+        reduce { state.copy(documentId = documentId, rootNodeId = rootNodeId, status = NodeEditorStatus.Loading) }
         nodeDao.getNodesByDocument(documentId).collect { nodes ->
-            if (nodes.isEmpty()) {
+            // Only auto-create empty root node when not zoomed in to a sub-node
+            if (nodes.isEmpty() && rootNodeId == null) {
                 val deviceId = authRepository.getDeviceId().first()
                 val now = System.currentTimeMillis()
                 val hlc = hlcClock.generate(deviceId)
@@ -82,7 +92,16 @@ class NodeEditorViewModel @Inject constructor(
                 nodeDao.insertNode(rootNode)
                 return@collect
             }
-            val flatNodes = mapToFlatList(nodes, documentId)
+            // Use rootNodeId as the tree root when zoomed in; otherwise use documentId
+            val treeRoot = rootNodeId ?: documentId
+            // When zooming in, pre-filter to only the subtree rooted at rootNodeId
+            // to avoid orphan-handling noise in mapToFlatList
+            val nodesForMapper = if (rootNodeId != null) {
+                filterSubtree(nodes, rootNodeId)
+            } else {
+                nodes
+            }
+            val flatNodes = mapToFlatList(nodesForMapper, treeRoot)
             reduce {
                 state.copy(
                     status = NodeEditorStatus.Success,
@@ -277,6 +296,22 @@ class NodeEditorViewModel @Inject constructor(
         }
         withoutBlock.addAll(insertAt, block)
 
+        // Enforce depth constraint: moved block head must be at most nodeAbove.depth + 1
+        val nodeAbove = withoutBlock.getOrNull(insertAt - 1)
+        val maxAllowedDepth = nodeAbove?.depth?.plus(1) ?: 0
+        val blockHeadDepth = withoutBlock[insertAt].depth
+        if (blockHeadDepth > maxAllowedDepth) {
+            val depthDelta = blockHeadDepth - maxAllowedDepth
+            val newParentId = nodeAbove?.entity?.id ?: state.documentId
+            for (i in insertAt until insertAt + blockSize) {
+                val n = withoutBlock[i]
+                withoutBlock[i] = n.copy(
+                    entity = if (i == insertAt) n.entity.copy(parentId = newParentId) else n.entity,
+                    depth = n.depth - depthDelta,
+                )
+            }
+        }
+
         // Recompute sort orders and parent IDs, then persist
         val recomputed = recomputeFlatNodes(withoutBlock)
 
@@ -291,17 +326,18 @@ class NodeEditorViewModel @Inject constructor(
     fun indentNode(nodeId: String) = intent {
         val flatNodes = state.flatNodes
         val nodeIndex = flatNodes.indexOfFirst { it.entity.id == nodeId }
-        if (nodeIndex <= 0) return@intent
+        if (nodeIndex < 0) return@intent
 
         val node = flatNodes[nodeIndex]
-        val predecessor = flatNodes[nodeIndex - 1]
 
-        // Can only indent if predecessor is at same depth (becomes new parent)
-        if (predecessor.depth != node.depth) return@intent
+        // Find the previous sibling (same depth and parent) — it becomes the new parent
+        val prevSibling = flatNodes.subList(0, nodeIndex)
+            .lastOrNull { it.depth == node.depth && it.entity.parentId == node.entity.parentId }
+            ?: return@intent
 
         val result = flatNodes.toMutableList()
         result[nodeIndex] = node.copy(
-            entity = node.entity.copy(parentId = predecessor.entity.id),
+            entity = node.entity.copy(parentId = prevSibling.entity.id),
             depth = node.depth + 1,
         )
         // Shift all descendants by +1
@@ -311,8 +347,9 @@ class NodeEditorViewModel @Inject constructor(
             i++
         }
 
+        pushUndoSnapshot(flatNodes)
         val recomputed = recomputeFlatNodes(result)
-        reduce { state.copy(flatNodes = recomputed) }
+        reduce { state.copy(flatNodes = recomputed, canUndo = true, canRedo = false) }
         persistReorderedNodes(flatNodes, recomputed)
     }
 
@@ -341,9 +378,100 @@ class NodeEditorViewModel @Inject constructor(
             i++
         }
 
+        pushUndoSnapshot(flatNodes)
         val recomputed = recomputeFlatNodes(result)
-        reduce { state.copy(flatNodes = recomputed) }
+        reduce { state.copy(flatNodes = recomputed, canUndo = true, canRedo = false) }
         persistReorderedNodes(flatNodes, recomputed)
+    }
+
+    fun moveUp(nodeId: String) = intent {
+        val flatNodes = state.flatNodes
+        val nodeIndex = flatNodes.indexOfFirst { it.entity.id == nodeId }
+        if (nodeIndex <= 0) return@intent
+        val node = flatNodes[nodeIndex]
+
+        // Find previous sibling (same parentId, same depth)
+        val prevSiblingIndex = (nodeIndex - 1 downTo 0)
+            .firstOrNull { flatNodes[it].depth == node.depth && flatNodes[it].entity.parentId == node.entity.parentId }
+            ?: return@intent
+
+        val blockEnd = ((nodeIndex + 1)..flatNodes.lastIndex)
+            .firstOrNull { flatNodes[it].depth <= node.depth } ?: flatNodes.size
+        val block = flatNodes.subList(nodeIndex, blockEnd).toList()
+        val withoutBlock = flatNodes.toMutableList()
+        withoutBlock.subList(nodeIndex, blockEnd).clear()
+        val insertAt = prevSiblingIndex.coerceIn(0, withoutBlock.size)
+        withoutBlock.addAll(insertAt, block)
+
+        pushUndoSnapshot(flatNodes)
+        val recomputed = recomputeFlatNodes(withoutBlock)
+        reduce { state.copy(flatNodes = recomputed, canUndo = true, canRedo = false) }
+        persistReorderedNodes(flatNodes, recomputed)
+        resetInactivityTimer()
+    }
+
+    fun moveDown(nodeId: String) = intent {
+        val flatNodes = state.flatNodes
+        val nodeIndex = flatNodes.indexOfFirst { it.entity.id == nodeId }
+        if (nodeIndex < 0) return@intent
+        val node = flatNodes[nodeIndex]
+
+        val blockEnd = ((nodeIndex + 1)..flatNodes.lastIndex)
+            .firstOrNull { flatNodes[it].depth <= node.depth } ?: flatNodes.size
+        val blockSize = blockEnd - nodeIndex
+
+        // Find next sibling (same parentId, same depth, at or after blockEnd)
+        val nextSiblingIndex = (blockEnd..flatNodes.lastIndex)
+            .firstOrNull { flatNodes[it].depth == node.depth && flatNodes[it].entity.parentId == node.entity.parentId }
+            ?: return@intent
+
+        val block = flatNodes.subList(nodeIndex, blockEnd).toList()
+        val withoutBlock = flatNodes.toMutableList()
+        withoutBlock.subList(nodeIndex, blockEnd).clear()
+        val insertAt = (nextSiblingIndex - blockSize + 1).coerceIn(0, withoutBlock.size)
+        withoutBlock.addAll(insertAt, block)
+
+        pushUndoSnapshot(flatNodes)
+        val recomputed = recomputeFlatNodes(withoutBlock)
+        reduce { state.copy(flatNodes = recomputed, canUndo = true, canRedo = false) }
+        persistReorderedNodes(flatNodes, recomputed)
+        resetInactivityTimer()
+    }
+
+    fun undo() = intent {
+        if (undoStack.isEmpty()) return@intent
+        val snapshot = undoStack.removeLast()
+        val current = state.flatNodes
+        redoStack.addLast(current)
+        reduce { state.copy(flatNodes = snapshot, canUndo = undoStack.isNotEmpty(), canRedo = true) }
+        persistReorderedNodes(current, snapshot)
+    }
+
+    fun redo() = intent {
+        if (redoStack.isEmpty()) return@intent
+        val snapshot = redoStack.removeLast()
+        val current = state.flatNodes
+        undoStack.addLast(current)
+        reduce { state.copy(flatNodes = snapshot, canUndo = true, canRedo = redoStack.isNotEmpty()) }
+        persistReorderedNodes(current, snapshot)
+    }
+
+    fun openAttachmentPicker() = intent {
+        postSideEffect(NodeEditorSideEffect.OpenAttachmentPicker)
+    }
+
+    fun switchToNote(nodeId: String) = intent {
+        if (nodeId in state.expandedNoteIds) {
+            // Note already visible; toggle back to content
+            postSideEffect(NodeEditorSideEffect.FocusContent(nodeId))
+        } else {
+            reduce { state.copy(expandedNoteIds = state.expandedNoteIds + nodeId) }
+            postSideEffect(NodeEditorSideEffect.FocusNote(nodeId))
+        }
+    }
+
+    fun onNodeFocusGained(nodeId: String) = intent {
+        reduce { state.copy(focusedNodeId = nodeId) }
     }
 
     private suspend fun persistReorderedNodes(oldFlatNodes: List<FlatNode>, newFlatNodes: List<FlatNode>) {
@@ -673,7 +801,7 @@ class NodeEditorViewModel @Inject constructor(
 
             // Build and push local changes
             val userId = authRepository.getUserId().filterNotNull().first()
-            val pendingNodes = nodeDao.getPendingChanges(lastSyncHlc, deviceId)
+            val pendingNodes = nodeDao.getPendingChanges(userId, lastSyncHlc, deviceId)
             val pendingDocs = documentDao.getPendingChanges(userId, lastSyncHlc, deviceId)
             val pendingBookmarks = bookmarkDao.getPendingChanges(userId, lastSyncHlc, deviceId)
             val pendingSettings = settingsDao.getPendingSettings(userId, lastSyncHlc, deviceId)
@@ -734,6 +862,35 @@ class NodeEditorViewModel @Inject constructor(
 
     companion object {
 
+        /**
+         * Returns only the descendant nodes of [rootNodeId] (not rootNodeId itself).
+         * Uses BFS from rootNodeId to collect all descendant IDs, then filters the node list.
+         * The returned list is suitable for passing to mapToFlatList(result, rootNodeId).
+         */
+        fun filterSubtree(nodes: List<NodeEntity>, rootNodeId: String): List<NodeEntity> {
+            val childrenMap = nodes
+                .filter { it.deletedAt == null }
+                .groupBy { it.parentId }
+
+            val included = mutableSetOf<String>()
+            val queue = ArrayDeque<String>()
+
+            // Start BFS from rootNodeId's children (not rootNodeId itself)
+            childrenMap[rootNodeId]?.forEach { child ->
+                queue.add(child.id)
+            }
+
+            while (queue.isNotEmpty()) {
+                val current = queue.removeFirst()
+                included.add(current)
+                childrenMap[current]?.forEach { child ->
+                    if (child.id !in included) queue.add(child.id)
+                }
+            }
+
+            return nodes.filter { it.id in included }
+        }
+
         fun recomputeFlatNodes(nodes: List<FlatNode>): List<FlatNode> {
             // Collect indices per parent, in flat-list order (= correct sibling order)
             val parentToIndices = linkedMapOf<String?, MutableList<Int>>()
@@ -762,8 +919,11 @@ data class NodeEditorUiState(
     val flatNodes: List<FlatNode> = emptyList(),
     val focusedNodeId: String? = null,
     val documentId: String = "",
+    val rootNodeId: String? = null,
     val expandedNoteIds: Set<String> = emptySet(),
     val syncStatus: SyncStatus = SyncStatus.Idle,
+    val canUndo: Boolean = false,
+    val canRedo: Boolean = false,
 )
 
 sealed class NodeEditorStatus {
@@ -775,6 +935,9 @@ sealed class NodeEditorStatus {
 sealed class NodeEditorSideEffect {
     data object NavigateUp : NodeEditorSideEffect()
     data class ShowError(val message: String) : NodeEditorSideEffect()
+    data class FocusNote(val nodeId: String) : NodeEditorSideEffect()
+    data class FocusContent(val nodeId: String) : NodeEditorSideEffect()
+    data object OpenAttachmentPicker : NodeEditorSideEffect()
 }
 
 enum class FocusDirection { Up, Down }

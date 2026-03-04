@@ -373,6 +373,65 @@ class NodeEditorViewModelTest {
     }
 
     @Test
+    fun `onNodeFocusGained setsFocusedNodeId`() = runTest {
+        val nodes = listOf(
+            fakeNode(id = "n0", content = "A", sortOrder = "a0"),
+            fakeNode(id = "n1", content = "B", sortOrder = "a1"),
+        )
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes))
+
+            containerHost.onNodeFocusGained("n1")
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, focusedNodeId = "n1"))
+
+            containerHost.onNodeFocusGained("n0")
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, focusedNodeId = "n0"))
+        }
+    }
+
+    @Test
+    fun `loadDocument withRootNodeId scopes flatList to subtree of that node`() = runTest {
+        // Document structure:
+        //   n0 (parentId = doc)
+        //   n1 (parentId = doc)  <-- this is the zoom root
+        //     n2 (parentId = n1)
+        //     n3 (parentId = n1)
+        //   n4 (parentId = doc)
+        val nodes = listOf(
+            fakeNode(id = "n0", content = "Root A", sortOrder = "a0", parentId = testDocumentId),
+            fakeNode(id = "n1", content = "Root B", sortOrder = "a1", parentId = testDocumentId),
+            fakeNode(id = "n2", content = "Child B1", sortOrder = "a0", parentId = "n1"),
+            fakeNode(id = "n3", content = "Child B2", sortOrder = "a1", parentId = "n1"),
+            fakeNode(id = "n4", content = "Root C", sortOrder = "a2", parentId = testDocumentId),
+        )
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+
+        // When zoomed into n1, only n2 and n3 should appear (children of n1)
+        val filteredForZoom = NodeEditorViewModel.filterSubtree(nodes, "n1")
+        val zoomedFlatNodes = mapToFlatList(filteredForZoom, "n1")
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId, rootNodeId = "n1")
+            expectState(NodeEditorUiState(documentId = testDocumentId, rootNodeId = "n1", status = NodeEditorStatus.Loading))
+            val successState = awaitState()
+            assertEquals(NodeEditorStatus.Success, successState.status)
+            assertEquals(zoomedFlatNodes, successState.flatNodes)
+            // Verify only children of n1 are visible (not n0 or n4)
+            assertTrue(successState.flatNodes.none { it.entity.id == "n0" })
+            assertTrue(successState.flatNodes.none { it.entity.id == "n4" })
+            assertTrue(successState.flatNodes.any { it.entity.id == "n2" })
+            assertTrue(successState.flatNodes.any { it.entity.id == "n3" })
+        }
+    }
+
+    @Test
     fun `deleteNode softDeletesAndSetsFocusToPrecedingNode`() = runTest {
         val nodes = listOf(
             fakeNode(id = "n0", content = "First", sortOrder = "a0"),

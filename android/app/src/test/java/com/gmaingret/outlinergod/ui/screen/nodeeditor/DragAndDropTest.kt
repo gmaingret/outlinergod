@@ -230,7 +230,45 @@ class DragAndDropTest {
         }
     }
 
-    // Test 5: Optimistic in-memory update reflects the reorder without awaiting Room
+    // Test 5: Depth constraint — moving a deep node next to a shallow node clamps its depth
+    @Test
+    fun `reorderNodes clamps depth to nodeAbove depth plus one`() = runTest {
+        // Tree: A(0) → B(1) → C(2); D(0)
+        // Drag C (depth 2) to position 0 (above A, which is depth 0)
+        // Expected: C becomes depth 1 (nodeAbove=null → maxDepth=0... wait, above A there's nothing)
+        // Actually drag C to position after D (index 3 → insert at 3 in list without C)
+        // Let's set up: A(0), B(1,child of A), C(2,child of B), D(0)
+        // Drag C from index 2 to index 3 (after D, nodeAbove=D depth 0 → maxDepth=1)
+        // C.depth=2 > maxDepth=1 → adjust C to depth=1, parentId=D
+        val nodes = listOf(
+            fakeNode(id = "A", content = "A", parentId = testDocumentId, sortOrder = "a0"),
+            fakeNode(id = "B", content = "B", parentId = "A", sortOrder = "a0"),
+            fakeNode(id = "C", content = "C", parentId = "B", sortOrder = "a0"),
+            fakeNode(id = "D", content = "D", parentId = testDocumentId, sortOrder = "a1"),
+        )
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        coEvery { nodeDao.updateNode(any()) } just Runs
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            val loadedState = awaitState()
+            // flat list: A(0), B(1), C(2), D(0)
+            assertEquals(4, loadedState.flatNodes.size)
+
+            // Drag C (index 2) to index 3 (after D)
+            containerHost.reorderNodes(2, 3)
+            val reorderedState = awaitState()
+
+            val cNode = reorderedState.flatNodes.first { it.entity.id == "C" }
+            // C was depth 2; node above after move is D (depth 0); maxAllowed = 1
+            assertEquals("C depth should be clamped to 1", 1, cNode.depth)
+            assertEquals("C parentId should be D", "D", cNode.entity.parentId)
+        }
+    }
+
+    // Test 6: Optimistic in-memory update reflects the reorder without awaiting Room
     @Test
     fun `reorderNodes optimisticallyUpdatesInMemoryFlatNodes`() = runTest {
         val nodes = listOf(

@@ -1,5 +1,7 @@
 package com.gmaingret.outlinergod.ui.screen.nodeeditor
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -26,14 +28,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.FormatIndentDecrease
 import androidx.compose.material.icons.automirrored.filled.FormatIndentIncrease
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckBox
-import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Undo
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -87,13 +89,21 @@ private const val ZWS = "\u200B"
 @Composable
 fun NodeEditorScreen(
     documentId: String,
+    rootNodeId: String? = null,
     onNavigateUp: () -> Unit,
+    onZoomIn: (String) -> Unit = {},
     viewModel: NodeEditorViewModel = hiltViewModel()
 ) {
     val state by viewModel.container.stateFlow.collectAsState()
+    var noteToFocusId by remember { mutableStateOf<String?>(null) }
+    var contentToFocusId by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(documentId) {
-        viewModel.loadDocument(documentId)
+    val attachmentPickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { /* uri -> attachment handling (future) */ }
+
+    LaunchedEffect(documentId, rootNodeId) {
+        viewModel.loadDocument(documentId, rootNodeId)
     }
 
     LaunchedEffect(Unit) {
@@ -101,6 +111,9 @@ fun NodeEditorScreen(
             when (sideEffect) {
                 is NodeEditorSideEffect.NavigateUp -> onNavigateUp()
                 is NodeEditorSideEffect.ShowError -> { /* handled via state */ }
+                is NodeEditorSideEffect.FocusNote -> noteToFocusId = sideEffect.nodeId
+                is NodeEditorSideEffect.FocusContent -> contentToFocusId = sideEffect.nodeId
+                is NodeEditorSideEffect.OpenAttachmentPicker -> attachmentPickerLauncher.launch("*/*")
             }
         }
     }
@@ -155,25 +168,16 @@ fun NodeEditorScreen(
                     val focusedNode = state.flatNodes.firstOrNull { it.entity.id == state.focusedNodeId }
                     if (focusedNode != null) {
                         NodeActionToolbar(
-                            isCompleted = focusedNode.entity.completed == 1,
+                            canUndo = state.canUndo,
+                            canRedo = state.canRedo,
                             onIndent = { viewModel.indentNode(focusedNode.entity.id) },
                             onOutdent = { viewModel.outdentNode(focusedNode.entity.id) },
-                            onAddChild = { viewModel.addChildNode(focusedNode.entity.id) },
-                            onToggleComplete = { viewModel.onCompletedToggled(focusedNode.entity.id) },
-                            onDelete = {
-                                val nodeId = focusedNode.entity.id
-                                viewModel.deleteNode(nodeId)
-                                scope.launch {
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = "Node deleted",
-                                        actionLabel = "Undo",
-                                        duration = SnackbarDuration.Short
-                                    )
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        viewModel.restoreNode(nodeId)
-                                    }
-                                }
-                            },
+                            onMoveUp = { viewModel.moveUp(focusedNode.entity.id) },
+                            onMoveDown = { viewModel.moveDown(focusedNode.entity.id) },
+                            onUndo = { viewModel.undo() },
+                            onRedo = { viewModel.redo() },
+                            onAddAttachment = { viewModel.openAttachmentPicker() },
+                            onSwitchToNote = { viewModel.switchToNote(focusedNode.entity.id) },
                             modifier = Modifier.imePadding()
                         )
                     }
@@ -239,7 +243,7 @@ fun NodeEditorScreen(
                                         Icon(
                                             imageVector = when (swipeState.dismissDirection) {
                                                 SwipeToDismissBoxValue.StartToEnd ->
-                                                    if (flatNode.entity.completed == 1) Icons.Default.Undo
+                                                    if (flatNode.entity.completed == 1) Icons.AutoMirrored.Filled.Undo
                                                     else Icons.Default.Check
                                                 else -> Icons.Default.Delete
                                             },
@@ -263,13 +267,18 @@ fun NodeEditorScreen(
                                         flatNode = flatNode,
                                         isFocused = state.focusedNodeId == flatNode.entity.id,
                                         isNoteExpanded = flatNode.entity.id in state.expandedNoteIds || flatNode.entity.note.isNotBlank(),
+                                        shouldFocusNote = noteToFocusId == flatNode.entity.id,
+                                        shouldFocusContent = contentToFocusId == flatNode.entity.id,
+                                        onNoteFocused = { noteToFocusId = null },
+                                        onContentFocused = { contentToFocusId = null },
+                                        onFocusGained = { viewModel.onNodeFocusGained(flatNode.entity.id) },
                                         onContentChanged = { viewModel.onContentChanged(flatNode.entity.id, it) },
                                         onEnterPressed = { cursor -> viewModel.onEnterPressed(flatNode.entity.id, cursor) },
                                         onBackspaceOnEmpty = { viewModel.onBackspaceOnEmptyNode(flatNode.entity.id) },
                                         onFocusLost = { viewModel.onNodeFocusLost(flatNode.entity.id) },
                                         onNoteChanged = { viewModel.onNoteChanged(flatNode.entity.id, it) },
                                         onToggleNote = { viewModel.toggleNote(flatNode.entity.id) },
-                                        onGlyphTap = { /* zoom in -- wired in future task */ },
+                                        onGlyphTap = { onZoomIn(flatNode.entity.id) },
                                         onToggleCollapse = {
                                             viewModel.toggleCollapsed(flatNode.entity.id)
                                         },
@@ -292,6 +301,11 @@ private fun NodeRow(
     flatNode: FlatNode,
     isFocused: Boolean,
     isNoteExpanded: Boolean,
+    shouldFocusNote: Boolean,
+    shouldFocusContent: Boolean,
+    onNoteFocused: () -> Unit,
+    onContentFocused: () -> Unit,
+    onFocusGained: () -> Unit,
     onContentChanged: (String) -> Unit,
     onEnterPressed: (Int) -> Unit,
     onBackspaceOnEmpty: () -> Unit,
@@ -304,6 +318,7 @@ private fun NodeRow(
     onOutdent: () -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
+    val noteFocusRequester = remember { FocusRequester() }
     var textFieldValue by remember(flatNode.entity.id) {
         val displayText = flatNode.entity.content.ifEmpty { ZWS }
         mutableStateOf(TextFieldValue(displayText, selection = TextRange(displayText.length)))
@@ -312,6 +327,20 @@ private fun NodeRow(
     LaunchedEffect(isFocused) {
         if (isFocused) {
             focusRequester.requestFocus()
+        }
+    }
+
+    LaunchedEffect(shouldFocusNote) {
+        if (shouldFocusNote) {
+            noteFocusRequester.requestFocus()
+            onNoteFocused()
+        }
+    }
+
+    LaunchedEffect(shouldFocusContent) {
+        if (shouldFocusContent) {
+            focusRequester.requestFocus()
+            onContentFocused()
         }
     }
 
@@ -454,7 +483,9 @@ private fun NodeRow(
                         .fillMaxWidth()
                         .focusRequester(focusRequester)
                         .onFocusChanged { focusState ->
-                            if (!focusState.isFocused) {
+                            if (focusState.isFocused) {
+                                onFocusGained()
+                            } else {
                                 onFocusLost()
                             }
                         }
@@ -496,7 +527,8 @@ private fun NodeRow(
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = ((flatNode.depth * 24) + 28).dp),
+                    .padding(start = ((flatNode.depth * 24) + 28).dp)
+                    .focusRequester(noteFocusRequester),
                 decorationBox = { innerTextField ->
                     if (noteValue.isEmpty()) {
                         Text(
@@ -514,33 +546,42 @@ private fun NodeRow(
 
 @Composable
 private fun NodeActionToolbar(
-    isCompleted: Boolean,
+    canUndo: Boolean,
+    canRedo: Boolean,
     onIndent: () -> Unit,
     onOutdent: () -> Unit,
-    onAddChild: () -> Unit,
-    onToggleComplete: () -> Unit,
-    onDelete: () -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onUndo: () -> Unit,
+    onRedo: () -> Unit,
+    onAddAttachment: () -> Unit,
+    onSwitchToNote: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     BottomAppBar(modifier = modifier) {
-        IconButton(onClick = onOutdent) {
-            Icon(Icons.AutoMirrored.Filled.FormatIndentDecrease, contentDescription = "Outdent")
-        }
         IconButton(onClick = onIndent) {
             Icon(Icons.AutoMirrored.Filled.FormatIndentIncrease, contentDescription = "Indent")
         }
-        IconButton(onClick = onAddChild) {
-            Icon(Icons.Default.Add, contentDescription = "Add child")
+        IconButton(onClick = onOutdent) {
+            Icon(Icons.AutoMirrored.Filled.FormatIndentDecrease, contentDescription = "Outdent")
         }
-        IconButton(onClick = onToggleComplete) {
-            Icon(
-                if (isCompleted) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
-                contentDescription = "Toggle complete"
-            )
+        IconButton(onClick = onMoveUp) {
+            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move up")
         }
-        Spacer(Modifier.weight(1f))
-        IconButton(onClick = onDelete) {
-            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+        IconButton(onClick = onMoveDown) {
+            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move down")
+        }
+        IconButton(onClick = onUndo, enabled = canUndo) {
+            Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
+        }
+        IconButton(onClick = onRedo, enabled = canRedo) {
+            Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo")
+        }
+        IconButton(onClick = onAddAttachment) {
+            Icon(Icons.Default.AttachFile, contentDescription = "Add attachment")
+        }
+        IconButton(onClick = onSwitchToNote) {
+            Icon(Icons.Default.Edit, contentDescription = "Switch to note")
         }
     }
 }

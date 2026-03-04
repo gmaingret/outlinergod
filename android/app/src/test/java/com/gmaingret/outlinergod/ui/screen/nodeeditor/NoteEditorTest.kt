@@ -190,6 +190,48 @@ class NoteEditorTest {
     }
 
     @Test
+    fun `switchToNote expands note and posts FocusNote when not expanded`() = runTest {
+        val nodes = listOf(fakeNode(id = "n1", content = "test", sortOrder = "a0"))
+        setupNodeDao(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes))
+
+            containerHost.switchToNote("n1")
+            val state = awaitState()
+            assertTrue("n1 should be in expandedNoteIds after switch", "n1" in state.expandedNoteIds)
+            expectSideEffect(NodeEditorSideEffect.FocusNote("n1"))
+        }
+    }
+
+    @Test
+    fun `switchToNote posts FocusContent when note already expanded`() = runTest {
+        val nodes = listOf(fakeNode(id = "n1", content = "test", sortOrder = "a0"))
+        setupNodeDao(nodes)
+        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes))
+
+            // First call: expand note
+            containerHost.switchToNote("n1")
+            awaitState()
+            expectSideEffect(NodeEditorSideEffect.FocusNote("n1"))
+
+            // Second call: note is in expandedNoteIds → should post FocusContent
+            containerHost.switchToNote("n1")
+            expectSideEffect(NodeEditorSideEffect.FocusContent("n1"))
+        }
+    }
+
+    @Test
     fun `onNoteChanged writes to note field not content field`() = runTest {
         val nodes = listOf(fakeNode(id = "n1", content = "original content", sortOrder = "a0"))
         setupNodeDao(nodes)
