@@ -44,9 +44,10 @@ abstract class AppDatabase : RoomDatabase() {
          */
         private fun createFts(db: SupportSQLiteDatabase) {
             // Regular FTS4 table — stores index data directly alongside the nodes table
+            // unicode61 tokenizer: unicode-aware case-folding, available since SQLite 3.7.13
             db.execSQL(
                 """CREATE VIRTUAL TABLE IF NOT EXISTS nodes_fts
-                   USING fts4(content, note, tokenize="porter unicode61")"""
+                   USING fts4(content, note, tokenize=unicode61)"""
             )
             // Populate FTS index from existing active nodes (no-op on empty DB)
             db.execSQL(
