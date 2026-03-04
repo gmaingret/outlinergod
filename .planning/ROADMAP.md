@@ -81,6 +81,8 @@ Plans:
 - When a node is selected (tapped/focused), a persistent toolbar appears above the keyboard with: Indent, Outdent, Add Child, Toggle Complete, Delete actions
 - Long-press context menu (ModalBottomSheet) is removed entirely; all its actions move to the toolbar
 **Plans:** 1 plan
+Plans:
+- [ ] 10-01-PLAN.md — Swipe gestures (SwipeToDismissBox), persistent NodeActionToolbar, snackbar undo, remove ModalBottomSheet
 **Status:** Planned
 
 ### Phase 11: search-export-bookmarks
