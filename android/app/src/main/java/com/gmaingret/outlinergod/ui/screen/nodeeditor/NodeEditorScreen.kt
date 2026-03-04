@@ -2,6 +2,7 @@ package com.gmaingret.outlinergod.ui.screen.nodeeditor
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,26 +23,41 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.FormatIndentDecrease
+import androidx.compose.material.icons.automirrored.filled.FormatIndentIncrease
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckBox
+import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Undo
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,16 +65,19 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gmaingret.outlinergod.ui.common.MarkdownVisualTransformation
 import com.gmaingret.outlinergod.ui.mapper.FlatNode
+import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -113,6 +133,8 @@ fun NodeEditorScreen(
             val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
                 viewModel.reorderNodes(from.index, to.index)
             }
+            val scope = rememberCoroutineScope()
+            val snackbarHostState = remember { SnackbarHostState() }
 
             Scaffold(
                 topBar = {
@@ -127,6 +149,34 @@ fun NodeEditorScreen(
                             }
                         }
                     )
+                },
+                snackbarHost = { SnackbarHost(snackbarHostState) },
+                bottomBar = {
+                    val focusedNode = state.flatNodes.firstOrNull { it.entity.id == state.focusedNodeId }
+                    if (focusedNode != null) {
+                        NodeActionToolbar(
+                            isCompleted = focusedNode.entity.completed == 1,
+                            onIndent = { viewModel.indentNode(focusedNode.entity.id) },
+                            onOutdent = { viewModel.outdentNode(focusedNode.entity.id) },
+                            onAddChild = { viewModel.addChildNode(focusedNode.entity.id) },
+                            onToggleComplete = { viewModel.onCompletedToggled(focusedNode.entity.id) },
+                            onDelete = {
+                                val nodeId = focusedNode.entity.id
+                                viewModel.deleteNode(nodeId)
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = "Node deleted",
+                                        actionLabel = "Undo",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        viewModel.restoreNode(nodeId)
+                                    }
+                                }
+                            },
+                            modifier = Modifier.imePadding()
+                        )
+                    }
                 }
             ) { paddingValues ->
                 LazyColumn(
@@ -140,83 +190,96 @@ fun NodeEditorScreen(
                         key = { it.entity.id }
                     ) { flatNode ->
                         ReorderableItem(reorderState, key = flatNode.entity.id) { isDragging ->
-                            Surface(
-                                tonalElevation = if (isDragging) 4.dp else 0.dp,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .longPressDraggableHandle(
-                                        onDragStarted = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        },
-                                    ),
+                            val currentNodeId = flatNode.entity.id
+                            val swipeState = rememberSwipeToDismissBoxState(
+                                confirmValueChange = { value ->
+                                    when (value) {
+                                        SwipeToDismissBoxValue.StartToEnd -> {
+                                            viewModel.onCompletedToggled(currentNodeId)
+                                            false
+                                        }
+                                        SwipeToDismissBoxValue.EndToStart -> {
+                                            viewModel.deleteNode(currentNodeId)
+                                            scope.launch {
+                                                val result = snackbarHostState.showSnackbar(
+                                                    message = "Node deleted",
+                                                    actionLabel = "Undo",
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                                if (result == SnackbarResult.ActionPerformed) {
+                                                    viewModel.restoreNode(currentNodeId)
+                                                }
+                                            }
+                                            true
+                                        }
+                                        SwipeToDismissBoxValue.Settled -> true
+                                    }
+                                }
+                            )
+
+                            SwipeToDismissBox(
+                                state = swipeState,
+                                enableDismissFromStartToEnd = true,
+                                enableDismissFromEndToStart = true,
+                                backgroundContent = {
+                                    val color = when (swipeState.dismissDirection) {
+                                        SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
+                                        SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                                        SwipeToDismissBoxValue.Settled -> Color.Transparent
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(color),
+                                        contentAlignment = when (swipeState.dismissDirection) {
+                                            SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
+                                            else -> Alignment.CenterEnd
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = when (swipeState.dismissDirection) {
+                                                SwipeToDismissBoxValue.StartToEnd ->
+                                                    if (flatNode.entity.completed == 1) Icons.Default.Undo
+                                                    else Icons.Default.Check
+                                                else -> Icons.Default.Delete
+                                            },
+                                            contentDescription = null,
+                                            modifier = Modifier.padding(16.dp)
+                                        )
+                                    }
+                                }
                             ) {
-                                NodeRow(
-                                    flatNode = flatNode,
-                                    isFocused = state.focusedNodeId == flatNode.entity.id,
-                                    isNoteExpanded = flatNode.entity.id in state.expandedNoteIds || flatNode.entity.note.isNotBlank(),
-                                    onContentChanged = { viewModel.onContentChanged(flatNode.entity.id, it) },
-                                    onEnterPressed = { cursor -> viewModel.onEnterPressed(flatNode.entity.id, cursor) },
-                                    onBackspaceOnEmpty = { viewModel.onBackspaceOnEmptyNode(flatNode.entity.id) },
-                                    onFocusLost = { viewModel.onNodeFocusLost(flatNode.entity.id) },
-                                    onNoteChanged = { viewModel.onNoteChanged(flatNode.entity.id, it) },
-                                    onToggleNote = { viewModel.toggleNote(flatNode.entity.id) },
-                                    onGlyphTap = { /* zoom in -- wired in future task */ },
-                                    onToggleCollapse = {
-                                        viewModel.toggleCollapsed(flatNode.entity.id)
-                                    },
-                                    onLongPress = {
-                                        viewModel.showContextMenu(flatNode.entity.id)
-                                    },
-                                    onIndent = { viewModel.indentNode(flatNode.entity.id) },
-                                    onOutdent = { viewModel.outdentNode(flatNode.entity.id) },
-                                )
+                                Surface(
+                                    tonalElevation = if (isDragging) 4.dp else 0.dp,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .longPressDraggableHandle(
+                                            onDragStarted = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            },
+                                        ),
+                                ) {
+                                    NodeRow(
+                                        flatNode = flatNode,
+                                        isFocused = state.focusedNodeId == flatNode.entity.id,
+                                        isNoteExpanded = flatNode.entity.id in state.expandedNoteIds || flatNode.entity.note.isNotBlank(),
+                                        onContentChanged = { viewModel.onContentChanged(flatNode.entity.id, it) },
+                                        onEnterPressed = { cursor -> viewModel.onEnterPressed(flatNode.entity.id, cursor) },
+                                        onBackspaceOnEmpty = { viewModel.onBackspaceOnEmptyNode(flatNode.entity.id) },
+                                        onFocusLost = { viewModel.onNodeFocusLost(flatNode.entity.id) },
+                                        onNoteChanged = { viewModel.onNoteChanged(flatNode.entity.id, it) },
+                                        onToggleNote = { viewModel.toggleNote(flatNode.entity.id) },
+                                        onGlyphTap = { /* zoom in -- wired in future task */ },
+                                        onToggleCollapse = {
+                                            viewModel.toggleCollapsed(flatNode.entity.id)
+                                        },
+                                        onIndent = { viewModel.indentNode(flatNode.entity.id) },
+                                        onOutdent = { viewModel.outdentNode(flatNode.entity.id) },
+                                    )
+                                }
                             }
                         }
                     }
-                }
-            }
-
-            // Context menu bottom sheet
-            if (state.contextMenuNodeId != null) {
-                val contextNodeId = state.contextMenuNodeId!!
-                ModalBottomSheet(
-                    onDismissRequest = { viewModel.dismissContextMenu() }
-                ) {
-                    ListItem(
-                        headlineContent = { Text("Add Child") },
-                        modifier = Modifier.clickable {
-                            viewModel.addChildNode(contextNodeId)
-                            viewModel.dismissContextMenu()
-                        }
-                    )
-                    ListItem(
-                        headlineContent = { Text("Indent") },
-                        modifier = Modifier.clickable {
-                            viewModel.indentNode(contextNodeId)
-                            viewModel.dismissContextMenu()
-                        }
-                    )
-                    ListItem(
-                        headlineContent = { Text("Outdent") },
-                        modifier = Modifier.clickable {
-                            viewModel.outdentNode(contextNodeId)
-                            viewModel.dismissContextMenu()
-                        }
-                    )
-                    ListItem(
-                        headlineContent = { Text("Toggle Completed") },
-                        modifier = Modifier.clickable {
-                            viewModel.onCompletedToggled(contextNodeId)
-                            viewModel.dismissContextMenu()
-                        }
-                    )
-                    ListItem(
-                        headlineContent = { Text("Delete") },
-                        modifier = Modifier.clickable {
-                            viewModel.deleteNode(contextNodeId)
-                            viewModel.dismissContextMenu()
-                        }
-                    )
                 }
             }
         }
@@ -237,7 +300,6 @@ private fun NodeRow(
     onToggleNote: () -> Unit,
     onGlyphTap: () -> Unit,
     onToggleCollapse: () -> Unit,
-    onLongPress: () -> Unit,
     onIndent: () -> Unit,
     onOutdent: () -> Unit,
 ) {
@@ -265,17 +327,12 @@ private fun NodeRow(
             Spacer(modifier = Modifier.width((flatNode.depth * 24).dp))
 
             // Glyph: filled dot, or directional arrow if has children
-            // The glyph area also serves as the drag handle (via dragModifier) and
-            // horizontal drag for indent (right) / outdent (left).
             if (flatNode.hasChildren) {
                 IconButton(
                     onClick = onToggleCollapse,
                     modifier = Modifier
                         .size(24.dp)
                         .pointerInput(flatNode.entity.id) {
-                            // Initial pass (capture, outer→inner): fires before longPressDraggableHandle
-                            // which runs in Main pass. Consuming on threshold prevents DnD activating
-                            // on a quick horizontal swipe.
                             awaitEachGesture {
                                 val down = awaitPointerEvent(PointerEventPass.Initial)
                                     .changes.firstOrNull { it.pressed } ?: return@awaitEachGesture
@@ -306,7 +363,7 @@ private fun NodeRow(
                     )
                 }
             } else {
-                // Filled dot glyph -- tap = zoom in, long-press = drag, horizontal drag = indent/outdent
+                // Filled dot glyph -- tap = zoom in, horizontal drag = indent/outdent
                 Box(
                     modifier = Modifier
                         .size(24.dp)
@@ -346,30 +403,9 @@ private fun NodeRow(
 
             Spacer(modifier = Modifier.width(4.dp))
 
-            // Content field — long-press on parent Column using Initial pass (capture phase).
-            // Initial pass fires before BasicTextField's Main-pass text-selection handler,
-            // so our timer runs to completion and onLongPress() fires reliably.
+            // Content field
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .pointerInput(flatNode.entity.id) {
-                        awaitEachGesture {
-                            val firstDown = awaitPointerEvent(PointerEventPass.Initial)
-                                .changes.firstOrNull { it.pressed } ?: return@awaitEachGesture
-                            var longPressTriggered = false
-                            withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
-                                while (true) {
-                                    val event = awaitPointerEvent(PointerEventPass.Initial)
-                                    val change = event.changes.firstOrNull { it.id == firstDown.id } ?: break
-                                    if (!change.pressed) break
-                                    val dx = change.position.x - firstDown.position.x
-                                    val dy = change.position.y - firstDown.position.y
-                                    if (dx * dx + dy * dy > viewConfiguration.touchSlop * viewConfiguration.touchSlop) break
-                                }
-                            } ?: run { longPressTriggered = true }
-                            if (longPressTriggered) onLongPress()
-                        }
-                    }
+                modifier = Modifier.weight(1f)
             ) {
                 BasicTextField(
                     value = textFieldValue,
@@ -387,7 +423,6 @@ private fun NodeRow(
                         }
 
                         // Detect Backspace on empty node via ZWS sentinel
-                        // When user backspaces on a node showing only ZWS, the text becomes empty
                         if (oldText == ZWS && newText.isEmpty()) {
                             onBackspaceOnEmpty()
                             return@BasicTextField
@@ -396,7 +431,6 @@ private fun NodeRow(
                         // Normal edit: strip ZWS from the text
                         val cleanText = newText.replace(ZWS, "")
                         if (cleanText.isEmpty()) {
-                            // Node is now empty — restore the ZWS sentinel so backspace keeps working
                             textFieldValue = TextFieldValue(ZWS, selection = TextRange(1))
                             onContentChanged("")
                         } else {
@@ -406,7 +440,14 @@ private fun NodeRow(
                     },
                     visualTransformation = MarkdownVisualTransformation,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = if (flatNode.entity.completed == 1)
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        else
+                            MaterialTheme.colorScheme.onSurface,
+                        textDecoration = if (flatNode.entity.completed == 1)
+                            TextDecoration.LineThrough
+                        else
+                            TextDecoration.None
                     ),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     modifier = Modifier
@@ -467,6 +508,39 @@ private fun NodeRow(
                     innerTextField()
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun NodeActionToolbar(
+    isCompleted: Boolean,
+    onIndent: () -> Unit,
+    onOutdent: () -> Unit,
+    onAddChild: () -> Unit,
+    onToggleComplete: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    BottomAppBar(modifier = modifier) {
+        IconButton(onClick = onOutdent) {
+            Icon(Icons.AutoMirrored.Filled.FormatIndentDecrease, contentDescription = "Outdent")
+        }
+        IconButton(onClick = onIndent) {
+            Icon(Icons.AutoMirrored.Filled.FormatIndentIncrease, contentDescription = "Indent")
+        }
+        IconButton(onClick = onAddChild) {
+            Icon(Icons.Default.Add, contentDescription = "Add child")
+        }
+        IconButton(onClick = onToggleComplete) {
+            Icon(
+                if (isCompleted) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
+                contentDescription = "Toggle complete"
+            )
+        }
+        Spacer(Modifier.weight(1f))
+        IconButton(onClick = onDelete) {
+            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
         }
     }
 }
