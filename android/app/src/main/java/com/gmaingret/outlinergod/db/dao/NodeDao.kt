@@ -1,6 +1,7 @@
 package com.gmaingret.outlinergod.db.dao
 
 import androidx.room.*
+import androidx.sqlite.db.SupportSQLiteQuery
 import com.gmaingret.outlinergod.db.entity.NodeEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -43,4 +44,7 @@ interface NodeDao {
           OR deleted_hlc > :sinceHlc)
     """)
     suspend fun getPendingChanges(sinceHlc: String, deviceId: String): List<NodeEntity>
+
+    @RawQuery
+    suspend fun searchFts(query: SupportSQLiteQuery): List<NodeEntity>
 }
