@@ -51,7 +51,7 @@
 **Fix**: Sentence replaced with clarification that OutlinerGod does NOT use a children array.
 
 ### 9. Deployment Details Not Captured
-**Problem**: Docker server (`greg@192.168.1.50`), GitHub repo (`gmaingret/outlinergod`), and Google OAuth SHA-1 fingerprint were not documented in any project file.  
+**Problem**: Docker server (`root@192.168.1.50`), GitHub repo (`gmaingret/outlinergod`), and Google OAuth SHA-1 fingerprint were not documented in any project file.  
 **Fix**: Added "Deployment & Repository" section to CLAUDE.md with all three details.
 
 ### 10. Search Architecture Clarification
@@ -97,7 +97,7 @@
 
 ### 13. No Deployment Task in Phase 2
 **Files**: PLAN_PHASE2.md, PLAN.md  
-**Problem**: Phase 2 built the Docker backend but never deployed it to `greg@192.168.1.50`. The separate "Post-Phase 2" deployment prompt was outside the task system and could be missed.  
+**Problem**: Phase 2 built the Docker backend but never deployed it to `root@192.168.1.50`. The separate "Post-Phase 2" deployment prompt was outside the task system and could be missed.  
 **Fix**: Added P2-28 as a proper task: creates `docker-compose.yml`, `Dockerfile`, `.env.example`, SSHes to server, runs `docker compose up -d --build`, verifies health check. Phase 2 task count updated to 28.
 
 ### 14. SHA-1 Fingerprint Not Referenced in Google Sign-In Task
@@ -174,7 +174,7 @@ Rules for this session:
 4. If a test fails, fix it before moving to the next task
 5. Do not start the next phase without explicit instruction
 6. Never commit .env or secrets — only .env.example
-7. P2-28 deploys to greg@192.168.1.50 — see task for SSH + docker compose instructions
+7. P2-28 deploys to root@192.168.1.50 — see task for SSH + docker compose instructions
 Start with P2-1.
 ```
 
