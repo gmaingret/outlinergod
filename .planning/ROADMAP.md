@@ -73,7 +73,7 @@ Plans:
 - [x] 09-01-PLAN.md — Density scale fix + logout (AuthRepository, SettingsViewModel, SettingsScreen) + full-row drag handle
 **Status:** Complete (VERIFICATION.md present, 4/4 must-haves verified, 2026-03-03)
 
-### Phase 10: android-node-actions
+### Phase 10: android-node-actions ✅
 **Goal:** Swipe gestures on node rows (swipe right = mark complete, swipe left = delete with undo snackbar); persistent selection toolbar replaces long-press context menu
 **Requirements:**
 - Swipe right on a node row → marks node as complete (visual strike-through or check indicator); swipe again to unmark
@@ -82,8 +82,8 @@ Plans:
 - Long-press context menu (ModalBottomSheet) is removed entirely; all its actions move to the toolbar
 **Plans:** 1 plan
 Plans:
-- [ ] 10-01-PLAN.md — Swipe gestures (SwipeToDismissBox), persistent NodeActionToolbar, snackbar undo, remove ModalBottomSheet
-**Status:** Planned
+- [x] 10-01-PLAN.md — Swipe gestures (SwipeToDismissBox), persistent NodeActionToolbar, snackbar undo, remove ModalBottomSheet
+**Status:** Complete (VERIFICATION.md present, 6/6 must-haves verified, 2026-03-04)
 
 ### Phase 11: search-export-bookmarks
 **Goal:** Search (FTS5), export, bookmarks screen
