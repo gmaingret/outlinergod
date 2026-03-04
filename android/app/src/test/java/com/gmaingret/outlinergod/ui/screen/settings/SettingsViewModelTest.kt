@@ -3,6 +3,7 @@ package com.gmaingret.outlinergod.ui.screen.settings
 import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.SettingsEntity
 import com.gmaingret.outlinergod.repository.AuthRepository
+import com.gmaingret.outlinergod.repository.ExportRepository
 import com.gmaingret.outlinergod.sync.HlcClock
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -24,6 +25,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.orbitmvi.orbit.test.test
+import java.io.File
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -32,6 +34,7 @@ class SettingsViewModelTest {
     private lateinit var settingsDao: SettingsDao
     private lateinit var authRepository: AuthRepository
     private lateinit var hlcClock: HlcClock
+    private lateinit var exportRepository: ExportRepository
 
     private fun fakeSettings(
         userId: String = "u1",
@@ -59,6 +62,7 @@ class SettingsViewModelTest {
         settingsDao = mockk(relaxed = true)
         authRepository = mockk()
         hlcClock = mockk()
+        exportRepository = mockk()
         every { authRepository.getAccessToken() } returns flowOf("u1")
         every { authRepository.getUserId() } returns flowOf("u1")
         every { authRepository.getDeviceId() } returns flowOf("device-1")
@@ -71,7 +75,7 @@ class SettingsViewModelTest {
     }
 
     private fun createViewModel(): SettingsViewModel {
-        return SettingsViewModel(settingsDao, authRepository, hlcClock)
+        return SettingsViewModel(settingsDao, authRepository, hlcClock, exportRepository)
     }
 
     @Test
@@ -255,5 +259,42 @@ class SettingsViewModelTest {
         assertTrue(guidelinesUpdate.showGuideLinesHlc.matches(Regex("^[0-9]{13}-[0-9]{5}-.*")))
         val backlinkUpdate = captured.find { it.showBacklinkBadge == 0 }!!
         assertTrue(backlinkUpdate.showBacklinkBadgeHlc.matches(Regex("^[0-9]{13}-[0-9]{5}-.*")))
+    }
+
+    // ---- Export tests ----
+
+    @Test
+    fun `exportAllData success postsShareFileSideEffect`() = runTest {
+        val settings = fakeSettings()
+        every { settingsDao.getSettings("u1") } returns flowOf(settings)
+        val tempFile = File.createTempFile("test-export", ".zip")
+        tempFile.deleteOnExit()
+        coEvery { exportRepository.exportAll() } returns Result.success(tempFile)
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadSettings()
+            expectState(SettingsUiState.Success(settings = settings))
+            containerHost.exportAllData()
+            // isExporting = true, then false (state collapses to final value)
+            expectState(SettingsUiState.Success(settings = settings, isExporting = true))
+            expectSideEffect(SettingsSideEffect.ShareFile(filePath = tempFile.absolutePath))
+            expectState(SettingsUiState.Success(settings = settings, isExporting = false))
+        }
+    }
+
+    @Test
+    fun `exportAllData failure postsShowError`() = runTest {
+        val settings = fakeSettings()
+        every { settingsDao.getSettings("u1") } returns flowOf(settings)
+        coEvery { exportRepository.exportAll() } returns Result.failure(Exception("Network error"))
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadSettings()
+            expectState(SettingsUiState.Success(settings = settings))
+            containerHost.exportAllData()
+            expectState(SettingsUiState.Success(settings = settings, isExporting = true))
+            expectSideEffect(SettingsSideEffect.ShowError("Network error"))
+            expectState(SettingsUiState.Success(settings = settings, isExporting = false))
+        }
     }
 }
