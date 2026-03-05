@@ -1,27 +1,27 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.6
-milestone_name: integration-polish
-status: completed
-stopped_at: "v0.6 milestone complete — archived 2026-03-05. All 13/13 requirements satisfied, 298 Android tests, 0 failures."
-last_updated: "2026-03-05T12:00:00.000Z"
-last_activity: "2026-03-05 - Completed v0.6 milestone (integration-polish + v0.5 android-advanced)"
+milestone: v0.7
+milestone_name: user-feedback
+status: in_progress
+stopped_at: "Completed 14-03-PLAN.md"
+last_updated: "2026-03-05T00:00:00.000Z"
+last_activity: "2026-03-05 - Executed 14-03: file attachments upload"
 progress:
-  total_phases: 13
+  total_phases: 14
   completed_phases: 13
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 15
+  completed_plans: 15
 ---
 
 # OutlinerGod Project State
 
 ## Current Position
 
-Status: v0.6 COMPLETE — milestone archived
-Last activity: 2026-03-05 — Completed v0.6 milestone completion (phases 09-13 archived)
+Status: v0.7 IN PROGRESS — Phase 14 complete (3/3 plans executed)
+Last activity: 2026-03-05 — Completed 14-03 file attachments upload (313/313 tests passing)
 
 **Core value:** Self-hosted Android outliner with offline-first HLC-LWW sync
-**Current focus:** Planning next milestone — run `/gsd:new-milestone`
+**Current focus:** Phase 14 complete — user feedback features done
 
 ## Project Reference
 
@@ -55,3 +55,5 @@ See: .planning/ROADMAP.md (collapsed — next milestone TBD)
 | D35 | filterSubtree collects descendants only before mapToFlatList | 12-02 | NodeEditorViewModel.filterSubtree |
 | D36 | Zoom-in uses Navigation back stack (each zoom = separate NavBackStackEntry) | 12-02 | AppNavHost, NodeEditorScreen |
 | D37 | In orbit-test, onScreenPaused() must be called before advanceUntilIdle() to cancel 30s inactivity timer | 13-01 | NodeEditorViewModelTest |
+| D38 | snackbarHostState and scope hoisted to composable level so ShowError works from any status branch | 14-03 | NodeEditorScreen |
+| D39 | ksp.incremental.intermodule=false added to fix KSP FileAlreadyExistsException on Windows | 14-03 | gradle.properties |

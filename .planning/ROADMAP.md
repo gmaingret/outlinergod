@@ -4,6 +4,32 @@
 
 - ✅ **v0.4 android-core** — Phases 01–08 (shipped 2026-03-03)
 - ✅ **v0.6 integration-polish** — Phases 09–13 (shipped 2026-03-05)
+- ✅ **v0.7 user-feedback** — Phase 14 (shipped 2026-03-05)
+
+---
+
+## v0.7 — user-feedback (SHIPPED 2026-03-05) ✅
+
+### Phase 14: user-feedback ✅
+**Goal:** Fix three user-reported issues from live app usage
+**Plans:** 3/3 plans complete
+
+#### 14-01: Delete undo via toolbar ✅
+- `deleteNode()` pushes to undoStack so toolbar Undo restores deleted nodes
+- Fix `restoreNode()` to restore full subtree (parent + descendants)
+- Add `NodeDao.restoreNodes()` batch un-delete
+
+#### 14-02: Drag reparenting fix ✅
+- Dragging a node between nodes of a different depth now adopts that depth
+- Block head's parentId updated to match the surrounding context (sibling of nodeAbove)
+- Fixes: L1 dragged between L2 nodes becomes L2 with correct parentId; children shift accordingly
+
+#### 14-03: File attachments ✅
+- Implement the empty `GetContent()` launcher callback
+- New `FileRepository` uploads to `POST /api/files/upload` via Ktor multipart
+- On success, appends `[filename](url)` to node content
+- Wire `ShowError` side effect to snackbar
+- 313/313 tests passing
 
 ---
 
