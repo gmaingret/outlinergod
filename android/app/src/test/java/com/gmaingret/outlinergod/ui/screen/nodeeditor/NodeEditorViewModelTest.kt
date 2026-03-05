@@ -31,6 +31,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import com.gmaingret.outlinergod.ui.common.SyncStatus
 import org.junit.Before
 import org.junit.Test
 import org.orbitmvi.orbit.test.test
@@ -453,5 +454,65 @@ class NodeEditorViewModelTest {
         }
 
         coVerify { nodeDao.softDeleteNodes(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `onScreenResumed triggers sync by setting syncStatus to Syncing`() = runTest {
+        val nodes = listOf(
+            fakeNode(id = "n0", content = "First", sortOrder = "a0"),
+        )
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            val loadedState = awaitState()
+            assertEquals(NodeEditorStatus.Success, loadedState.status)
+
+            // onScreenResumed triggers sync (Syncing → Idle/Error) and starts inactivity timer.
+            // Cancel the timer immediately after to prevent a second sync cycle during advanceUntilIdle.
+            containerHost.onScreenResumed()
+            containerHost.onScreenPaused() // cancel inactivity timer before it fires
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Consume Syncing state
+            val syncingState = awaitState()
+            assertEquals(SyncStatus.Syncing, syncingState.syncStatus)
+
+            // Consume final Idle or Error state
+            val finalState = awaitState()
+            assertTrue(
+                "syncStatus should be Idle or Error after triggerSync, was ${finalState.syncStatus}",
+                finalState.syncStatus == SyncStatus.Idle ||
+                finalState.syncStatus == SyncStatus.Error
+            )
+        }
+    }
+
+    @Test
+    fun `onScreenPaused cancels inactivity timer`() = runTest {
+        val nodes = listOf(
+            fakeNode(id = "n0", content = "First", sortOrder = "a0"),
+        )
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            val loadedState = awaitState()
+            assertEquals(NodeEditorStatus.Success, loadedState.status)
+
+            // Resume starts inactivity timer; also triggers sync (Syncing -> Idle/Error).
+            // Immediately pause to cancel the timer before advanceUntilIdle fires the 30s delay.
+            containerHost.onScreenResumed()
+            containerHost.onScreenPaused()
+            testDispatcher.scheduler.advanceUntilIdle()
+            // Consume sync state changes from the immediate triggerSync call
+            awaitState() // Syncing
+            awaitState() // Idle or Error
+            // No crash, no additional state change after pause = timer was cancelled cleanly
+        }
     }
 }
