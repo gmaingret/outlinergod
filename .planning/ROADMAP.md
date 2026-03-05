@@ -1,8 +1,16 @@
 # OutlinerGod — Roadmap
 
-## v0.4: android-core *(complete)*
+## Milestones
 
-All 8 phases complete. All audit gaps (GAP-A, GAP-B) closed. Ready for milestone audit.
+- ✅ **v0.4 android-core** — Phases 01–08 (shipped 2026-03-03)
+- ✅ **v0.6 integration-polish** — Phases 09–13 (shipped 2026-03-05)
+
+---
+
+## Completed Milestones
+
+<details>
+<summary>✅ v0.4 android-core — Phases 01–08 (SHIPPED 2026-03-03)</summary>
 
 ### Phase 01: backend-foundation ✅
 **Goal:** Fastify scaffold, SQLite + Drizzle, HLC, JWT, Docker
@@ -22,99 +30,63 @@ All 8 phases complete. All audit gaps (GAP-A, GAP-B) closed. Ready for milestone
 
 ### Phase 05: sync-integration-fixes ✅
 **Goal:** Fix all three critical integration blockers so Android↔backend sync works end-to-end
-**Requirements:** GAP-1 (HLC format), GAP-2 (userId = JWT), GAP-3 (camelCase POST body)
-**Gap Closure:** Closes all gaps from v0.4 audit — must complete before v0.5 work begins
-**Plans:** 2 plans
-Plans:
-- [x] 05-01-PLAN.md — HLC decimal format + AuthRepository getUserId() infrastructure
-- [x] 05-02-PLAN.md — ViewModel consumer migration + test fixture updates
+**Gap Closure:** Closes all gaps from v0.4 audit (GAP-1, GAP-2, GAP-3)
 **Status:** Complete (VERIFICATION.md present, 10/10 must-haves verified)
 
 ### Phase 06: tech-debt-cleanup ✅
-**Goal:** Fix the "should" sort-order divergence and remove dead code, missing docs, verification stubs
-**Requirements:** DocumentListScreen fractional index fix, orphaned syncStatus removal, VERIFICATION.md stubs
+**Goal:** Fix sort-order divergence and remove dead code, missing docs, verification stubs
 **Gap Closure:** Closes non-blocking tech debt from v0.4 audit
-**Plans:** 2 plans
-Plans:
-- [x] 06-01-PLAN.md — Fix generateNextSortOrder + remove dead syncStatus entity field
-- [x] 06-02-PLAN.md — VERIFICATION.md stubs for phases 01-03 + project README
-**Status:** Complete (VERIFICATION.md present, 9/9 must-haves verified, 2026-03-03)
+**Status:** Complete (VERIFICATION.md present, 9/9 must-haves verified)
 
 ### Phase 07: settings-display-and-techdebt ✅
-**Goal:** Fix MainActivity JWT-as-userId bug so settings visually apply; remove orphaned SyncStatus enum; fix WorkManager policy; extract LAST_SYNC_HLC_KEY to shared constant
-**Requirements:** GAP-A (MainActivity reads settings with wrong key), tech debt cleanup
-**Gap Closure:** Closes GAP-A from v0.4 re-audit + 3 non-blocking tech debt items
-**Plans:** 1 plan
-Plans:
-- [x] 07-01-PLAN.md — MainActivity getUserId() fix + SyncStatus deletion + KEEP→UPDATE + LAST_SYNC_HLC_KEY constant
-**Status:** Complete (VERIFICATION.md present, 6/6 must-haves verified, 2026-03-03)
+**Goal:** Fix MainActivity JWT-as-userId bug; remove orphaned SyncStatus enum; fix WorkManager policy; extract LAST_SYNC_HLC_KEY
+**Gap Closure:** Closes GAP-A from v0.4 re-audit
+**Status:** Complete (VERIFICATION.md present, 6/6 must-haves verified)
 
 ### Phase 08: settings-sync-push ✅
-**Goal:** Wire settings into the sync push pipeline so Android-originating settings changes reach the backend
-**Requirements:** GAP-B (settings never pushed to server)
+**Goal:** Wire settings into the sync push pipeline
 **Gap Closure:** Closes GAP-B from v0.4 re-audit — final gap before v0.4 complete
-**Plans:** 1 plan
-Plans:
-- [x] 08-01-PLAN.md — SettingsDao.getPendingSettings + toSettingsSyncRecord mapper + SyncPushPayload.settings + SyncWorker/ViewModel wiring + tests
-**Status:** Complete (VERIFICATION.md present, 5/5 must-haves verified, 2026-03-03)
+**Status:** Complete (VERIFICATION.md present, 5/5 must-haves verified)
 
----
+</details>
 
-## v0.5: android-advanced *(planned)*
+<details>
+<summary>✅ v0.6 integration-polish — Phases 09–13 (SHIPPED 2026-03-05)</summary>
 
 ### Phase 09: android-ux-polish ✅
-**Goal:** Fix density scale (compact = current size; comfortable/cozy add more spacing); add logout button to SettingsScreen; extend drag handle to full node row instead of glyph-only
-**Requirements:**
-- Density: current font-size/spacing = compact. Comfortable and cozy must add progressively more line height, node padding, and font size so users have room to breathe.
-- Logout: SettingsScreen gets a logout button that calls AuthRepository.logout() and navigates to LoginScreen
-- Full-row drag: reorderable drag handle covers the entire node row, not only the glyph icon
-**Plans:** 1 plan
-Plans:
-- [x] 09-01-PLAN.md — Density scale fix + logout (AuthRepository, SettingsViewModel, SettingsScreen) + full-row drag handle
+**Goal:** Fix density scale; add logout button to SettingsScreen; extend drag handle to full node row
+**Plans:** 1 plan — 09-01-PLAN.md
 **Status:** Complete (VERIFICATION.md present, 4/4 must-haves verified, 2026-03-03)
 
 ### Phase 10: android-node-actions ✅
-**Goal:** Swipe gestures on node rows (swipe right = mark complete, swipe left = delete with undo snackbar); persistent selection toolbar replaces long-press context menu
-**Requirements:**
-- Swipe right on a node row → marks node as complete (visual strike-through or check indicator); swipe again to unmark
-- Swipe left on a node row → deletes node with snackbar undo (restores within ~5 seconds)
-- When a node is selected (tapped/focused), a persistent toolbar appears above the keyboard with: Indent, Outdent, Add Child, Toggle Complete, Delete actions
-- Long-press context menu (ModalBottomSheet) is removed entirely; all its actions move to the toolbar
-**Plans:** 1 plan
-Plans:
-- [x] 10-01-PLAN.md — Swipe gestures (SwipeToDismissBox), persistent NodeActionToolbar, snackbar undo, remove ModalBottomSheet
+**Goal:** Swipe gestures (complete / delete + undo); persistent NodeActionToolbar replaces long-press context menu
+**Plans:** 1 plan — 10-01-PLAN.md
 **Status:** Complete (VERIFICATION.md present, 6/6 must-haves verified, 2026-03-04)
 
 ### Phase 11: search-export-bookmarks ✅
-**Goal:** Client-side FTS5 search with structured operators, full-account ZIP export via ShareSheet, and functional bookmarks screen with CRUD
-**Plans:** 4 plans
-Plans:
-- [x] 11-01-PLAN.md — FTS5 database migration + SearchRepository + SearchQueryParser
-- [x] 11-02-PLAN.md — Export (FileProvider + ExportRepository + SettingsScreen button)
-- [x] 11-03-PLAN.md — Bookmarks screen (BookmarkListViewModel + BookmarksScreen UI + navigation)
-- [x] 11-04-PLAN.md — Search screen (SearchViewModel + SearchScreen + DocumentList search button)
+**Goal:** Client-side FTS4 search with structured operators; full-account ZIP export; bookmarks screen CRUD
+**Plans:** 4 plans — 11-01 through 11-04-PLAN.md
 **Status:** Complete (VERIFICATION.md present, 13/13 must-haves verified, 2026-03-04)
+
+### Phase 12: integration-e2e ✅
+**Goal:** Close tech debt (TD-2, TD-4), wire zoom-in navigation, harden backend (rate limiting, tombstone purge), SyncWorker integration test
+**Plans:** 5 plans — 12-01 through 12-05-PLAN.md
+**Status:** Complete (all 5 plans done, 14/14 must-haves verified, implemented in commit d798e35)
+
+### Phase 13: v0.6-gap-closure ✅
+**Goal:** Close 2 critical wiring gaps (search→node navigation, NodeEditorScreen sync-on-resume) and 3 tech debt items
+**Gap Closure:** Closes GAP-V1, GAP-V2, TD-A, TD-B, TD-C from v0.6-MILESTONE-AUDIT.md
+**Plans:** 1 plan — 13-01-PLAN.md
+**Status:** Complete (VERIFICATION.md present, 6/6 must-haves verified, 2026-03-05)
+
+</details>
 
 ---
 
-## v0.6: integration-polish *(complete)*
+## Next Milestone
 
-### Phase 13: v0.6-gap-closure ✅
-**Goal:** Close the 2 critical wiring gaps (search→node navigation, NodeEditorScreen sync-on-resume) and 3 non-blocking tech debt items found by the v0.6 milestone audit
-**Requirements:** PRD §6 search result navigation; Phase 4-13 sync-on-resume intent
-**Gap Closure:** Closes GAP-V1, GAP-V2, TD-A, TD-B, TD-C from v0.6-MILESTONE-AUDIT.md
-**Plans:** 1 plan
-Plans:
-- [x] 13-01-PLAN.md — GAP-V1 (SearchSideEffect+nodeId wiring) + GAP-V2 (NodeEditorScreen DisposableEffect) + TD-A/B/C (docstring, dead import, bookmark targetNodeId zoom-in)
-**Status:** Complete (VERIFICATION.md present, 6/6 must-haves verified, 2026-03-05)
+Run `/gsd:new-milestone` to plan the next milestone.
 
-### Phase 12: integration-e2e
-**Goal:** Close remaining tech debt (TD-2, TD-4), wire zoom-in navigation, harden backend (rate limiting, tombstone purge), and add SyncWorker integration test with real Room DB
-**Plans:** 5 plans
-Plans:
-- [x] 12-01-PLAN.md — Delete dead CreateDocumentRequest.kt (TD-2) + add userId to NodeDao.getPendingChanges (TD-4)
-- [x] 12-02-PLAN.md — Wire zoom-in on glyph tap (navigation with rootNodeId)
-- [x] 12-03-PLAN.md — Backend hardening: auth rate limiting + tombstone purge
-- [x] 12-04-PLAN.md — SyncWorker integration test (real Room DB) + LazyColumn contentType
-- [x] 12-05-PLAN.md — Gap closure: add tappable dot glyph to hasChildren branch in NodeEditorScreen
-**Status:** Complete (all 5 plans done, implemented in commit d798e35)
+Current known tech debt for consideration:
+- TD-D: NodeActionToolbar button set (8 buttons) diverged from Phase 10 plan spec (5 buttons) — documentation drift, no code issue
+- TD-E: Drag/swipe gesture conflict not runtime-verified on device — needs manual device testing

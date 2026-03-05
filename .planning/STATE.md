@@ -1,61 +1,38 @@
+---
+gsd_state_version: 1.0
+milestone: v0.6
+milestone_name: integration-polish
+status: completed
+stopped_at: "v0.6 milestone complete — archived 2026-03-05. All 13/13 requirements satisfied, 298 Android tests, 0 failures."
+last_updated: "2026-03-05T12:00:00.000Z"
+last_activity: "2026-03-05 - Completed v0.6 milestone (integration-polish + v0.5 android-advanced)"
+progress:
+  total_phases: 13
+  completed_phases: 13
+  total_plans: 12
+  completed_plans: 12
+---
+
 # OutlinerGod Project State
 
 ## Current Position
 
-Phase: 13 of 13 (v0.6-gap-closure)
-Plan: 01 of 1 complete
-Status: Phase 13 COMPLETE — all gaps closed
-Last activity: 2026-03-05 - Completed 13-01: v0.6-gap-closure (GAP-V1, GAP-V2, TD-A, TD-B, TD-C)
+Status: v0.6 COMPLETE — milestone archived
+Last activity: 2026-03-05 — Completed v0.6 milestone completion (phases 09-13 archived)
 
-Progress: █████████████ (completed: 01-11, 12-01..05, 13-01 | remaining: none)
+**Core value:** Self-hosted Android outliner with offline-first HLC-LWW sync
+**Current focus:** Planning next milestone — run `/gsd:new-milestone`
 
-## Accumulated Decisions
+## Project Reference
 
-| ID | Decision | Phase-Plan | Impact |
-|----|----------|------------|--------|
-| D1 | sort_order is always TEXT (fractional indexing) | architecture | all DAOs |
-| D2 | flatMapLatest on getAccessToken() for settings observation | 04-04 | MainActivity theme — SUPERSEDED by D17 |
-| D3 | Default theme null/unknown maps to dark | 04-04 | OutlinerGodTheme |
-| D4 | ViewModel logic in companion object pure functions for JVM testability | 04-07 | all ViewModels |
-| D5 | reorderable 2.5.1 (not 3.0.0 which doesn't exist) | 04-10 | DnD |
-| D6 | Orbit MVI 10.0.0 for all ViewModels | 04-01 | all screens |
-| D7 | Glyph horizontal drag uses PointerEventPass.Initial (capture phase) | 04-05 | NodeEditorScreen |
-| D8 | Long-press on text content uses PointerEventPass.Initial on parent Column | 04-05 | NodeEditorScreen |
-| D9 | HLC format: 13-digit decimal wall + 5-digit decimal counter | 05-01 | HlcClock, sync records |
-| D10 | HLC property test wall range: 1_000_000_000_000..9_999_999_999_999 | 05-01 | HlcClockTest |
-| D11 | getUserId() for DAO queries; getAccessToken() only for Ktor/LoginViewModel | 05-02 | ViewModels, SyncWorker |
-| D12 | CreateDocumentRequest uses @SerialName for snake_case POST body | 05-02 | DocumentListViewModel |
-| D13 | Phase 01 VERIFICATION status is code_confirmed_unverified | 06-02 | Audit trail |
-| D14 | Phase 02 VERIFICATION status is code_confirmed_doc_gap | 06-02 | Audit trail |
-| D15 | FractionalIndex.generateKeyBetween(null, null) returns "aV" not "aP" | 06-01 | sort-order tests |
-| D16 | syncStatus field removed from entities (Option B: drop Kotlin field, keep SQLite column) | 06-01 | Room entity schema |
-| D17 | GAP-A fix: MainActivity must call getUserId() (UUID) not getAccessToken() (JWT) for settingsDao.getSettings(); JWT string never matches UUID-keyed settings rows | 07-01 | MainActivity theme/density |
-| D18 | SyncConstants object in sync package holds LAST_SYNC_HLC_KEY; all callers import from SyncConstants — no duplication across companion objects | 07-01 | SyncWorker, DocumentListViewModel, NodeEditorViewModel |
-| D19 | ExistingPeriodicWorkPolicy.UPDATE replaces deprecated KEEP in SyncScheduler | 07-01 | WorkManager periodic sync |
-| D20 | SettingsSyncRecord.id defaults to "" for pull-direction backward compatibility; push-direction always sets id = userId via mapper | 08-01 | Sync.kt, SyncMappers.kt |
-| D21 | getPendingSettings filters by device_id to prevent echo-back (pulled settings must not be re-pushed) | 08-01 | SettingsDao, all push sites |
-| D22 | GAP-B closed: settings flow bidirectionally; SyncPushPayload.settings was always null before this phase | 08-01 | SyncWorker, DocumentListVM, NodeEditorVM |
-| D23 | Density scale direction: compact=1.0f (tightest), comfortable=1.10f, cozy=1.20f (widest) — corrects inverted original | 09-01 | MainActivity densityScale |
-| D24 | getRefreshToken(): Flow<String?> added to AuthRepository interface + impl (reads REFRESH_TOKEN_KEY from DataStore) | 09-01 | SettingsViewModel.logout() |
-| D25 | logout() is fail-open: postSideEffect(NavigateToLogin) on success, failure, and catch — user never stuck on SettingsScreen | 09-01 | SettingsViewModel, SettingsScreen |
-| D26 | longPressDraggableHandle on Surface (full row), not NodeRow glyph — improves DnD discoverability | 09-01 | NodeEditorScreen |
-| D27 | NodeContextMenuTest updated to remove showContextMenu/dismissContextMenu tests; context-menu functionality completely replaced by swipe gestures and NodeActionToolbar | 10-01 | NodeContextMenuTest |
-| D28 | Use testDispatcher.scheduler.advanceUntilIdle() in orbit-test DSL to flush intent coroutines before asserting slot captures (advanceUntilIdle() top-level not in scope) | 10-01 | NodeEditorViewModelTest |
-| D29 | viewModelScope.launch in init{} for infinite queryFlow collection — orbit-test joinIntents has 1s wall-clock timeout; repeatOnSubscription in onCreate causes OrbitTimeoutCancellationException | 11-04 | SearchViewModel |
-| D30 | Shared TestCoroutineScheduler pattern: create scheduler explicitly, pass to StandardTestDispatcher(testScheduler) AND runTest(testDispatcher) — viewModelScope and orbit TestScope share one virtual clock | 11-04 | SearchViewModelTest |
-| D31 | intent { reduce { newState } } from viewModelScope.launch — short-lived intents complete immediately; outer launch is non-orbit and not tracked by joinIntents | 11-04 | SearchViewModel |
-| D32 | Rate limit scoped inside auth plugin (not buildApp global) — sync push sends large batches that must never be throttled | 12-03 | auth.ts plugin registration |
-| D33 | purgeTombstones called after runMigrations() and before buildApp() in startServer() — schema must exist before purge runs | 12-03 | index.ts startup order |
-| D34 | NodeDao.getPendingChanges requires userId as first parameter (matches DocumentDao/BookmarkDao); prevents nodes from user B polluting user A's sync push on shared device | 12-01 | NodeDao, SyncWorker, DocumentListViewModel, NodeEditorViewModel |
-| D35 | filterSubtree collects descendants only (not rootNodeId itself) before mapToFlatList — avoids orphan-handling pollution when zooming in | 12-02 | NodeEditorViewModel.filterSubtree |
-| D36 | Zoom-in uses Navigation back stack (each zoom = separate NavBackStackEntry); System Back naturally zooms out — no in-screen state needed | 12-02 | AppNavHost, NodeEditorScreen |
-| D37 | In orbit-test, onScreenPaused() must be called immediately after onScreenResumed() (before advanceUntilIdle()) to cancel the inactivity timer. runTest's scheduler advances past delay(30_000), causing a second sync cycle if the timer is not cancelled first. | 13-01 | NodeEditorViewModelTest |
+See: .planning/MILESTONES.md (updated 2026-03-05)
+See: .planning/ROADMAP.md (collapsed — next milestone TBD)
 
-## Blockers / Concerns
+## Open Tech Debt (for next milestone planning)
 
-- BookmarkDaoTest.observeAllActive_excludesOtherUsers has a flaky Robolectric/Room race condition (pre-existing, passes on retry)
-- All v0.4 audit gaps (GAP-A, GAP-B) are now closed
-- All v0.6 audit gaps (GAP-V1, GAP-V2, TD-A, TD-B, TD-C) are now closed
+- TD-D: NodeActionToolbar button set (8 buttons) diverged from Phase 10 plan spec (documentation drift)
+- TD-E: Drag/swipe gesture conflict (longPressDraggableHandle inside SwipeToDismissBox) — needs device testing
+- 12-05-SUMMARY.md never written (plan implemented in commit d798e35, code verified in 12-VERIFICATION.md)
 
 ## Key Environment
 
@@ -64,8 +41,17 @@ Progress: █████████████ (completed: 01-11, 12-01..05, 
 - Run tests: export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr" && export ANDROID_HOME="/c/Users/gmain/AppData/Local/Android/Sdk" && cd android && ./gradlew test
 - Git remote: https://github.com/gmaingret/outlinergod.git (branch: master)
 
-## Session Continuity
+## Accumulated Decisions (v0.6 scope — see milestones/v0.6-ROADMAP.md for full list)
 
-Last session: 2026-03-05T00:00:00Z
-Stopped at: Completed 13-01-PLAN.md. GAP-V1/V2/TD-A/TD-B/TD-C all closed. 298 Android tests, 0 failures.
-Resume file: None
+| ID | Decision | Phase-Plan | Impact |
+|----|----------|------------|--------|
+| D23 | Density scale direction: compact=1.0f (tightest), comfortable=1.10f, cozy=1.20f (widest) | 09-01 | MainActivity densityScale |
+| D24 | getRefreshToken(): Flow<String?> added to AuthRepository interface + impl | 09-01 | SettingsViewModel.logout() |
+| D25 | logout() is fail-open: postSideEffect(NavigateToLogin) on success, failure, and catch | 09-01 | SettingsViewModel, SettingsScreen |
+| D26 | longPressDraggableHandle on Surface (full row), not NodeRow glyph | 09-01 | NodeEditorScreen |
+| D29 | viewModelScope.launch in init{} for infinite queryFlow collection | 11-04 | SearchViewModel |
+| D30 | Shared TestCoroutineScheduler pattern for shared virtual clock | 11-04 | SearchViewModelTest |
+| D32 | Rate limit scoped inside auth plugin (not buildApp global) | 12-03 | auth.ts plugin registration |
+| D35 | filterSubtree collects descendants only before mapToFlatList | 12-02 | NodeEditorViewModel.filterSubtree |
+| D36 | Zoom-in uses Navigation back stack (each zoom = separate NavBackStackEntry) | 12-02 | AppNavHost, NodeEditorScreen |
+| D37 | In orbit-test, onScreenPaused() must be called before advanceUntilIdle() to cancel 30s inactivity timer | 13-01 | NodeEditorViewModelTest |
