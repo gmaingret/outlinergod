@@ -67,6 +67,7 @@ class NoteEditorTest {
         dataStore = mockk(relaxed = true)
         fileRepository = mockk(relaxed = true)
         savedStateHandle = SavedStateHandle(mapOf("documentId" to testDocumentId))
+        every { authRepository.getAccessToken() } returns flowOf(null)
         every { authRepository.getDeviceId() } returns flowOf(testDeviceId)
         every { authRepository.getUserId() } returns flowOf("user-1")
         every { hlcClock.generate(any()) } returns testHlcValue

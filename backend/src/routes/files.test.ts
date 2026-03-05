@@ -285,6 +285,93 @@ describe('Files routes', () => {
       expect(res.statusCode).toBe(401)
       expect(res.json()).toEqual({ error: 'Unauthorized' })
     })
+
+    it('returns404_whenNodeIdDoesNotBelongToUser', async () => {
+      // Seed a node belonging to user-b
+      const now = Date.now()
+      const nodeId = '11111111-1111-1111-1111-111111111111'
+      const docId = '22222222-2222-2222-2222-222222222222'
+      sqlite
+        .prepare(
+          `INSERT INTO documents (id, user_id, title, title_hlc, type, parent_id, parent_id_hlc, sort_order, sort_order_hlc, collapsed, collapsed_hlc, deleted_at, deleted_hlc, device_id, created_at, updated_at)
+           VALUES (?, ?, 'Doc', '', 'document', NULL, '', 'a', '', 0, '', NULL, '', '', ?, ?)`,
+        )
+        .run(docId, 'user-b', now, now)
+      sqlite
+        .prepare(
+          `INSERT INTO nodes (id, document_id, user_id, content, content_hlc, note, note_hlc, parent_id, parent_id_hlc, sort_order, sort_order_hlc, completed, completed_hlc, color, color_hlc, collapsed, collapsed_hlc, deleted_at, deleted_hlc, device_id, created_at, updated_at)
+           VALUES (?, ?, ?, '', '', '', '', NULL, '', 'a', '', 0, '', 0, '', 0, '', NULL, '', '', ?, ?)`,
+        )
+        .run(nodeId, docId, 'user-b', now, now)
+
+      // user-a tries to attach a file to user-b's node
+      const boundary = 'test-boundary-node-ownership'
+      const bodyParts = [
+        `--${boundary}`,
+        `Content-Disposition: form-data; name="file"; filename="test.jpg"`,
+        `Content-Type: image/jpeg`,
+        '',
+        'fake-image-bytes',
+        `--${boundary}`,
+        `Content-Disposition: form-data; name="node_id"`,
+        '',
+        nodeId,
+        `--${boundary}--`,
+      ].join('\r\n')
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/files',
+        headers: {
+          authorization: `Bearer ${tokenA}`,
+          'content-type': `multipart/form-data; boundary=${boundary}`,
+        },
+        body: bodyParts,
+      })
+
+      expect(res.statusCode).toBe(404)
+      expect(res.json()).toEqual({ error: 'Node not found' })
+    })
+  })
+
+  // =========================================================================
+  // POST /api/files/upload (alias)
+  // =========================================================================
+  describe('POST /api/files/upload', () => {
+    it('returns201_withFileMetadata_onValidUpload', async () => {
+      const boundary = 'test-boundary-upload-alias'
+      const body = buildMultipartBody(boundary)
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/files/upload',
+        headers: {
+          authorization: `Bearer ${tokenA}`,
+          'content-type': `multipart/form-data; boundary=${boundary}`,
+        },
+        body,
+      })
+
+      expect(res.statusCode).toBe(201)
+      const json = res.json()
+      expect(json.url).toMatch(/^\/api\/files\/[0-9a-f-]{36}\.[a-z0-9]+$/)
+    })
+
+    it('returns401_withNoAuthHeader', async () => {
+      const boundary = 'test-boundary-upload-alias-401'
+      const body = buildMultipartBody(boundary)
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/files/upload',
+        headers: {
+          'content-type': `multipart/form-data; boundary=${boundary}`,
+        },
+        body,
+      })
+
+      expect(res.statusCode).toBe(401)
+    })
   })
 
   // =========================================================================

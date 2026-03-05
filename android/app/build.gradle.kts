@@ -114,6 +114,10 @@ dependencies {
     implementation(libs.hilt.work)
     ksp(libs.hilt.androidx.compiler)
 
+    // Coil (image loading)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+
     // Credentials (Google Sign-In)
     implementation(libs.credentials)
     implementation(libs.credentials.play.services.auth)

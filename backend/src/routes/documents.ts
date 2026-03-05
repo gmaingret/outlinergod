@@ -94,9 +94,9 @@ export function createDocumentRoutes(sqlite: InstanceType<typeof Database>) {
       sqlite
         .prepare(
           `INSERT INTO documents (id, user_id, title, title_hlc, type, parent_id, parent_id_hlc, sort_order, sort_order_hlc, collapsed, collapsed_hlc, deleted_at, deleted_hlc, device_id, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, '', ?, ?, 0, ?, NULL, '', ?, ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, NULL, ?, ?, ?, ?)`,
         )
-        .run(id, req.user!.id, body.title, hlc, body.type, body.parent_id ?? null, body.sort_order, hlc, hlc, SERVER_DEVICE_ID, now, now)
+        .run(id, req.user!.id, body.title, hlc, body.type, body.parent_id ?? null, hlc, body.sort_order, hlc, hlc, hlc, SERVER_DEVICE_ID, now, now)
 
       const row = sqlite.prepare('SELECT * FROM documents WHERE id = ?').get(id) as DocumentRow
 
@@ -150,11 +150,13 @@ export function createDocumentRoutes(sqlite: InstanceType<typeof Database>) {
 
       // Circular reference check
       if (body.parent_id !== undefined && body.parent_id !== null) {
-        let current = body.parent_id
-        for (let i = 0; i < 100; i++) {
-          if (current === id) {
+        const visited = new Set<string>([id])
+        let current: string | null = body.parent_id
+        while (current) {
+          if (visited.has(current)) {
             return reply.status(400).send({ error: 'Circular reference detected' })
           }
+          visited.add(current)
           const ancestor = sqlite
             .prepare('SELECT parent_id FROM documents WHERE id = ? AND user_id = ?')
             .get(current, req.user!.id) as { parent_id: string | null } | undefined
@@ -247,15 +249,16 @@ export function createDocumentRoutes(sqlite: InstanceType<typeof Database>) {
 
       const newNodeId = randomUUID()
       const now = Date.now()
+      const convertHlc = hlcGenerate(SERVER_DEVICE_ID)
 
       const transaction = sqlite.transaction(() => {
         // 1. Create new node in target document with source doc title as content
         sqlite
           .prepare(
             `INSERT INTO nodes (id, document_id, user_id, content, content_hlc, note, note_hlc, parent_id, parent_id_hlc, sort_order, sort_order_hlc, completed, completed_hlc, color, color_hlc, collapsed, collapsed_hlc, deleted_at, deleted_hlc, device_id, created_at, updated_at)
-             VALUES (?, ?, ?, ?, '', '', '', ?, '', ?, '', 0, '', 0, '', 0, '', NULL, '', '', ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, 0, ?, 0, ?, 0, ?, NULL, ?, ?, ?, ?)`,
           )
-          .run(newNodeId, body.target_document_id, req.user!.id, sourceDoc.title, body.target_parent_id ?? null, body.sort_order, now, now)
+          .run(newNodeId, body.target_document_id, req.user!.id, sourceDoc.title, convertHlc, convertHlc, body.target_parent_id ?? null, convertHlc, body.sort_order, convertHlc, convertHlc, convertHlc, convertHlc, convertHlc, SERVER_DEVICE_ID, now, now)
 
         // 2. Migrate top-level nodes (parent_id IS NULL) — re-parent to newNode
         sqlite

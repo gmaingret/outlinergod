@@ -147,4 +147,29 @@ describe('GET /api/export', () => {
 
     expect(res.statusCode).toBe(401)
   })
+
+  it('only_includes_documents_owned_by_authenticated_user', async () => {
+    // Seed a second user and their document
+    seedUser(sqlite, 'user-b')
+    const docA = seedDocument(sqlite, { user_id: 'user-a', title: 'A Doc' })
+    seedDocument(sqlite, { user_id: 'user-b', title: 'B Doc' })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/export',
+      headers: { authorization: `Bearer ${tokenA}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+    // Parse ZIP to verify only user-a's document is included
+    const { default: JSZip } = await import('jszip')
+    const zip = await JSZip.loadAsync(res.rawPayload)
+    const documentsJson = await zip.file('documents.json')?.async('text')
+    expect(documentsJson).toBeDefined()
+    const documents = JSON.parse(documentsJson!)
+    const ids = documents.map((d: { id: string }) => d.id)
+    expect(ids).toContain(docA)
+    expect(ids).not.toContain('user-b')
+    expect(documents.every((d: { user_id: string }) => d.user_id === 'user-a')).toBe(true)
+  })
 })

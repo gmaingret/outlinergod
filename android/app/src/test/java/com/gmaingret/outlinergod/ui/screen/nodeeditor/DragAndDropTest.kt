@@ -68,6 +68,7 @@ class DragAndDropTest {
         dataStore = mockk(relaxed = true)
         fileRepository = mockk(relaxed = true)
         savedStateHandle = SavedStateHandle(mapOf("documentId" to testDocumentId))
+        every { authRepository.getAccessToken() } returns flowOf(null)
         every { authRepository.getDeviceId() } returns flowOf(testDeviceId)
         every { authRepository.getUserId() } returns flowOf("user-1")
         every { hlcClock.generate(any()) } returns testHlcValue
@@ -272,7 +273,44 @@ class DragAndDropTest {
         }
     }
 
-    // Test 6: Optimistic in-memory update reflects the reorder without awaiting Room
+    // Test 6: Shallow item dropped between deeper siblings snaps to their depth
+    @Test
+    fun `reorderNodes snaps depth up when dropped between deeper siblings`() = runTest {
+        // List: AppImprovement(depth 0), Groceries(depth 0), bread(depth 1, child Groceries), multisel(depth 1, child Groceries)
+        // Drag AppImprovement (index 0) to between bread(2) and multisel(3): toIndex=3 → insertAt=3-1+1=3... but let's test fromIndex=0,toIndex=2
+        // After removing block [AppImprovement] from withoutBlock=[Groceries,bread,multisel],
+        // insertAt for toIndex(2)>fromIndex(0): (2-1+1)=2 → prevNode=bread(depth 1) → newDepth snaps to 1
+        val nodes = listOf(
+            fakeNode(id = "AppImprovement", content = "App improvement", parentId = testDocumentId, sortOrder = "a0"),
+            fakeNode(id = "Groceries", content = "Groceries", parentId = testDocumentId, sortOrder = "a1"),
+            fakeNode(id = "bread", content = "bread", parentId = "Groceries", sortOrder = "a0"),
+            fakeNode(id = "multisel", content = "multisel", parentId = "Groceries", sortOrder = "a1"),
+        )
+        every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
+        coEvery { nodeDao.updateNode(any()) } just Runs
+
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadDocument(testDocumentId)
+            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
+            awaitState()
+
+            // Drag AppImprovement (index 0) to index 2 (between bread and multisel in withoutBlock)
+            containerHost.reorderNodes(0, 2)
+            val reorderedState = awaitState()
+
+            val appNode = reorderedState.flatNodes.first { it.entity.id == "AppImprovement" }
+            val multiselNode = reorderedState.flatNodes.first { it.entity.id == "multisel" }
+
+            // AppImprovement should snap to depth 1 (sibling of bread/multisel)
+            assertEquals("AppImprovement should snap to depth 1", 1, appNode.depth)
+            // multisel must NOT become a child of AppImprovement
+            assertNotEquals("multisel parentId must not be AppImprovement", "AppImprovement", multiselNode.entity.parentId)
+            assertEquals("multisel must remain child of Groceries", "Groceries", multiselNode.entity.parentId)
+        }
+    }
+
+    // Test 7: Optimistic in-memory update reflects the reorder without awaiting Room
     @Test
     fun `reorderNodes optimisticallyUpdatesInMemoryFlatNodes`() = runTest {
         val nodes = listOf(

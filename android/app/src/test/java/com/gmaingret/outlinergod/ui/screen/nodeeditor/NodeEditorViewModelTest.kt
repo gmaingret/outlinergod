@@ -71,6 +71,7 @@ class NodeEditorViewModelTest {
         dataStore = mockk(relaxed = true)
         fileRepository = mockk()
         savedStateHandle = SavedStateHandle(mapOf("documentId" to testDocumentId))
+        every { authRepository.getAccessToken() } returns flowOf(null)
         every { authRepository.getDeviceId() } returns flowOf(testDeviceId)
         every { authRepository.getUserId() } returns flowOf("user-1")
         every { hlcClock.generate(any()) } returns testHlcValue
@@ -684,40 +685,38 @@ class NodeEditorViewModelTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `uploadAttachment_success_appendsUrlToContent`() = runTest {
+    fun `uploadAttachment_success_createsAttachChildNode`() = runTest {
         val nodes = listOf(
             fakeNode(id = "n1", content = "Hello", sortOrder = "a0"),
         )
         every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
-        val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
 
         val mockUri: Uri = mockk()
         val uploaded = UploadedFile(url = "/api/files/abc.jpg", filename = "abc.jpg", mimeType = "image/jpeg")
         coEvery { fileRepository.uploadFile("n1", mockUri, "image/jpeg") } returns Result.success(uploaded)
-        coEvery { nodeDao.getNodesByDocumentSync(testDocumentId) } returns nodes
+
+        val nodeSlot = slot<NodeEntity>()
+        coEvery { nodeDao.insertNode(capture(nodeSlot)) } just Runs
 
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.loadDocument(testDocumentId)
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Loading))
-            expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes))
+            awaitState() // Loading
+            awaitState() // Success
 
             containerHost.uploadAttachment("n1", mockUri, "image/jpeg")
 
-            // Orbit MVI processes outer intent to completion before running nested intents.
-            // Order: Syncing → Idle (outer intent finishes) → ContentUpdated (nested intent runs)
             val syncingState = awaitState()
             assertEquals(SyncStatus.Syncing, syncingState.syncStatus)
 
-            // Idle state (outer intent sets Idle after onContentChanged call queues the nested intent)
             val idleState = awaitState()
             assertEquals(SyncStatus.Idle, idleState.syncStatus)
 
-            // Content updated (nested intent from onContentChanged runs after outer intent completes)
-            val contentUpdatedState = awaitState()
-            val updatedNode = contentUpdatedState.flatNodes.firstOrNull { it.entity.id == "n1" }
-            assertTrue("Content should contain attachment link",
-                updatedNode?.entity?.content?.contains("[abc.jpg](/api/files/abc.jpg)") == true)
+            // Verify a child ATTACH node was inserted under "n1"
+            val inserted = nodeSlot.captured
+            assertEquals("n1", inserted.parentId)
+            assertTrue("Content should use ATTACH format",
+                inserted.content.startsWith("ATTACH|image/jpeg|abc.jpg|"))
         }
     }
 

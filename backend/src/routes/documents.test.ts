@@ -535,6 +535,39 @@ describe('Document routes', () => {
 
       expect(res.statusCode).toBe(401)
     })
+
+    it('returns400_whenCircularReferenceDetected_direct', async () => {
+      // A is parent of B; try to set A's parent to B
+      const docA = seedDocument(sqlite, { user_id: 'user-a', title: 'A' })
+      const docB = seedDocument(sqlite, { user_id: 'user-a', title: 'B', parent_id: docA })
+
+      const res = await app.inject({
+        method: 'PATCH',
+        url: `/api/documents/${docA}`,
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({ parent_id: docB }),
+      })
+
+      expect(res.statusCode).toBe(400)
+      expect(res.json()).toEqual({ error: 'Circular reference detected' })
+    })
+
+    it('returns400_whenCircularReferenceDetected_indirect', async () => {
+      // A → B → C; try to set A's parent to C
+      const docA = seedDocument(sqlite, { user_id: 'user-a', title: 'A' })
+      const docB = seedDocument(sqlite, { user_id: 'user-a', title: 'B', parent_id: docA })
+      const docC = seedDocument(sqlite, { user_id: 'user-a', title: 'C', parent_id: docB })
+
+      const res = await app.inject({
+        method: 'PATCH',
+        url: `/api/documents/${docA}`,
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({ parent_id: docC }),
+      })
+
+      expect(res.statusCode).toBe(400)
+      expect(res.json()).toEqual({ error: 'Circular reference detected' })
+    })
   })
 
   // =========================================================================

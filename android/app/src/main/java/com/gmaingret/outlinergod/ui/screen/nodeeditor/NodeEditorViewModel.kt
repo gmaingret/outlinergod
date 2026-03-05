@@ -72,7 +72,9 @@ class NodeEditorViewModel @Inject constructor(
     }
 
     fun loadDocument(documentId: String, rootNodeId: String? = null) = intent {
-        reduce { state.copy(documentId = documentId, rootNodeId = rootNodeId, status = NodeEditorStatus.Loading) }
+        // Load auth token once for image rendering (single reduce keeps state transitions simple)
+        val token = authRepository.getAccessToken().first()
+        reduce { state.copy(documentId = documentId, rootNodeId = rootNodeId, status = NodeEditorStatus.Loading, authToken = token) }
         titleJob?.cancel()
         titleJob = viewModelScope.launch {
             documentDao.getDocumentById(documentId).filterNotNull().collect { doc ->
@@ -289,7 +291,7 @@ class NodeEditorViewModel @Inject constructor(
 
     // --- P4-10: Drag-and-drop reorder + indent/outdent ---
 
-    fun reorderNodes(fromIndex: Int, toIndex: Int) = intent {
+    fun reorderNodes(fromIndex: Int, toIndex: Int, depthOffset: Int = 0) = intent {
         val flatNodes = state.flatNodes
         if (fromIndex == toIndex || fromIndex !in flatNodes.indices || toIndex !in flatNodes.indices) return@intent
 
@@ -311,55 +313,52 @@ class NodeEditorViewModel @Inject constructor(
         } else {
             toIndex.coerceIn(0, withoutBlock.size)
         }
-        withoutBlock.addAll(insertAt, block)
 
-        // Enforce depth context:
-        //  - Too deep (blockHead.depth > nodeAbove.depth + 1): clamp to nodeAbove.depth + 1,
-        //    reparent block head to nodeAbove.
-        //  - Too shallow (blockHead.depth < nodeAbove.depth): adopt nodeAbove.depth,
-        //    reparent block head to become a sibling of nodeAbove.
-        //  - Same or within one level: no depth change needed.
-        val nodeAbove = withoutBlock.getOrNull(insertAt - 1)
-        val aboveDepth = nodeAbove?.depth ?: 0
-        val minParentId = state.rootNodeId ?: state.documentId
-        val blockHeadDepth = withoutBlock[insertAt].depth
-        // When there is a node above: allow depth in [aboveDepth, aboveDepth+1].
-        // When dropped at the top (no nodeAbove): must be depth=0 (root level).
-        val maxAllowedDepth = if (nodeAbove != null) aboveDepth + 1 else 0
-        val minAllowedDepth = aboveDepth
-        when {
-            blockHeadDepth > maxAllowedDepth -> {
-                // Too deep: reparent to become a child of nodeAbove
-                val depthDelta = blockHeadDepth - maxAllowedDepth
-                val newParentId = nodeAbove?.entity?.id ?: minParentId
-                for (i in insertAt until insertAt + blockSize) {
-                    val n = withoutBlock[i]
-                    withoutBlock[i] = n.copy(
-                        entity = if (i == insertAt) n.entity.copy(parentId = newParentId) else n.entity,
-                        depth = n.depth - depthDelta,
-                    )
-                }
+        // Infer new depth and parentId from insertion context.
+        // The node above the drop position constrains max allowed depth.
+        val prevNode = if (insertAt > 0) withoutBlock[insertAt - 1] else null
+        val maxDepth = (prevNode?.depth ?: -1) + 1
+        val oldDepth = node.depth
+        // If user explicitly dragged horizontally, respect that depth; otherwise snap to context
+        val newDepth = if (depthOffset != 0) {
+            (oldDepth + depthOffset).coerceIn(0, maxDepth)
+        } else {
+            oldDepth.coerceIn(prevNode?.depth ?: 0, maxDepth)
+        }
+        val depthDelta = newDepth - oldDepth
+
+        val treeRoot = state.rootNodeId ?: state.documentId
+        val newParentId: String = when {
+            newDepth == 0 -> treeRoot
+            prevNode != null && newDepth == prevNode.depth + 1 -> prevNode.entity.id
+            prevNode != null -> {
+                // Walk backward to find the ancestor at depth (newDepth - 1)
+                (insertAt - 1 downTo 0)
+                    .firstOrNull { withoutBlock[it].depth == newDepth - 1 }
+                    ?.let { withoutBlock[it].entity.id }
+                    ?: treeRoot
             }
-            blockHeadDepth < minAllowedDepth -> {
-                // Too shallow: reparent to become a sibling of nodeAbove
-                val depthDelta = blockHeadDepth - minAllowedDepth
-                val newParentId = if (aboveDepth == 0) minParentId else nodeAbove!!.entity.parentId
-                for (i in insertAt until insertAt + blockSize) {
-                    val n = withoutBlock[i]
-                    withoutBlock[i] = n.copy(
-                        entity = if (i == insertAt) n.entity.copy(parentId = newParentId) else n.entity,
-                        depth = n.depth - depthDelta,
-                    )
-                }
-            }
-            // else: depth is within [aboveDepth, aboveDepth+1] — no adjustment needed
+            else -> treeRoot
         }
 
-        // Recompute sort orders and parent IDs, then persist
+        // Apply new depth and parentId to the entire block
+        val updatedBlock = block.mapIndexed { i, flatNode ->
+            if (i == 0) {
+                flatNode.copy(
+                    entity = flatNode.entity.copy(parentId = newParentId),
+                    depth = newDepth,
+                )
+            } else {
+                flatNode.copy(depth = (flatNode.depth + depthDelta).coerceAtLeast(newDepth + 1))
+            }
+        }
+        withoutBlock.addAll(insertAt, updatedBlock)
+
+        pushUndoSnapshot(flatNodes)
         val recomputed = recomputeFlatNodes(withoutBlock)
 
         // Optimistic UI update
-        reduce { state.copy(flatNodes = recomputed) }
+        reduce { state.copy(flatNodes = recomputed, canUndo = true, canRedo = false) }
 
         // Persist changed nodes to Room
         persistReorderedNodes(flatNodes, recomputed)
@@ -516,9 +515,37 @@ class NodeEditorViewModel @Inject constructor(
         val result = fileRepository.uploadFile(nodeId, uri, mimeType)
         result.fold(
             onSuccess = { uploaded ->
-                val flatNode = state.flatNodes.firstOrNull { it.entity.id == nodeId } ?: return@intent
-                val newContent = "${flatNode.entity.content} [${uploaded.filename}](${uploaded.url})".trim()
-                onContentChanged(nodeId, newContent)
+                val parentNode = state.flatNodes.firstOrNull { it.entity.id == nodeId } ?: return@intent
+                val deviceId = authRepository.getDeviceId().first()
+                val now = System.currentTimeMillis()
+                val hlc = hlcClock.generate(deviceId)
+
+                // Find existing children of nodeId to determine sort order
+                val siblings = state.flatNodes.filter { it.entity.parentId == nodeId }
+                val lastSortOrder = siblings.maxByOrNull { it.entity.sortOrder }?.entity?.sortOrder
+                val newSortOrder = FractionalIndex.generateKeyBetween(lastSortOrder, null)
+
+                // Content encodes mimeType, filename, and URL for display
+                val attachContent = "ATTACH|${uploaded.mimeType}|${uploaded.filename}|${uploaded.url}"
+
+                val attachNode = NodeEntity(
+                    id = UUID.randomUUID().toString(),
+                    documentId = parentNode.entity.documentId,
+                    userId = parentNode.entity.userId,
+                    content = attachContent,
+                    contentHlc = hlc,
+                    note = "",
+                    noteHlc = "",
+                    parentId = nodeId,
+                    parentIdHlc = hlc,
+                    sortOrder = newSortOrder,
+                    sortOrderHlc = hlc,
+                    deviceId = deviceId,
+                    createdAt = now,
+                    updatedAt = now,
+                )
+                nodeDao.insertNode(attachNode)
+                // Room Flow emits automatically — no manual state update needed
                 reduce { state.copy(syncStatus = SyncStatus.Idle) }
             },
             onFailure = {
@@ -540,6 +567,12 @@ class NodeEditorViewModel @Inject constructor(
 
     fun onNodeFocusGained(nodeId: String) = intent {
         reduce { state.copy(focusedNodeId = nodeId) }
+    }
+
+    fun clearFocus() = intent {
+        val currentId = state.focusedNodeId ?: return@intent
+        onNodeFocusLost(currentId)
+        reduce { state.copy(focusedNodeId = null) }
     }
 
     private suspend fun persistReorderedNodes(oldFlatNodes: List<FlatNode>, newFlatNodes: List<FlatNode>) {
@@ -1000,6 +1033,7 @@ data class NodeEditorUiState(
     val syncStatus: SyncStatus = SyncStatus.Idle,
     val canUndo: Boolean = false,
     val canRedo: Boolean = false,
+    val authToken: String? = null,
 )
 
 sealed class NodeEditorStatus {

@@ -7,12 +7,14 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,15 +30,15 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.FormatIndentDecrease
 import androidx.compose.material.icons.automirrored.filled.FormatIndentIncrease
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.automirrored.filled.Redo
-import androidx.compose.material.icons.automirrored.filled.Undo
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
@@ -73,6 +75,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -80,8 +84,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import kotlin.math.roundToInt
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextDecoration
@@ -173,9 +182,13 @@ fun NodeEditorScreen(
 
         is NodeEditorStatus.Success -> {
             val haptic = LocalHapticFeedback.current
+            val focusManager = LocalFocusManager.current
+            val density = LocalDensity.current
+            val indentPx = with(density) { 48.dp.toPx() }
+            var dragDepthOffset by remember { mutableStateOf(0) }
             val lazyListState = rememberLazyListState()
             val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
-                viewModel.reorderNodes(from.index, to.index)
+                viewModel.reorderNodes(from.index, to.index, dragDepthOffset)
             }
             val imageLoader = remember(state.authToken) {
                 val token = state.authToken
@@ -248,11 +261,30 @@ fun NodeEditorScreen(
                     }
                 }
             ) { paddingValues ->
-                LazyColumn(
-                    state = lazyListState,
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
+                        .pointerInput(Unit) {
+                            awaitEachGesture {
+                                val down = awaitFirstDown(requireUnconsumed = false)
+                                val startX = down.position.x
+                                while (true) {
+                                    val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                                    if (!change.pressed) break
+                                    if (reorderState.isAnyItemDragging) {
+                                        val deltaX = change.position.x - startX
+                                        dragDepthOffset = (deltaX / indentPx).roundToInt().coerceIn(-3, 3)
+                                    }
+                                }
+                                dragDepthOffset = 0
+                            }
+                        }
+                ) {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     items(
                         items = state.flatNodes,
@@ -262,99 +294,127 @@ fun NodeEditorScreen(
                         val currentNodeId = flatNode.entity.id
                         val isFocused = state.focusedNodeId == flatNode.entity.id
                         ReorderableItem(reorderState, key = flatNode.entity.id) { isDragging ->
+                            Column {
+                                // Drop indicator: 2dp primary-colored line at top of the dragged item
+                                if (isDragging) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(2.dp)
+                                            .padding(start = (flatNode.depth * 24).dp)
+                                            .background(MaterialTheme.colorScheme.primary)
+                                    )
+                                }
                             val swipeState = rememberSwipeToDismissBoxState(
-                            confirmValueChange = { value ->
-                                when (value) {
-                                    SwipeToDismissBoxValue.StartToEnd -> {
-                                        viewModel.onCompletedToggled(currentNodeId)
-                                        false
-                                    }
-                                    SwipeToDismissBoxValue.EndToStart -> {
-                                        viewModel.deleteNode(currentNodeId)
-                                        scope.launch {
-                                            val result = snackbarHostState.showSnackbar(
-                                                message = "Node deleted",
-                                                actionLabel = "Undo",
-                                                duration = SnackbarDuration.Short
-                                            )
-                                            if (result == SnackbarResult.ActionPerformed) {
-                                                viewModel.restoreNode(currentNodeId)
+                                confirmValueChange = { value ->
+                                    when (value) {
+                                        SwipeToDismissBoxValue.StartToEnd -> {
+                                            viewModel.onCompletedToggled(currentNodeId)
+                                            false
+                                        }
+                                        SwipeToDismissBoxValue.EndToStart -> {
+                                            viewModel.deleteNode(currentNodeId)
+                                            scope.launch {
+                                                val result = snackbarHostState.showSnackbar(
+                                                    message = "Node deleted",
+                                                    actionLabel = "Undo",
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                                if (result == SnackbarResult.ActionPerformed) {
+                                                    viewModel.restoreNode(currentNodeId)
+                                                }
                                             }
+                                            true
                                         }
-                                        true
+                                        SwipeToDismissBoxValue.Settled -> true
                                     }
-                                    SwipeToDismissBoxValue.Settled -> true
                                 }
-                            }
-                        )
-                        SwipeToDismissBox(
-                            state = swipeState,
-                            enableDismissFromStartToEnd = true,
-                            enableDismissFromEndToStart = true,
-                            backgroundContent = {
-                                val color = when (swipeState.dismissDirection) {
-                                    SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
-                                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                                    SwipeToDismissBoxValue.Settled -> Color.Transparent
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(color),
-                                    contentAlignment = when (swipeState.dismissDirection) {
-                                        SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
-                                        else -> Alignment.CenterEnd
+                            )
+                            SwipeToDismissBox(
+                                state = swipeState,
+                                enableDismissFromStartToEnd = true,
+                                enableDismissFromEndToStart = true,
+                                backgroundContent = {
+                                    val color = when (swipeState.dismissDirection) {
+                                        SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
+                                        SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                                        SwipeToDismissBoxValue.Settled -> Color.Transparent
                                     }
-                                ) {
-                                    Icon(
-                                        imageVector = when (swipeState.dismissDirection) {
-                                            SwipeToDismissBoxValue.StartToEnd ->
-                                                if (flatNode.entity.completed == 1) Icons.AutoMirrored.Filled.Undo
-                                                else Icons.Default.Check
-                                            else -> Icons.Default.Delete
-                                        },
-                                        contentDescription = null,
-                                        modifier = Modifier.padding(16.dp)
-                                    )
-                                }
-                            }
-                        ) {
-                            Surface(
-                                tonalElevation = if (isDragging) 4.dp else 0.dp,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .longPressDraggableHandle(
-                                        onDragStarted = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(color),
+                                        contentAlignment = when (swipeState.dismissDirection) {
+                                            SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
+                                            else -> Alignment.CenterEnd
                                         }
-                                    )
-                                    .clickable(enabled = !isFocused) {
-                                        viewModel.onNodeFocusGained(flatNode.entity.id)
-                                    },
+                                    ) {
+                                        Icon(
+                                            imageVector = when (swipeState.dismissDirection) {
+                                                SwipeToDismissBoxValue.StartToEnd ->
+                                                    if (flatNode.entity.completed == 1) Icons.AutoMirrored.Filled.Undo
+                                                    else Icons.Default.Check
+                                                else -> Icons.Default.Delete
+                                            },
+                                            contentDescription = null,
+                                            modifier = Modifier.padding(16.dp)
+                                        )
+                                    }
+                                }
                             ) {
-                                NodeRow(
-                                    flatNode = flatNode,
-                                    isFocused = isFocused,
-                                    isNoteExpanded = flatNode.entity.id in state.expandedNoteIds || flatNode.entity.note.isNotBlank(),
-                                    shouldFocusNote = noteToFocusId == flatNode.entity.id,
-                                    shouldFocusContent = contentToFocusId == flatNode.entity.id,
-                                    onNoteFocused = { noteToFocusId = null },
-                                    onContentFocused = { contentToFocusId = null },
-                                    onFocusGained = { viewModel.onNodeFocusGained(flatNode.entity.id) },
-                                    onContentChanged = { viewModel.onContentChanged(flatNode.entity.id, it) },
-                                    onEnterPressed = { cursor -> viewModel.onEnterPressed(flatNode.entity.id, cursor) },
-                                    onBackspaceOnEmpty = { viewModel.onBackspaceOnEmptyNode(flatNode.entity.id) },
-                                    onFocusLost = { viewModel.onNodeFocusLost(flatNode.entity.id) },
-                                    onNoteChanged = { viewModel.onNoteChanged(flatNode.entity.id, it) },
-                                    onGlyphTap = { onZoomIn(flatNode.entity.id) },
-                                    onToggleCollapse = { viewModel.toggleCollapsed(flatNode.entity.id) },
-                                    imageLoader = imageLoader,
-                                )
+                                Surface(
+                                    tonalElevation = if (isDragging) 4.dp else 0.dp,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .longPressDraggableHandle(
+                                            onDragStarted = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            }
+                                        )
+                                        .clickable(enabled = !isFocused) {
+                                            viewModel.onNodeFocusGained(flatNode.entity.id)
+                                        },
+                                ) {
+                                    NodeRow(
+                                        flatNode = flatNode,
+                                        isFocused = isFocused,
+                                        isNoteExpanded = flatNode.entity.id in state.expandedNoteIds || flatNode.entity.note.isNotBlank(),
+                                        shouldFocusNote = noteToFocusId == flatNode.entity.id,
+                                        shouldFocusContent = contentToFocusId == flatNode.entity.id,
+                                        onNoteFocused = { noteToFocusId = null },
+                                        onContentFocused = { contentToFocusId = null },
+                                        onFocusGained = { viewModel.onNodeFocusGained(flatNode.entity.id) },
+                                        onContentChanged = { viewModel.onContentChanged(flatNode.entity.id, it) },
+                                        onEnterPressed = { cursor -> viewModel.onEnterPressed(flatNode.entity.id, cursor) },
+                                        onBackspaceOnEmpty = { viewModel.onBackspaceOnEmptyNode(flatNode.entity.id) },
+                                        onFocusLost = { viewModel.onNodeFocusLost(flatNode.entity.id) },
+                                        onNoteChanged = { viewModel.onNoteChanged(flatNode.entity.id, it) },
+                                        onGlyphTap = { onZoomIn(flatNode.entity.id) },
+                                        onToggleCollapse = { viewModel.toggleCollapsed(flatNode.entity.id) },
+                                        imageLoader = imageLoader,
+                                    )
+                                }
                             }
-                        }
+                            } // Column (drop indicator wrapper)
                         } // ReorderableItem
                     }
+                    // Trailing spacer — tap empty space below nodes clears focus
+                    item {
+                        Spacer(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(400.dp)
+                                .clickable(
+                                    indication = null,
+                                    interactionSource = remember { MutableInteractionSource() }
+                                ) {
+                                    focusManager.clearFocus()
+                                    viewModel.clearFocus()
+                                }
+                        )
+                    }
                 }
+                } // Box (pointer input wrapper)
             }
         }
     }
@@ -471,7 +531,7 @@ private fun NodeRow(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.InsertDriveFile,
+                            imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.primary

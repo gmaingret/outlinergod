@@ -2,6 +2,9 @@ import { randomUUID } from 'node:crypto'
 import type { FastifyInstance } from 'fastify'
 import type Database from 'better-sqlite3'
 import { requireAuth } from '../middleware/auth.js'
+import { hlcGenerate } from '../hlc/hlc.js'
+
+const SERVER_DEVICE_ID = 'server'
 
 interface BookmarkRow {
   id: string
@@ -92,6 +95,7 @@ export function createBookmarkRoutes(sqlite: InstanceType<typeof Database>) {
 
       const id = randomUUID()
       const now = Date.now()
+      const hlc = hlcGenerate(SERVER_DEVICE_ID)
 
       sqlite
         .prepare(
@@ -99,17 +103,25 @@ export function createBookmarkRoutes(sqlite: InstanceType<typeof Database>) {
             target_document_id, target_document_id_hlc, target_node_id, target_node_id_hlc,
             query, query_hlc, sort_order, sort_order_hlc, deleted_at, deleted_hlc,
             device_id, created_at, updated_at)
-           VALUES (?, ?, ?, '', ?, '', ?, '', ?, '', ?, '', ?, '', NULL, '', '', ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)`,
         )
         .run(
           id,
           req.user!.id,
           body.title,
+          hlc,
           body.target_type,
+          hlc,
           body.target_document_id ?? null,
+          hlc,
           body.target_node_id ?? null,
+          hlc,
           body.query ?? null,
+          hlc,
           body.sort_order,
+          hlc,
+          hlc,
+          SERVER_DEVICE_ID,
           now,
           now,
         )

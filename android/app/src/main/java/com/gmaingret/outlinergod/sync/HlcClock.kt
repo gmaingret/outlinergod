@@ -1,7 +1,5 @@
 package com.gmaingret.outlinergod.sync
 
-import java.util.concurrent.atomic.AtomicReference
-
 /**
  * Hybrid Logical Clock (HLC) -- per-field LWW timestamp for sync.
  *

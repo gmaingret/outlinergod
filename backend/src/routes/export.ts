@@ -30,14 +30,20 @@ export function createExportRoutes(sqlite: InstanceType<typeof Database>) {
         zip.file(`nodes/${doc.id}.json`, JSON.stringify(nodes, null, 2))
       }
 
-      // 4. Include attachments from UPLOADS_PATH if available
+      // 4. Include attachments owned by this user
       try {
         const uploadsPath = process.env.UPLOADS_PATH
         if (uploadsPath) {
-          const files = await fs.readdir(uploadsPath)
-          for (const filename of files) {
-            const data = await fs.readFile(path.join(uploadsPath, filename))
-            zip.file(`attachments/${filename}`, data)
+          const userFiles = sqlite
+            .prepare('SELECT filename FROM files WHERE user_id = ?')
+            .all(userId) as { filename: string }[]
+          for (const { filename } of userFiles) {
+            try {
+              const data = await fs.readFile(path.join(uploadsPath, filename))
+              zip.file(`attachments/${filename}`, data)
+            } catch {
+              // File may not exist on disk; skip it
+            }
           }
         }
       } catch {

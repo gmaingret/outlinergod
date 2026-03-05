@@ -79,7 +79,7 @@ class NodeEditorSyncTest {
         }
         savedStateHandle = SavedStateHandle(mapOf("documentId" to testDocumentId))
         every { authRepository.getDeviceId() } returns flowOf(testDeviceId)
-        every { authRepository.getAccessToken() } returns flowOf("user-1")
+        every { authRepository.getAccessToken() } returns flowOf(null)
         every { authRepository.getUserId() } returns flowOf("user-1")
         every { hlcClock.generate(any()) } returns testHlcValue
     }
