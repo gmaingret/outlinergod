@@ -37,7 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    onNavigateToNodeEditor: (String) -> Unit,
+    onNavigateToNodeEditor: (String, String) -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: SearchViewModel = hiltViewModel()
 ) {
@@ -55,7 +55,7 @@ fun SearchScreen(
         viewModel.container.sideEffectFlow.collect { sideEffect ->
             when (sideEffect) {
                 is SearchSideEffect.NavigateToNodeEditor -> {
-                    onNavigateToNodeEditor(sideEffect.documentId)
+                    onNavigateToNodeEditor(sideEffect.documentId, sideEffect.nodeId)
                 }
             }
         }

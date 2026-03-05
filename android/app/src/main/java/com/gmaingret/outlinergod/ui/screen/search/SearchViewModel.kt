@@ -81,7 +81,7 @@ class SearchViewModel @Inject constructor(
     }
 
     fun onResultTapped(item: SearchResultItem) = intent {
-        postSideEffect(SearchSideEffect.NavigateToNodeEditor(item.documentId))
+        postSideEffect(SearchSideEffect.NavigateToNodeEditor(item.documentId, item.nodeId))
     }
 }
 
@@ -102,5 +102,5 @@ sealed class SearchUiState {
 }
 
 sealed class SearchSideEffect {
-    data class NavigateToNodeEditor(val documentId: String) : SearchSideEffect()
+    data class NavigateToNodeEditor(val documentId: String, val nodeId: String) : SearchSideEffect()
 }

@@ -139,7 +139,7 @@ class BookmarkListViewModelTest {
             // Now test navigation: onBookmarkTapped posts a side effect, no state change
             containerHost.onBookmarkTapped(bookmark)
             testDispatcher.scheduler.advanceUntilIdle()
-            expectSideEffect(BookmarkListSideEffect.NavigateToNodeEditor("doc-2"))
+            expectSideEffect(BookmarkListSideEffect.NavigateToNodeEditor("doc-2", "node-1"))
         }
     }
 

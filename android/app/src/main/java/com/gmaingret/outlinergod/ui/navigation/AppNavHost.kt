@@ -90,16 +90,16 @@ fun AppNavHost(
                 onNavigateToDocument = { documentId ->
                     navController.navigate(AppRoutes.nodeEditor(documentId))
                 },
-                onNavigateToNodeEditor = { documentId ->
-                    navController.navigate(AppRoutes.nodeEditor(documentId))
+                onNavigateToNodeEditor = { documentId, nodeId ->
+                    navController.navigate(AppRoutes.nodeEditor(documentId, nodeId))
                 },
                 onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(AppRoutes.SEARCH) {
             SearchScreen(
-                onNavigateToNodeEditor = { documentId ->
-                    navController.navigate(AppRoutes.nodeEditor(documentId))
+                onNavigateToNodeEditor = { documentId, nodeId ->
+                    navController.navigate(AppRoutes.nodeEditor(documentId, nodeId))
                 },
                 onNavigateBack = { navController.popBackStack() }
             )

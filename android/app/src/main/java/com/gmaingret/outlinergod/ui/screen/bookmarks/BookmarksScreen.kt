@@ -38,7 +38,7 @@ import com.gmaingret.outlinergod.db.entity.BookmarkEntity
 @Composable
 fun BookmarksScreen(
     onNavigateToDocument: (String) -> Unit,
-    onNavigateToNodeEditor: (String) -> Unit,
+    onNavigateToNodeEditor: (String, String?) -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: BookmarkListViewModel = hiltViewModel()
 ) {
@@ -53,7 +53,7 @@ fun BookmarksScreen(
                     onNavigateToDocument(sideEffect.documentId)
                 }
                 is BookmarkListSideEffect.NavigateToNodeEditor -> {
-                    onNavigateToNodeEditor(sideEffect.documentId)
+                    onNavigateToNodeEditor(sideEffect.documentId, sideEffect.nodeId)
                 }
                 is BookmarkListSideEffect.ShowError -> {
                     snackbarHostState.showSnackbar(sideEffect.message)

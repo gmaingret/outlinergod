@@ -25,7 +25,6 @@ import com.gmaingret.outlinergod.sync.toSettingsSyncRecord
 import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
-import com.gmaingret.outlinergod.util.SyncLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first

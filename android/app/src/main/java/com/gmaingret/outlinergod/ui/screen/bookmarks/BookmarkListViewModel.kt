@@ -47,7 +47,7 @@ class BookmarkListViewModel @Inject constructor(
             }
             "node" -> {
                 bookmark.targetDocumentId?.let { docId ->
-                    postSideEffect(BookmarkListSideEffect.NavigateToNodeEditor(docId))
+                    postSideEffect(BookmarkListSideEffect.NavigateToNodeEditor(docId, bookmark.targetNodeId))
                 }
             }
             else -> {
@@ -76,6 +76,6 @@ sealed class BookmarkListUiState {
 
 sealed class BookmarkListSideEffect {
     data class NavigateToDocument(val documentId: String) : BookmarkListSideEffect()
-    data class NavigateToNodeEditor(val documentId: String) : BookmarkListSideEffect()
+    data class NavigateToNodeEditor(val documentId: String, val nodeId: String?) : BookmarkListSideEffect()
     data class ShowError(val message: String) : BookmarkListSideEffect()
 }

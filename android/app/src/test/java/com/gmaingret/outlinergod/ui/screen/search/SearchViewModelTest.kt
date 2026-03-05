@@ -210,7 +210,24 @@ class SearchViewModelTest {
         viewModel.test(this) {
             containerHost.onResultTapped(item)
             testScheduler.advanceUntilIdle()
-            expectSideEffect(SearchSideEffect.NavigateToNodeEditor("doc-1"))
+            expectSideEffect(SearchSideEffect.NavigateToNodeEditor("doc-1", "n1"))
+        }
+    }
+
+    @Test
+    fun `onResultTapped posts NavigateToNodeEditor with correct nodeId`() = runTest(testDispatcher) {
+        val item = SearchResultItem(
+            nodeId = "specific-node",
+            documentId = "doc-1",
+            content = "Hello",
+            note = "",
+            documentTitle = "Doc"
+        )
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.onResultTapped(item)
+            testScheduler.advanceUntilIdle()
+            expectSideEffect(SearchSideEffect.NavigateToNodeEditor("doc-1", "specific-node"))
         }
     }
 }
