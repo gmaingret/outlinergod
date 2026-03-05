@@ -1,6 +1,20 @@
 ---
 gsd_state_version: 1.0
 milestone: v0.7
+milestone_name: — user-feedback
+status: in_progress
+last_updated: "2026-03-05T11:33:43.085Z"
+last_activity: 2026-03-05 — Completed 14-03 file attachments upload (313/313 tests passing)
+progress:
+  total_phases: 14
+  completed_phases: 10
+  total_plans: 26
+  completed_plans: 25
+---
+
+---
+gsd_state_version: 1.0
+milestone: v0.7
 milestone_name: user-feedback
 status: in_progress
 stopped_at: "Completed 14-03-PLAN.md"
