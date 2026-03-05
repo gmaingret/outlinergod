@@ -9,6 +9,7 @@ import com.gmaingret.outlinergod.db.dao.NodeDao
 import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.NodeEntity
 import com.gmaingret.outlinergod.repository.AuthRepository
+import com.gmaingret.outlinergod.repository.FileRepository
 import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
 import com.gmaingret.outlinergod.ui.mapper.mapToFlatList
@@ -48,6 +49,7 @@ class NodeEditorPersistenceTest {
     private lateinit var bookmarkDao: BookmarkDao
     private lateinit var settingsDao: SettingsDao
     private lateinit var dataStore: DataStore<Preferences>
+    private lateinit var fileRepository: FileRepository
 
     private val testDeviceId = "device-1"
     private val testHlcValue = "1636300202430-00000-device-1"
@@ -64,6 +66,7 @@ class NodeEditorPersistenceTest {
         bookmarkDao = mockk(relaxed = true)
         settingsDao = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
+        fileRepository = mockk(relaxed = true)
         savedStateHandle = SavedStateHandle(mapOf("documentId" to testDocumentId))
         every { authRepository.getDeviceId() } returns flowOf(testDeviceId)
         every { authRepository.getUserId() } returns flowOf("user-1")
@@ -109,6 +112,7 @@ class NodeEditorPersistenceTest {
             bookmarkDao = bookmarkDao,
             settingsDao = settingsDao,
             dataStore = dataStore,
+            fileRepository = fileRepository,
         )
     }
 

@@ -1,5 +1,6 @@
 package com.gmaingret.outlinergod.ui.screen.nodeeditor
 
+import android.net.Uri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -14,6 +15,7 @@ import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.NodeEntity
 import com.gmaingret.outlinergod.prototype.FractionalIndex
 import com.gmaingret.outlinergod.repository.AuthRepository
+import com.gmaingret.outlinergod.repository.FileRepository
 import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
 import com.gmaingret.outlinergod.ui.common.SyncStatus
@@ -51,6 +53,7 @@ class NodeEditorViewModel @Inject constructor(
     private val bookmarkDao: BookmarkDao,
     private val settingsDao: SettingsDao,
     private val dataStore: DataStore<Preferences>,
+    private val fileRepository: FileRepository,
 ) : ViewModel(), ContainerHost<NodeEditorUiState, NodeEditorSideEffect> {
 
     override val container = container<NodeEditorUiState, NodeEditorSideEffect>(NodeEditorUiState())
@@ -58,10 +61,13 @@ class NodeEditorViewModel @Inject constructor(
     private var titleJob: Job? = null
     private val undoStack = ArrayDeque<List<FlatNode>>()
     private val redoStack = ArrayDeque<List<FlatNode>>()
+    private val undoDeletedIds = ArrayDeque<List<String>>()
 
     private fun pushUndoSnapshot(current: List<FlatNode>) {
         if (undoStack.size >= 50) undoStack.removeFirst()
         undoStack.addLast(current)
+        // Always push a parallel empty entry so undoDeletedIds stays aligned with undoStack
+        undoDeletedIds.addLast(emptyList())
         redoStack.clear()
     }
 
@@ -307,20 +313,46 @@ class NodeEditorViewModel @Inject constructor(
         }
         withoutBlock.addAll(insertAt, block)
 
-        // Enforce depth constraint: moved block head must be at most nodeAbove.depth + 1
+        // Enforce depth context:
+        //  - Too deep (blockHead.depth > nodeAbove.depth + 1): clamp to nodeAbove.depth + 1,
+        //    reparent block head to nodeAbove.
+        //  - Too shallow (blockHead.depth < nodeAbove.depth): adopt nodeAbove.depth,
+        //    reparent block head to become a sibling of nodeAbove.
+        //  - Same or within one level: no depth change needed.
         val nodeAbove = withoutBlock.getOrNull(insertAt - 1)
-        val maxAllowedDepth = nodeAbove?.depth?.plus(1) ?: 0
+        val aboveDepth = nodeAbove?.depth ?: 0
+        val minParentId = state.rootNodeId ?: state.documentId
         val blockHeadDepth = withoutBlock[insertAt].depth
-        if (blockHeadDepth > maxAllowedDepth) {
-            val depthDelta = blockHeadDepth - maxAllowedDepth
-            val newParentId = nodeAbove?.entity?.id ?: state.documentId
-            for (i in insertAt until insertAt + blockSize) {
-                val n = withoutBlock[i]
-                withoutBlock[i] = n.copy(
-                    entity = if (i == insertAt) n.entity.copy(parentId = newParentId) else n.entity,
-                    depth = n.depth - depthDelta,
-                )
+        // When there is a node above: allow depth in [aboveDepth, aboveDepth+1].
+        // When dropped at the top (no nodeAbove): must be depth=0 (root level).
+        val maxAllowedDepth = if (nodeAbove != null) aboveDepth + 1 else 0
+        val minAllowedDepth = aboveDepth
+        when {
+            blockHeadDepth > maxAllowedDepth -> {
+                // Too deep: reparent to become a child of nodeAbove
+                val depthDelta = blockHeadDepth - maxAllowedDepth
+                val newParentId = nodeAbove?.entity?.id ?: minParentId
+                for (i in insertAt until insertAt + blockSize) {
+                    val n = withoutBlock[i]
+                    withoutBlock[i] = n.copy(
+                        entity = if (i == insertAt) n.entity.copy(parentId = newParentId) else n.entity,
+                        depth = n.depth - depthDelta,
+                    )
+                }
             }
+            blockHeadDepth < minAllowedDepth -> {
+                // Too shallow: reparent to become a sibling of nodeAbove
+                val depthDelta = blockHeadDepth - minAllowedDepth
+                val newParentId = if (aboveDepth == 0) minParentId else nodeAbove!!.entity.parentId
+                for (i in insertAt until insertAt + blockSize) {
+                    val n = withoutBlock[i]
+                    withoutBlock[i] = n.copy(
+                        entity = if (i == insertAt) n.entity.copy(parentId = newParentId) else n.entity,
+                        depth = n.depth - depthDelta,
+                    )
+                }
+            }
+            // else: depth is within [aboveDepth, aboveDepth+1] — no adjustment needed
         }
 
         // Recompute sort orders and parent IDs, then persist
@@ -452,10 +484,18 @@ class NodeEditorViewModel @Inject constructor(
     fun undo() = intent {
         if (undoStack.isEmpty()) return@intent
         val snapshot = undoStack.removeLast()
+        val deletedIds = if (undoDeletedIds.isNotEmpty()) undoDeletedIds.removeLast() else emptyList()
         val current = state.flatNodes
         redoStack.addLast(current)
         reduce { state.copy(flatNodes = snapshot, canUndo = undoStack.isNotEmpty(), canRedo = true) }
         persistReorderedNodes(current, snapshot)
+        // Restore soft-deleted nodes for this undo step (only if this was a delete op)
+        if (deletedIds.isNotEmpty()) {
+            val deviceId = authRepository.getDeviceId().first()
+            val hlc = hlcClock.generate(deviceId)
+            val now = System.currentTimeMillis()
+            nodeDao.restoreNodes(deletedIds, hlc, now)
+        }
     }
 
     fun redo() = intent {
@@ -469,6 +509,23 @@ class NodeEditorViewModel @Inject constructor(
 
     fun openAttachmentPicker() = intent {
         postSideEffect(NodeEditorSideEffect.OpenAttachmentPicker)
+    }
+
+    fun uploadAttachment(nodeId: String, uri: Uri, mimeType: String) = intent {
+        reduce { state.copy(syncStatus = SyncStatus.Syncing) }
+        val result = fileRepository.uploadFile(nodeId, uri, mimeType)
+        result.fold(
+            onSuccess = { uploaded ->
+                val flatNode = state.flatNodes.firstOrNull { it.entity.id == nodeId } ?: return@intent
+                val newContent = "${flatNode.entity.content} [${uploaded.filename}](${uploaded.url})".trim()
+                onContentChanged(nodeId, newContent)
+                reduce { state.copy(syncStatus = SyncStatus.Idle) }
+            },
+            onFailure = {
+                reduce { state.copy(syncStatus = SyncStatus.Error) }
+                postSideEffect(NodeEditorSideEffect.ShowError("Upload failed: ${it.message}"))
+            }
+        )
     }
 
     fun switchToNote(nodeId: String) = intent {
@@ -688,25 +745,31 @@ class NodeEditorViewModel @Inject constructor(
             if (flatNodes[i].depth > nodeDepth) idsToDelete.add(flatNodes[i].entity.id)
             else break
         }
+
+        // Push undo snapshot with deleted IDs so toolbar Undo can restore them
+        if (undoStack.size >= 50) undoStack.removeFirst()
+        undoStack.addLast(flatNodes)
+        undoDeletedIds.addLast(idsToDelete)
+        redoStack.clear()
+
         nodeDao.softDeleteNodes(idsToDelete, now, hlc, now)
 
         val precedingNodeId = if (index > 0) flatNodes[index - 1].entity.id else null
-        reduce { state.copy(focusedNodeId = precedingNodeId) }
+        reduce { state.copy(focusedNodeId = precedingNodeId, canUndo = true, canRedo = false) }
     }
 
     fun restoreNode(nodeId: String) = intent {
         val node = nodeDao.getNodeById(nodeId).first() ?: return@intent
+        val deletedAt = node.deletedAt ?: return@intent
         val deviceId = authRepository.getDeviceId().first()
         val hlc = hlcClock.generate(deviceId)
         val now = System.currentTimeMillis()
-        nodeDao.updateNode(
-            node.copy(
-                deletedAt = null,
-                deletedHlc = hlc,
-                updatedAt = now,
-                deviceId = deviceId,
-            )
-        )
+        // Restore all nodes in the same document deleted at the same timestamp (full subtree)
+        val allNodes = nodeDao.getNodesByDocumentIncludingDeleted(state.documentId)
+        val idsToRestore = allNodes
+            .filter { it.deletedAt == deletedAt }
+            .map { it.id }
+        nodeDao.restoreNodes(idsToRestore, hlc, now)
         resetInactivityTimer()
     }
 

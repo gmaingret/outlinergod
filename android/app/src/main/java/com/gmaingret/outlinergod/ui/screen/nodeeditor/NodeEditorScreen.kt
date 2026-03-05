@@ -2,6 +2,7 @@ package com.gmaingret.outlinergod.ui.screen.nodeeditor
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -98,10 +99,18 @@ fun NodeEditorScreen(
     val state by viewModel.container.stateFlow.collectAsState()
     var noteToFocusId by remember { mutableStateOf<String?>(null) }
     var contentToFocusId by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val attachmentPickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
-    ) { /* uri -> attachment handling (future) */ }
+    ) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
+        val nodeId = state.focusedNodeId ?: return@rememberLauncherForActivityResult
+        viewModel.uploadAttachment(nodeId, uri, mimeType)
+    }
 
     LaunchedEffect(documentId, rootNodeId) {
         viewModel.loadDocument(documentId, rootNodeId)
@@ -111,7 +120,9 @@ fun NodeEditorScreen(
         viewModel.container.sideEffectFlow.collect { sideEffect ->
             when (sideEffect) {
                 is NodeEditorSideEffect.NavigateUp -> onNavigateUp()
-                is NodeEditorSideEffect.ShowError -> { /* handled via state */ }
+                is NodeEditorSideEffect.ShowError -> {
+                    scope.launch { snackbarHostState.showSnackbar(sideEffect.message) }
+                }
                 is NodeEditorSideEffect.FocusNote -> noteToFocusId = sideEffect.nodeId
                 is NodeEditorSideEffect.FocusContent -> contentToFocusId = sideEffect.nodeId
                 is NodeEditorSideEffect.OpenAttachmentPicker -> attachmentPickerLauncher.launch("*/*")
@@ -158,8 +169,6 @@ fun NodeEditorScreen(
             val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
                 viewModel.reorderNodes(from.index, to.index)
             }
-            val scope = rememberCoroutineScope()
-            val snackbarHostState = remember { SnackbarHostState() }
 
             Scaffold(
                 topBar = {

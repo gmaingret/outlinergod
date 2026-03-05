@@ -46,6 +46,12 @@ interface NodeDao {
     """)
     suspend fun getPendingChanges(userId: String, sinceHlc: String, deviceId: String): List<NodeEntity>
 
+    @Query("UPDATE nodes SET deleted_at = NULL, deleted_hlc = :hlc, updated_at = :updatedAt WHERE id IN (:nodeIds)")
+    suspend fun restoreNodes(nodeIds: List<String>, hlc: String, updatedAt: Long)
+
+    @Query("SELECT * FROM nodes WHERE document_id = :documentId")
+    suspend fun getNodesByDocumentIncludingDeleted(documentId: String): List<NodeEntity>
+
     @RawQuery
     suspend fun searchFts(query: SupportSQLiteQuery): List<NodeEntity>
 }
