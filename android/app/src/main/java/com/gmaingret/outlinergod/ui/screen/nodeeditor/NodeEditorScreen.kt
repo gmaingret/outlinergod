@@ -21,6 +21,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.FormatIndentDecrease
@@ -30,10 +32,15 @@ import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
+import coil3.ImageLoader
+import coil3.compose.AsyncImage
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import okhttp3.OkHttpClient
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,6 +65,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,6 +80,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
@@ -79,11 +88,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.gmaingret.outlinergod.BuildConfig
 import com.gmaingret.outlinergod.ui.common.MarkdownVisualTransformation
 import com.gmaingret.outlinergod.ui.mapper.FlatNode
 import kotlinx.coroutines.launch
-import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.rememberReorderableLazyListState
 
 private const val ZWS = "\u200B"
 
@@ -169,6 +177,27 @@ fun NodeEditorScreen(
             val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
                 viewModel.reorderNodes(from.index, to.index)
             }
+            val imageLoader = remember(state.authToken) {
+                val token = state.authToken
+                if (token == null) ImageLoader(context)
+                else ImageLoader.Builder(context)
+                    .components {
+                        add(OkHttpNetworkFetcherFactory(
+                            callFactory = {
+                                OkHttpClient.Builder()
+                                    .addInterceptor { chain ->
+                                        chain.proceed(
+                                            chain.request().newBuilder()
+                                                .addHeader("Authorization", "Bearer $token")
+                                                .build()
+                                        )
+                                    }
+                                    .build()
+                            }
+                        ))
+                    }
+                    .build()
+            }
 
             Scaffold(
                 topBar = {
@@ -230,104 +259,108 @@ fun NodeEditorScreen(
                         key = { it.entity.id },
                         contentType = { "node" }
                     ) { flatNode ->
+                        val currentNodeId = flatNode.entity.id
+                        val isFocused = state.focusedNodeId == flatNode.entity.id
                         ReorderableItem(reorderState, key = flatNode.entity.id) { isDragging ->
-                            val currentNodeId = flatNode.entity.id
                             val swipeState = rememberSwipeToDismissBoxState(
-                                confirmValueChange = { value ->
-                                    when (value) {
-                                        SwipeToDismissBoxValue.StartToEnd -> {
-                                            viewModel.onCompletedToggled(currentNodeId)
-                                            false
-                                        }
-                                        SwipeToDismissBoxValue.EndToStart -> {
-                                            viewModel.deleteNode(currentNodeId)
-                                            scope.launch {
-                                                val result = snackbarHostState.showSnackbar(
-                                                    message = "Node deleted",
-                                                    actionLabel = "Undo",
-                                                    duration = SnackbarDuration.Short
-                                                )
-                                                if (result == SnackbarResult.ActionPerformed) {
-                                                    viewModel.restoreNode(currentNodeId)
-                                                }
+                            confirmValueChange = { value ->
+                                when (value) {
+                                    SwipeToDismissBoxValue.StartToEnd -> {
+                                        viewModel.onCompletedToggled(currentNodeId)
+                                        false
+                                    }
+                                    SwipeToDismissBoxValue.EndToStart -> {
+                                        viewModel.deleteNode(currentNodeId)
+                                        scope.launch {
+                                            val result = snackbarHostState.showSnackbar(
+                                                message = "Node deleted",
+                                                actionLabel = "Undo",
+                                                duration = SnackbarDuration.Short
+                                            )
+                                            if (result == SnackbarResult.ActionPerformed) {
+                                                viewModel.restoreNode(currentNodeId)
                                             }
-                                            true
                                         }
-                                        SwipeToDismissBoxValue.Settled -> true
+                                        true
                                     }
+                                    SwipeToDismissBoxValue.Settled -> true
                                 }
-                            )
-
-                            SwipeToDismissBox(
-                                state = swipeState,
-                                enableDismissFromStartToEnd = true,
-                                enableDismissFromEndToStart = true,
-                                backgroundContent = {
-                                    val color = when (swipeState.dismissDirection) {
-                                        SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
-                                        SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                                        SwipeToDismissBoxValue.Settled -> Color.Transparent
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(color),
-                                        contentAlignment = when (swipeState.dismissDirection) {
-                                            SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
-                                            else -> Alignment.CenterEnd
-                                        }
-                                    ) {
-                                        Icon(
-                                            imageVector = when (swipeState.dismissDirection) {
-                                                SwipeToDismissBoxValue.StartToEnd ->
-                                                    if (flatNode.entity.completed == 1) Icons.AutoMirrored.Filled.Undo
-                                                    else Icons.Default.Check
-                                                else -> Icons.Default.Delete
-                                            },
-                                            contentDescription = null,
-                                            modifier = Modifier.padding(16.dp)
-                                        )
-                                    }
+                            }
+                        )
+                        SwipeToDismissBox(
+                            state = swipeState,
+                            enableDismissFromStartToEnd = true,
+                            enableDismissFromEndToStart = true,
+                            backgroundContent = {
+                                val color = when (swipeState.dismissDirection) {
+                                    SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
+                                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                                    SwipeToDismissBoxValue.Settled -> Color.Transparent
                                 }
-                            ) {
-                                Surface(
-                                    tonalElevation = if (isDragging) 4.dp else 0.dp,
+                                Box(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .longPressDraggableHandle(
-                                            onDragStarted = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            },
-                                        ),
+                                        .fillMaxSize()
+                                        .background(color),
+                                    contentAlignment = when (swipeState.dismissDirection) {
+                                        SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
+                                        else -> Alignment.CenterEnd
+                                    }
                                 ) {
-                                    NodeRow(
-                                        flatNode = flatNode,
-                                        isFocused = state.focusedNodeId == flatNode.entity.id,
-                                        isNoteExpanded = flatNode.entity.id in state.expandedNoteIds || flatNode.entity.note.isNotBlank(),
-                                        shouldFocusNote = noteToFocusId == flatNode.entity.id,
-                                        shouldFocusContent = contentToFocusId == flatNode.entity.id,
-                                        onNoteFocused = { noteToFocusId = null },
-                                        onContentFocused = { contentToFocusId = null },
-                                        onFocusGained = { viewModel.onNodeFocusGained(flatNode.entity.id) },
-                                        onContentChanged = { viewModel.onContentChanged(flatNode.entity.id, it) },
-                                        onEnterPressed = { cursor -> viewModel.onEnterPressed(flatNode.entity.id, cursor) },
-                                        onBackspaceOnEmpty = { viewModel.onBackspaceOnEmptyNode(flatNode.entity.id) },
-                                        onFocusLost = { viewModel.onNodeFocusLost(flatNode.entity.id) },
-                                        onNoteChanged = { viewModel.onNoteChanged(flatNode.entity.id, it) },
-                                        onGlyphTap = { onZoomIn(flatNode.entity.id) },
-                                        onToggleCollapse = {
-                                            viewModel.toggleCollapsed(flatNode.entity.id)
+                                    Icon(
+                                        imageVector = when (swipeState.dismissDirection) {
+                                            SwipeToDismissBoxValue.StartToEnd ->
+                                                if (flatNode.entity.completed == 1) Icons.AutoMirrored.Filled.Undo
+                                                else Icons.Default.Check
+                                            else -> Icons.Default.Delete
                                         },
+                                        contentDescription = null,
+                                        modifier = Modifier.padding(16.dp)
                                     )
                                 }
                             }
+                        ) {
+                            Surface(
+                                tonalElevation = if (isDragging) 4.dp else 0.dp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .longPressDraggableHandle(
+                                        onDragStarted = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        }
+                                    )
+                                    .clickable(enabled = !isFocused) {
+                                        viewModel.onNodeFocusGained(flatNode.entity.id)
+                                    },
+                            ) {
+                                NodeRow(
+                                    flatNode = flatNode,
+                                    isFocused = isFocused,
+                                    isNoteExpanded = flatNode.entity.id in state.expandedNoteIds || flatNode.entity.note.isNotBlank(),
+                                    shouldFocusNote = noteToFocusId == flatNode.entity.id,
+                                    shouldFocusContent = contentToFocusId == flatNode.entity.id,
+                                    onNoteFocused = { noteToFocusId = null },
+                                    onContentFocused = { contentToFocusId = null },
+                                    onFocusGained = { viewModel.onNodeFocusGained(flatNode.entity.id) },
+                                    onContentChanged = { viewModel.onContentChanged(flatNode.entity.id, it) },
+                                    onEnterPressed = { cursor -> viewModel.onEnterPressed(flatNode.entity.id, cursor) },
+                                    onBackspaceOnEmpty = { viewModel.onBackspaceOnEmptyNode(flatNode.entity.id) },
+                                    onFocusLost = { viewModel.onNodeFocusLost(flatNode.entity.id) },
+                                    onNoteChanged = { viewModel.onNoteChanged(flatNode.entity.id, it) },
+                                    onGlyphTap = { onZoomIn(flatNode.entity.id) },
+                                    onToggleCollapse = { viewModel.toggleCollapsed(flatNode.entity.id) },
+                                    imageLoader = imageLoader,
+                                )
+                            }
                         }
+                        } // ReorderableItem
                     }
                 }
             }
         }
     }
 }
+
+private val ATTACH_REGEX = Regex("""^ATTACH\|(.+?)\|(.+?)\|(.+)$""")
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -347,16 +380,18 @@ private fun NodeRow(
     onNoteChanged: (String) -> Unit,
     onGlyphTap: () -> Unit,
     onToggleCollapse: () -> Unit,
+    imageLoader: ImageLoader,
 ) {
     val focusRequester = remember { FocusRequester() }
     val noteFocusRequester = remember { FocusRequester() }
+    val isAttachment = flatNode.entity.content.startsWith("ATTACH|")
     var textFieldValue by remember(flatNode.entity.id) {
         val displayText = flatNode.entity.content.ifEmpty { ZWS }
         mutableStateOf(TextFieldValue(displayText, selection = TextRange(displayText.length)))
     }
 
     LaunchedEffect(isFocused) {
-        if (isFocused) {
+        if (isFocused && !isAttachment) {
             focusRequester.requestFocus()
         }
     }
@@ -369,7 +404,7 @@ private fun NodeRow(
     }
 
     LaunchedEffect(shouldFocusContent) {
-        if (shouldFocusContent) {
+        if (shouldFocusContent && !isAttachment) {
             focusRequester.requestFocus()
             onContentFocused()
         }
@@ -389,7 +424,7 @@ private fun NodeRow(
             // Glyph: filled dot — tap = zoom in
             Box(
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(32.dp)
                     .clickable { onGlyphTap() },
                 contentAlignment = Alignment.Center
             ) {
@@ -405,64 +440,129 @@ private fun NodeRow(
 
             Spacer(modifier = Modifier.width(4.dp))
 
-            // Content field
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                BasicTextField(
-                    value = textFieldValue,
-                    onValueChange = { newValue ->
-                        val newText = newValue.text
-                        val oldText = textFieldValue.text
-
-                        // Detect Enter key: newline inserted
-                        val newlineIndex = newText.indexOf('\n')
-                        if (newlineIndex >= 0 && !oldText.contains('\n')) {
-                            // Strip ZWS from position calculation
-                            val cleanPosition = newText.substring(0, newlineIndex).replace(ZWS, "").length
-                            onEnterPressed(cleanPosition)
-                            return@BasicTextField
-                        }
-
-                        // Detect Backspace on empty node via ZWS sentinel
-                        if (oldText == ZWS && newText.isEmpty()) {
-                            onBackspaceOnEmpty()
-                            return@BasicTextField
-                        }
-
-                        // Normal edit: strip ZWS from the text
-                        val cleanText = newText.replace(ZWS, "")
-                        if (cleanText.isEmpty()) {
-                            textFieldValue = TextFieldValue(ZWS, selection = TextRange(1))
-                            onContentChanged("")
-                        } else {
-                            textFieldValue = newValue.copy(text = cleanText)
-                            onContentChanged(cleanText)
-                        }
-                    },
-                    visualTransformation = MarkdownVisualTransformation,
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(
-                        color = if (flatNode.entity.completed == 1)
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        else
-                            MaterialTheme.colorScheme.onSurface,
-                        textDecoration = if (flatNode.entity.completed == 1)
-                            TextDecoration.LineThrough
-                        else
-                            TextDecoration.None
-                    ),
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester)
-                        .onFocusChanged { focusState ->
-                            if (focusState.isFocused) {
-                                onFocusGained()
-                            } else {
-                                onFocusLost()
-                            }
-                        }
+            // Content field (or attachment display)
+            val attachMatch = if (isAttachment) ATTACH_REGEX.find(flatNode.entity.content) else null
+            if (attachMatch != null) {
+                val mimeType = attachMatch.groupValues[1]
+                val filename = attachMatch.groupValues[2]
+                val relativeUrl = attachMatch.groupValues[3]
+                val isImage = mimeType.startsWith("image/")
+                if (isImage) {
+                    val fullUrl = BuildConfig.BASE_URL + relativeUrl
+                    Column(modifier = Modifier.weight(1f)) {
+                        AsyncImage(
+                            model = fullUrl,
+                            contentDescription = filename,
+                            imageLoader = imageLoader,
+                            contentScale = ContentScale.FillWidth,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = filename,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.InsertDriveFile,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = filename,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            } else if (!isFocused) {
+                // Not in edit mode — plain Text, zero gesture competition.
+                // The Surface's pointerInput handles tap (→ focus) and long-press (→ drag).
+                val displayStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = if (flatNode.entity.completed == 1)
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    else
+                        MaterialTheme.colorScheme.onSurface,
+                    textDecoration = if (flatNode.entity.completed == 1)
+                        TextDecoration.LineThrough
+                    else
+                        TextDecoration.None
                 )
+                Text(
+                    text = flatNode.entity.content,
+                    style = displayStyle,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                )
+            } else {
+                Column(modifier = Modifier.weight(1f)) {
+                    BasicTextField(
+                        value = textFieldValue,
+                        onValueChange = { newValue ->
+                            val newText = newValue.text
+                            val oldText = textFieldValue.text
+
+                            // Detect Enter key: newline inserted
+                            val newlineIndex = newText.indexOf('\n')
+                            if (newlineIndex >= 0 && !oldText.contains('\n')) {
+                                // Strip ZWS from position calculation
+                                val cleanPosition = newText.substring(0, newlineIndex).replace(ZWS, "").length
+                                onEnterPressed(cleanPosition)
+                                return@BasicTextField
+                            }
+
+                            // Detect Backspace on empty node via ZWS sentinel
+                            if (oldText == ZWS && newText.isEmpty()) {
+                                onBackspaceOnEmpty()
+                                return@BasicTextField
+                            }
+
+                            // Normal edit: strip ZWS from the text
+                            val cleanText = newText.replace(ZWS, "")
+                            if (cleanText.isEmpty()) {
+                                textFieldValue = TextFieldValue(ZWS, selection = TextRange(1))
+                                onContentChanged("")
+                            } else {
+                                textFieldValue = newValue.copy(text = cleanText)
+                                onContentChanged(cleanText)
+                            }
+                        },
+                        visualTransformation = MarkdownVisualTransformation,
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(
+                            color = if (flatNode.entity.completed == 1)
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            else
+                                MaterialTheme.colorScheme.onSurface,
+                            textDecoration = if (flatNode.entity.completed == 1)
+                                TextDecoration.LineThrough
+                            else
+                                TextDecoration.None
+                        ),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    onFocusGained()
+                                } else {
+                                    onFocusLost()
+                                }
+                            }
+                    )
+                }
             }
 
             // Collapse/expand arrow: right-aligned, only shown for nodes with children
@@ -481,6 +581,7 @@ private fun NodeRow(
                     )
                 }
             }
+
         }
 
         // Note field (shown when expanded or note has content)
@@ -534,11 +635,11 @@ private fun NodeActionToolbar(
     modifier: Modifier = Modifier
 ) {
     BottomAppBar(modifier = modifier) {
-        IconButton(onClick = onIndent) {
-            Icon(Icons.AutoMirrored.Filled.FormatIndentIncrease, contentDescription = "Indent")
-        }
         IconButton(onClick = onOutdent) {
             Icon(Icons.AutoMirrored.Filled.FormatIndentDecrease, contentDescription = "Outdent")
+        }
+        IconButton(onClick = onIndent) {
+            Icon(Icons.AutoMirrored.Filled.FormatIndentIncrease, contentDescription = "Indent")
         }
         IconButton(onClick = onMoveUp) {
             Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move up")
