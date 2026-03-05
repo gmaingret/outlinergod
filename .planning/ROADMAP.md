@@ -99,6 +99,15 @@ Plans:
 
 ## v0.6: integration-polish *(gap closure in progress)*
 
+### Phase 13: v0.6-gap-closure
+**Goal:** Close the 2 critical wiring gaps (search→node navigation, NodeEditorScreen sync-on-resume) and 3 non-blocking tech debt items found by the v0.6 milestone audit
+**Requirements:** PRD §6 search result navigation; Phase 4-13 sync-on-resume intent
+**Gap Closure:** Closes GAP-V1, GAP-V2, TD-A, TD-B, TD-C from v0.6-MILESTONE-AUDIT.md
+**Plans:** 1 plan
+Plans:
+- [ ] 13-01-PLAN.md — GAP-V1 (SearchSideEffect+nodeId wiring) + GAP-V2 (NodeEditorScreen DisposableEffect) + TD-A/B/C (docstring, dead import, bookmark targetNodeId zoom-in)
+**Status:** Planned
+
 ### Phase 12: integration-e2e
 **Goal:** Close remaining tech debt (TD-2, TD-4), wire zoom-in navigation, harden backend (rate limiting, tombstone purge), and add SyncWorker integration test with real Room DB
 **Plans:** 5 plans
@@ -107,5 +116,5 @@ Plans:
 - [x] 12-02-PLAN.md — Wire zoom-in on glyph tap (navigation with rootNodeId)
 - [x] 12-03-PLAN.md — Backend hardening: auth rate limiting + tombstone purge
 - [x] 12-04-PLAN.md — SyncWorker integration test (real Room DB) + LazyColumn contentType
-- [ ] 12-05-PLAN.md — Gap closure: add tappable dot glyph to hasChildren branch in NodeEditorScreen
-**Status:** Gap closure in progress (UAT gap: dot glyph missing from parent node branch)
+- [x] 12-05-PLAN.md — Gap closure: add tappable dot glyph to hasChildren branch in NodeEditorScreen
+**Status:** Complete (all 5 plans done, implemented in commit d798e35)
