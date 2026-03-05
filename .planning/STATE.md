@@ -55,5 +55,8 @@ See: .planning/ROADMAP.md (collapsed — next milestone TBD)
 | D35 | filterSubtree collects descendants only before mapToFlatList | 12-02 | NodeEditorViewModel.filterSubtree |
 | D36 | Zoom-in uses Navigation back stack (each zoom = separate NavBackStackEntry) | 12-02 | AppNavHost, NodeEditorScreen |
 | D37 | In orbit-test, onScreenPaused() must be called before advanceUntilIdle() to cancel 30s inactivity timer | 13-01 | NodeEditorViewModelTest |
-| D38 | snackbarHostState and scope hoisted to composable level so ShowError works from any status branch | 14-03 | NodeEditorScreen |
-| D39 | ksp.incremental.intermodule=false added to fix KSP FileAlreadyExistsException on Windows | 14-03 | gradle.properties |
+| D38 | undoDeletedIds parallel stack always pushed in sync with undoStack; deleteNode pushes actual ids, pushUndoSnapshot pushes emptyList | 14-01 | NodeEditorViewModel |
+| D39 | restoreNode() uses deletedAt timestamp as batch key — all nodes with same timestamp restored together (subtree restore) | 14-01 | NodeEditorViewModel.restoreNode |
+| D40 | undo() only calls restoreNodes() when deletedIds non-empty, so structural ops (indent/outdent) are unaffected | 14-01 | NodeEditorViewModel.undo |
+| D41 | snackbarHostState and scope hoisted to composable level so ShowError works from any status branch | 14-03 | NodeEditorScreen |
+| D42 | ksp.incremental.intermodule=false added to fix KSP FileAlreadyExistsException on Windows | 14-03 | gradle.properties |
