@@ -2,12 +2,12 @@
 
 ## Current Position
 
-Phase: 12 of 12 (integration-e2e) — COMPLETE
-Plan: 04 of 4 complete
-Status: Phase 12 COMPLETE — all 4 plans done
-Last activity: 2026-03-04 - Completed 12-04-PLAN.md: SyncWorkerIntegrationTest (real Room DB) + LazyColumn contentType optimization
+Phase: 13 of 13 (v0.6-gap-closure)
+Plan: 01 of 1 complete
+Status: Phase 13 COMPLETE — all gaps closed
+Last activity: 2026-03-05 - Completed 13-01: v0.6-gap-closure (GAP-V1, GAP-V2, TD-A, TD-B, TD-C)
 
-Progress: ████████████ (completed: 01-11, 12-01, 12-02, 12-03, 12-04 | remaining: none)
+Progress: █████████████ (completed: 01-11, 12-01..05, 13-01 | remaining: none)
 
 ## Accumulated Decisions
 
@@ -49,11 +49,13 @@ Progress: ████████████ (completed: 01-11, 12-01, 12-02, 
 | D34 | NodeDao.getPendingChanges requires userId as first parameter (matches DocumentDao/BookmarkDao); prevents nodes from user B polluting user A's sync push on shared device | 12-01 | NodeDao, SyncWorker, DocumentListViewModel, NodeEditorViewModel |
 | D35 | filterSubtree collects descendants only (not rootNodeId itself) before mapToFlatList — avoids orphan-handling pollution when zooming in | 12-02 | NodeEditorViewModel.filterSubtree |
 | D36 | Zoom-in uses Navigation back stack (each zoom = separate NavBackStackEntry); System Back naturally zooms out — no in-screen state needed | 12-02 | AppNavHost, NodeEditorScreen |
+| D37 | In orbit-test, onScreenPaused() must be called immediately after onScreenResumed() (before advanceUntilIdle()) to cancel the inactivity timer. runTest's scheduler advances past delay(30_000), causing a second sync cycle if the timer is not cancelled first. | 13-01 | NodeEditorViewModelTest |
 
 ## Blockers / Concerns
 
 - BookmarkDaoTest.observeAllActive_excludesOtherUsers has a flaky Robolectric/Room race condition (pre-existing, passes on retry)
 - All v0.4 audit gaps (GAP-A, GAP-B) are now closed
+- All v0.6 audit gaps (GAP-V1, GAP-V2, TD-A, TD-B, TD-C) are now closed
 
 ## Key Environment
 
@@ -64,6 +66,6 @@ Progress: ████████████ (completed: 01-11, 12-01, 12-02, 
 
 ## Session Continuity
 
-Last session: 2026-03-04T17:21:00Z
-Stopped at: Completed 12-04-PLAN.md. SyncWorkerIntegrationTest (3 new tests, real Room DB + DataStore). LazyColumn contentType optimization. 295 Android tests, 0 failures.
+Last session: 2026-03-05T00:00:00Z
+Stopped at: Completed 13-01-PLAN.md. GAP-V1/V2/TD-A/TD-B/TD-C all closed. 298 Android tests, 0 failures.
 Resume file: None
