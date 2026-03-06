@@ -2,10 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { LoginPage } from './components/LoginPage'
 import { DocumentListPage } from './pages/DocumentListPage'
-
-function NodeEditorPage() {
-  return <div className="p-8 text-gray-700">Node editor — coming in Phase 18</div>
-}
+import { NodeEditorPage } from './pages/NodeEditorPage'
 
 export default function App() {
   return (
