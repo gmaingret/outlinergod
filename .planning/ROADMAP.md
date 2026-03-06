@@ -29,7 +29,7 @@
 | 16. Auth | 3/3 | Complete    | 2026-03-06 |
 | 17. Document List | 2/2 | Complete    | 2026-03-06 |
 | 18. Node Editor + Sync | 3/3 | Complete    | 2026-03-06 |
-| 19. Drag-and-Drop | 2/2 | Complete   | 2026-03-06 |
+| 19. Drag-and-Drop | 2/2 | Complete    | 2026-03-06 |
 
 ### Phase Details
 

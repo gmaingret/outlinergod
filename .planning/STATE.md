@@ -4,8 +4,8 @@ milestone: v0.8
 milestone_name: — web-client
 status: completed
 stopped_at: Completed 19-02-PLAN.md
-last_updated: "2026-03-06T14:10:28.748Z"
-last_activity: "2026-03-06 — 19-01 complete: flattenTree/reorderNode pure functions, 23 treeHelpers tests pass, dnd-kit installed"
+last_updated: "2026-03-06T14:14:18.360Z"
+last_activity: "2026-03-06 — 19-02 complete: FlatNodeList with drag-to-reorder/reparent, 7 new tests, NodeRow removed, 69 total tests pass"
 progress:
   total_phases: 19
   completed_phases: 15
