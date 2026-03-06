@@ -462,49 +462,88 @@ export function createSyncRoutes(sqlite: InstanceType<typeof Database>) {
       }
 
       const userId = req.user!.id
+      // When since == "0" the client has no local data (fresh install or post-logout empty DB).
+      // Skip the device_id filter so we return ALL of the user's records, including those
+      // originally created from this device (which would otherwise be wrongly excluded).
+      const isFullSync = since === '0'
 
-      // Nodes: any HLC column > since AND device_id != requester
-      const nodes = sqlite
-        .prepare(
-          `SELECT * FROM nodes
-           WHERE user_id = ?
-           AND (content_hlc > ? OR note_hlc > ? OR parent_id_hlc > ? OR sort_order_hlc > ?
-                OR completed_hlc > ? OR color_hlc > ? OR collapsed_hlc > ? OR deleted_hlc > ?)
-           AND device_id != ?`,
-        )
-        .all(userId, since, since, since, since, since, since, since, since, deviceId) as NodeSyncRecord[]
+      // Nodes: any HLC column > since AND (full sync OR device_id != requester)
+      const nodes = isFullSync
+        ? (sqlite
+            .prepare(
+              `SELECT * FROM nodes
+               WHERE user_id = ?
+               AND (content_hlc > ? OR note_hlc > ? OR parent_id_hlc > ? OR sort_order_hlc > ?
+                    OR completed_hlc > ? OR color_hlc > ? OR collapsed_hlc > ? OR deleted_hlc > ?)`,
+            )
+            .all(userId, since, since, since, since, since, since, since, since) as NodeSyncRecord[])
+        : (sqlite
+            .prepare(
+              `SELECT * FROM nodes
+               WHERE user_id = ?
+               AND (content_hlc > ? OR note_hlc > ? OR parent_id_hlc > ? OR sort_order_hlc > ?
+                    OR completed_hlc > ? OR color_hlc > ? OR collapsed_hlc > ? OR deleted_hlc > ?)
+               AND device_id != ?`,
+            )
+            .all(userId, since, since, since, since, since, since, since, since, deviceId) as NodeSyncRecord[])
 
-      // Documents: any HLC column > since AND device_id != requester
-      const documents = sqlite
-        .prepare(
-          `SELECT * FROM documents
-           WHERE user_id = ?
-           AND (title_hlc > ? OR parent_id_hlc > ? OR sort_order_hlc > ?
-                OR collapsed_hlc > ? OR deleted_hlc > ?)
-           AND device_id != ?`,
-        )
-        .all(userId, since, since, since, since, since, deviceId) as DocumentSyncRecord[]
+      // Documents: any HLC column > since AND (full sync OR device_id != requester)
+      const documents = isFullSync
+        ? (sqlite
+            .prepare(
+              `SELECT * FROM documents
+               WHERE user_id = ?
+               AND (title_hlc > ? OR parent_id_hlc > ? OR sort_order_hlc > ?
+                    OR collapsed_hlc > ? OR deleted_hlc > ?)`,
+            )
+            .all(userId, since, since, since, since, since) as DocumentSyncRecord[])
+        : (sqlite
+            .prepare(
+              `SELECT * FROM documents
+               WHERE user_id = ?
+               AND (title_hlc > ? OR parent_id_hlc > ? OR sort_order_hlc > ?
+                    OR collapsed_hlc > ? OR deleted_hlc > ?)
+               AND device_id != ?`,
+            )
+            .all(userId, since, since, since, since, since, deviceId) as DocumentSyncRecord[])
 
       // Settings: single row, null if none or no changes
-      const settingsRow = sqlite
-        .prepare(
-          `SELECT * FROM settings
-           WHERE user_id = ?
-           AND (theme_hlc > ? OR density_hlc > ? OR show_guide_lines_hlc > ? OR show_backlink_badge_hlc > ?)
-           AND device_id != ?`,
-        )
-        .get(userId, since, since, since, since, deviceId) as SettingsSyncRecord | undefined
+      const settingsRow = isFullSync
+        ? (sqlite
+            .prepare(
+              `SELECT * FROM settings
+               WHERE user_id = ?
+               AND (theme_hlc > ? OR density_hlc > ? OR show_guide_lines_hlc > ? OR show_backlink_badge_hlc > ?)`,
+            )
+            .get(userId, since, since, since, since) as SettingsSyncRecord | undefined)
+        : (sqlite
+            .prepare(
+              `SELECT * FROM settings
+               WHERE user_id = ?
+               AND (theme_hlc > ? OR density_hlc > ? OR show_guide_lines_hlc > ? OR show_backlink_badge_hlc > ?)
+               AND device_id != ?`,
+            )
+            .get(userId, since, since, since, since, deviceId) as SettingsSyncRecord | undefined)
 
-      // Bookmarks: any HLC column > since AND device_id != requester
-      const bookmarks = sqlite
-        .prepare(
-          `SELECT * FROM bookmarks
-           WHERE user_id = ?
-           AND (title_hlc > ? OR target_type_hlc > ? OR target_document_id_hlc > ?
-                OR target_node_id_hlc > ? OR query_hlc > ? OR sort_order_hlc > ? OR deleted_hlc > ?)
-           AND device_id != ?`,
-        )
-        .all(userId, since, since, since, since, since, since, since, deviceId) as BookmarkSyncRecord[]
+      // Bookmarks: any HLC column > since AND (full sync OR device_id != requester)
+      const bookmarks = isFullSync
+        ? (sqlite
+            .prepare(
+              `SELECT * FROM bookmarks
+               WHERE user_id = ?
+               AND (title_hlc > ? OR target_type_hlc > ? OR target_document_id_hlc > ?
+                    OR target_node_id_hlc > ? OR query_hlc > ? OR sort_order_hlc > ? OR deleted_hlc > ?)`,
+            )
+            .all(userId, since, since, since, since, since, since, since) as BookmarkSyncRecord[])
+        : (sqlite
+            .prepare(
+              `SELECT * FROM bookmarks
+               WHERE user_id = ?
+               AND (title_hlc > ? OR target_type_hlc > ? OR target_document_id_hlc > ?
+                    OR target_node_id_hlc > ? OR query_hlc > ? OR sort_order_hlc > ? OR deleted_hlc > ?)
+               AND device_id != ?`,
+            )
+            .all(userId, since, since, since, since, since, since, since, deviceId) as BookmarkSyncRecord[])
 
       const server_hlc = hlcGenerate(SERVER_DEVICE_ID)
 

@@ -218,7 +218,8 @@ describe('GET /api/sync/changes', () => {
     expect(ids).toContain('node-changed')
   })
 
-  it('excludes_nodes_fromSameDevice', async () => {
+  it('excludes_nodes_fromSameDevice_onIncrementalSync', async () => {
+    // When since != "0" (incremental sync), same-device nodes are still excluded.
     seedNode(sqlite, {
       id: 'node-echo',
       document_id: 'doc-1',
@@ -237,7 +238,7 @@ describe('GET /api/sync/changes', () => {
     const jwt = await signTestJwt(USER_ID)
     const res = await app.inject({
       method: 'GET',
-      url: '/api/sync/changes?since=0&device_id=deviceA',
+      url: '/api/sync/changes?since=0000&device_id=deviceA',
       headers: { authorization: `Bearer ${jwt}` },
     })
 
@@ -245,6 +246,35 @@ describe('GET /api/sync/changes', () => {
     const body = res.json()
     const ids = body.nodes.map((n: { id: string }) => n.id)
     expect(ids).not.toContain('node-echo')
+  })
+
+  it('fullSync_includesSameDevice_documents_whenSinceIsZero', async () => {
+    // Regression: after logout+re-login, Room DB is empty so Android sends since=0.
+    // The server must return ALL docs including those created from the same device_id,
+    // otherwise the user only sees docs created on other devices.
+    const docId = 'doc-same-device'
+    const now = Date.now()
+    sqlite
+      .prepare(
+        `INSERT INTO documents (id, user_id, title, title_hlc, type, parent_id, parent_id_hlc,
+          sort_order, sort_order_hlc, collapsed, collapsed_hlc, deleted_at, deleted_hlc,
+          device_id, created_at, updated_at)
+         VALUES (?, ?, 'MyDoc', 'AAAA', 'document', NULL, '', 'a', 'AAAA', 0, 'AAAA', NULL, '',
+          'deviceA', ?, ?)`,
+      )
+      .run(docId, USER_ID, now, now)
+
+    const jwt = await signTestJwt(USER_ID)
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/sync/changes?since=0&device_id=deviceA',
+      headers: { authorization: `Bearer ${jwt}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    const ids = body.documents.map((d: { id: string }) => d.id)
+    expect(ids).toContain(docId)
   })
 
   it('excludes_nodes_notChangedAfterSince', async () => {
