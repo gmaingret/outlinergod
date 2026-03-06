@@ -44,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,6 +55,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.gmaingret.outlinergod.db.entity.DocumentEntity
 import com.gmaingret.outlinergod.prototype.FractionalIndex
 import com.gmaingret.outlinergod.ui.common.SyncStatus
@@ -73,9 +77,15 @@ fun DocumentListScreen(
     var showCreateDialog by remember { mutableStateOf(false) }
     var createDocTitle by remember { mutableStateOf("") }
 
-    // Trigger sync on screen resume
-    LaunchedEffect(Unit) {
-        viewModel.onScreenResumed()
+    // Trigger periodic sync while screen is active; cancel when paused
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.onScreenResumed()
+            if (event == Lifecycle.Event.ON_PAUSE) viewModel.onScreenPaused()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     // Collect side effects

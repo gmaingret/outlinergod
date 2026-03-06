@@ -26,6 +26,8 @@ import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -156,10 +158,21 @@ class DocumentListViewModel @Inject constructor(
         }
     }
 
+    private var periodicSyncJob: Job? = null
+
     fun onScreenResumed() {
-        viewModelScope.launch {
-            triggerSync()
+        periodicSyncJob?.cancel()
+        periodicSyncJob = viewModelScope.launch {
+            while (true) {
+                triggerSync().join()
+                delay(30_000)
+            }
         }
+    }
+
+    fun onScreenPaused() {
+        periodicSyncJob?.cancel()
+        periodicSyncJob = null
     }
 
     fun createDocument(title: String, type: String, parentId: String?, sortOrder: String) = intent {
