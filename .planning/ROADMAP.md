@@ -29,7 +29,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 20. Security fixes | 1/1 | Complete    | 2026-03-06 |
-| 21. Sync architecture | 0/? | Not started | — |
+| 21. Sync architecture | 0/2 | Planned     | — |
 | 22. Android performance | 0/? | Not started | — |
 | 23. Data model & structure | 0/? | Not started | — |
 | 24. Test coverage gaps | 0/? | Not started | — |
@@ -60,6 +60,12 @@ Plans:
   2. `NodeEditorViewModel.triggerSync()`, `DocumentListViewModel.triggerSync()`, and `SyncWorker.doWork()` all call the orchestrator — no direct pull/push logic in any of them
   3. All 222+ Android tests still pass
   4. A sync bug fix or new entity type requires editing exactly one file
+
+**Plans:** 2 plans
+Plans:
+- [ ] 21-01-PLAN.md — SyncOrchestrator interface + SyncOrchestratorImpl + unit and integration tests (TDD)
+- [ ] 21-02-PLAN.md — Gut SyncWorker + DocumentListViewModel + NodeEditorViewModel + update caller tests
+
 
 #### Phase 22: Android performance
 **Goal:** Eliminate the four identified Android performance bottlenecks: per-keystroke full-document fetch, unbatched DnD updates, 62-sibling sort-order overflow, and SyncLogger always active in release builds.
