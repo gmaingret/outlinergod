@@ -134,6 +134,100 @@ export function indentNode(roots: TreeNode[], nodeId: string): TreeNode[] {
   return roots
 }
 
+// FlatNode — the unit the drag-and-drop layer works with.
+export interface FlatNode {
+  node: TreeNode
+  depth: number
+  parentId: string | null
+}
+
+// DFS traversal producing a flat ordered list. Respects node.collapsed.
+// Children of collapsed nodes are omitted from the result.
+export function flattenTree(
+  roots: TreeNode[],
+  depth = 0,
+  parentId: string | null = null,
+  result: FlatNode[] = []
+): FlatNode[] {
+  for (const node of roots) {
+    result.push({ node, depth, parentId })
+    if (!node.collapsed && node.children.length > 0) {
+      flattenTree(node.children, depth + 1, node.id, result)
+    }
+  }
+  return result
+}
+
+
+// Reorder a node in the tree by moving it to targetIndex in the visible flat list at newDepth.
+// Mutates TreeNode objects in place (same pattern as indentNode/outdentNode). Returns roots.
+export function reorderNode(
+  roots: TreeNode[],
+  dragId: string,
+  targetIndex: number,
+  newDepth: number
+): TreeNode[] {
+  const flatNodes = flattenTree(roots)
+  const activeEntry = flatNodes.find(fn => fn.node.id === dragId)
+  if (!activeEntry) return roots
+
+  const draggedNode = activeEntry.node
+
+  // --- Step 1: remove dragged node from its current parent ---
+  const draggedFound = findNodeWithParent(roots, dragId)
+  if (!draggedFound) return roots
+
+  const { siblings: oldSiblings, index: oldIndex } = draggedFound
+  oldSiblings.splice(oldIndex, 1)
+  recomputeSortOrders(oldSiblings)
+
+  // --- Step 2: determine new parent ---
+  // Re-flatten after removal so targetIndex is resolved against the updated tree
+  const flatAfterRemoval = flattenTree(roots)
+
+  let newParentId: string | null = null
+  let newParentNode: TreeNode | null = null
+
+  if (newDepth > 0) {
+    // Look backwards from targetIndex - 1 for first entry at depth newDepth - 1
+    const searchEnd = Math.min(targetIndex, flatAfterRemoval.length)
+    for (let i = searchEnd - 1; i >= 0; i--) {
+      if (flatAfterRemoval[i].depth === newDepth - 1) {
+        newParentId = flatAfterRemoval[i].node.id
+        newParentNode = flatAfterRemoval[i].node
+        break
+      }
+    }
+    // Fall back to root if no valid parent found
+    if (newParentId === null) {
+      newDepth = 0
+    }
+  }
+
+  // --- Step 3: update parent_id on dragged node ---
+  draggedNode.parent_id = newParentId
+
+  // --- Step 4: insert dragged node into new parent's children list ---
+  if (newParentNode) {
+    // Derive insert position by counting parent's children appearing before targetIndex in flat list
+    let childrenBeforeTarget = 0
+    for (let i = 0; i < Math.min(targetIndex, flatAfterRemoval.length); i++) {
+      if (flatAfterRemoval[i].parentId === newParentId) {
+        childrenBeforeTarget++
+      }
+    }
+    newParentNode.children.splice(childrenBeforeTarget, 0, draggedNode)
+    recomputeSortOrders(newParentNode.children)
+  } else {
+    // Insert at root level
+    const clampedTarget = Math.min(targetIndex, roots.length)
+    roots.splice(clampedTarget, 0, draggedNode)
+    recomputeSortOrders(roots)
+  }
+
+  return roots
+}
+
 // Promote the target node to be a sibling immediately after its parent.
 // No-op if the target is already at root level (no parent).
 export function outdentNode(roots: TreeNode[], nodeId: string): TreeNode[] {
