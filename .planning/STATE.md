@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.9
 milestone_name: — quality-hardening
 status: completed
-stopped_at: Phase 26 context gathered
-last_updated: "2026-03-06T16:38:19.817Z"
-last_activity: "2026-03-06 — 19-02 complete: FlatNodeList with drag-to-reorder/reparent, 7 new tests, NodeRow removed, 69 total tests pass"
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-03-06T17:00:30.762Z"
+last_activity: "2026-03-06 — 20-01 complete: IDOR fix on DELETE /files, JWT_SECRET guard, 90-day refresh token purge; 280/280 backend tests pass"
 progress:
   total_phases: 26
-  completed_phases: 15
-  total_plans: 38
-  completed_plans: 37
+  completed_phases: 16
+  total_plans: 39
+  completed_plans: 38
   percent: 97
 ---
 
@@ -18,12 +18,12 @@ progress:
 
 ## Current Position
 
-Phase: 19 — Drag-and-Drop (COMPLETE)
-Plan: 19-02 COMPLETE — FlatNodeList component with dnd-kit DndContext/SortableContext, 69 tests pass
-Status: Phase 19 complete; all 38 plans done; v0.8 milestone complete
-Last activity: 2026-03-06 — 19-02 complete: FlatNodeList with drag-to-reorder/reparent, 7 new tests, NodeRow removed, 69 total tests pass
+Phase: 20 — Security Fixes (COMPLETE)
+Plan: 20-01 COMPLETE — IDOR fix on file DELETE, JWT_SECRET startup guard, 90-day refresh token purge; 280/280 backend tests pass
+Status: Phase 20 complete; v0.9 security hardening milestone in progress
+Last activity: 2026-03-06 — 20-01 complete: IDOR fix + JWT guard + refresh token purge, 4 new tests, 280 total backend tests pass
 
-Progress: [██████████] 97% (v0.8: all phases complete)
+Progress: [██████████] 97% (v0.9: security-hardening phase 20 complete)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -111,4 +111,4 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 ## Session Continuity
 
 Next action: Start v0.9 milestone — run `/gsd:plan-phase 20` to begin Phase 20 (Security fixes)
-Stopped at: Phase 26 context gathered
+Stopped at: Completed 20-01-PLAN.md

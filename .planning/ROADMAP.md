@@ -16,7 +16,7 @@
 
 ### Phases
 
-- [ ] **Phase 20: Security fixes** — File DELETE ownership, JWT_SECRET startup guard, refresh token purge
+- [x] **Phase 20: Security fixes** — File DELETE ownership, JWT_SECRET startup guard, refresh token purge (completed 2026-03-06)
 - [ ] **Phase 21: Sync architecture** — Extract SyncOrchestrator, eliminate 3-copy sync logic across NodeEditorViewModel / DocumentListViewModel / SyncWorker
 - [ ] **Phase 22: Android performance** — `getNodeByIdSync` on keystroke, batch DnD `persistReorderedNodes`, fix `recomputeFlatNodes` 62-sibling overflow, wrap SyncLogger in BuildConfig.DEBUG
 - [ ] **Phase 23: Data model & structure** — Proper attachment columns (not pipe-delimited string), move FractionalIndex to util/, delete orphan `backend/src/hlc.ts`, enable Room `exportSchema = true`, unify UndoSnapshot into single sealed class
@@ -28,7 +28,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 20. Security fixes | 0/1 | Planned | — |
+| 20. Security fixes | 1/1 | Complete   | 2026-03-06 |
 | 21. Sync architecture | 0/? | Not started | — |
 | 22. Android performance | 0/? | Not started | — |
 | 23. Data model & structure | 0/? | Not started | — |
@@ -41,7 +41,7 @@
 #### Phase 20: Security fixes
 **Goal:** Close all security bugs identified in the codebase audit — no authenticated user can delete another user's files, JWT_SECRET is validated at startup, and stale refresh tokens are periodically purged.
 **Depends on:** Nothing
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
 - [ ] 20-01-PLAN.md — DELETE ownership check, JWT_SECRET guard, refresh token purge
 **Requirements:** (security audit)
