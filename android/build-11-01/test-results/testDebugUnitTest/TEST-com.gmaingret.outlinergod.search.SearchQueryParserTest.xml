@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.search.SearchQueryParserTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:31.317Z" hostname="GREGLAPTOP" time="0.003">
+  <properties/>
+  <testcase name="colorGreen_operator_setsColor4" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.001"/>
+  <testcase name="isCompleted_operator_setsCompletedTrue_andRemainsAsTerms" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <testcase name="colorPurple_operator_setsColor6" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <testcase name="termAlreadyEndingWithStar_notDoubled" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <testcase name="inNote_operator_setsInNoteTrue_inTitleFalse" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.001"/>
+  <testcase name="caseInsensitiveOperators_parsed" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <testcase name="colorYellow_operator_setsColor3" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <testcase name="plainText_setsFtsTermsWithPrefixStar_andNoFilters" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <testcase name="inTitle_operator_setsInTitleTrue_inNoteFalse" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <testcase name="isNotCompleted_operator_setsCompletedFalse" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <testcase name="colorOrange_operator_setsColor2" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <testcase name="operatorOnly_noRemainingTerms_emptyFtsTerms" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.001"/>
+  <testcase name="emptyString_returnsEmptyFtsTerms_andAllNullOrFalse" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <testcase name="multipleOperators_allExtractedCorrectly" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <testcase name="colorBlue_operator_setsColor5" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <testcase name="colorRed_operator_setsColor1" classname="com.gmaingret.outlinergod.search.SearchQueryParserTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

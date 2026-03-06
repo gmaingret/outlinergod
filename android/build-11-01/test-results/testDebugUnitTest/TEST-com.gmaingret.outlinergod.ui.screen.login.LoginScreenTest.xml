@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.screen.login.LoginScreenTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:24.385Z" hostname="GREGLAPTOP" time="0.003">
+  <properties/>
+  <testcase name="buildConfig_googleClientId_fieldIsString" classname="com.gmaingret.outlinergod.ui.screen.login.LoginScreenTest" time="0.001"/>
+  <testcase name="appRoutes_documentList_isCorrect" classname="com.gmaingret.outlinergod.ui.screen.login.LoginScreenTest" time="0.0"/>
+  <testcase name="appNavHost_loginRoute_remainsStartDestination" classname="com.gmaingret.outlinergod.ui.screen.login.LoginScreenTest" time="0.001"/>
+  <testcase name="loginScreenKt_classExists_inLoginPackage" classname="com.gmaingret.outlinergod.ui.screen.login.LoginScreenTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

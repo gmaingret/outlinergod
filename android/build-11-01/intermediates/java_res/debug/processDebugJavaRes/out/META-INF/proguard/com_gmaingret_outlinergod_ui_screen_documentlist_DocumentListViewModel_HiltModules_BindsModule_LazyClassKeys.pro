@@ -1,0 +1,1 @@
+-keep,allowobfuscation,allowshrinking class com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListViewModel

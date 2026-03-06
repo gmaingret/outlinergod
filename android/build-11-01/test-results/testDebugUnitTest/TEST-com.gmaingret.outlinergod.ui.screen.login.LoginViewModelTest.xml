@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.screen.login.LoginViewModelTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:24.448Z" hostname="GREGLAPTOP" time="0.241">
+  <properties/>
+  <testcase name="handleGoogleSignIn onFailure sets Error state" classname="com.gmaingret.outlinergod.ui.screen.login.LoginViewModelTest" time="0.044"/>
+  <testcase name="emptyIdToken produces Idle not Error" classname="com.gmaingret.outlinergod.ui.screen.login.LoginViewModelTest" time="0.052"/>
+  <testcase name="handleGoogleSignIn onSuccess transitions to Success and posts NavigateToDocumentList" classname="com.gmaingret.outlinergod.ui.screen.login.LoginViewModelTest" time="0.043"/>
+  <testcase name="handleGoogleSignIn sets Loading state immediately" classname="com.gmaingret.outlinergod.ui.screen.login.LoginViewModelTest" time="0.023"/>
+  <testcase name="checkExistingSession withNoToken transitionsToIdle" classname="com.gmaingret.outlinergod.ui.screen.login.LoginViewModelTest" time="0.01"/>
+  <testcase name="checkExistingSession withToken navigatesToDocumentList" classname="com.gmaingret.outlinergod.ui.screen.login.LoginViewModelTest" time="0.012"/>
+  <testcase name="handleSignInError reduces to Error state" classname="com.gmaingret.outlinergod.ui.screen.login.LoginViewModelTest" time="0.009"/>
+  <testcase name="initialState is CheckingSession" classname="com.gmaingret.outlinergod.ui.screen.login.LoginViewModelTest" time="0.004"/>
+  <testcase name="handleGoogleSignIn onFailure does not post NavigateToDocumentList side effect" classname="com.gmaingret.outlinergod.ui.screen.login.LoginViewModelTest" time="0.039"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

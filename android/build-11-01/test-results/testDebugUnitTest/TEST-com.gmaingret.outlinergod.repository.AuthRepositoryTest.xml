@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.repository.AuthRepositoryTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:30.980Z" hostname="GREGLAPTOP" time="0.174">
+  <properties/>
+  <testcase name="googleSignIn_storesUserId" classname="com.gmaingret.outlinergod.repository.AuthRepositoryTest" time="0.08"/>
+  <testcase name="googleSignIn_returnsFailure_onNetworkError" classname="com.gmaingret.outlinergod.repository.AuthRepositoryTest" time="0.012"/>
+  <testcase name="googleSignIn_returnsAuthResponse" classname="com.gmaingret.outlinergod.repository.AuthRepositoryTest" time="0.013"/>
+  <testcase name="deviceId_isStableAcrossMultipleCalls" classname="com.gmaingret.outlinergod.repository.AuthRepositoryTest" time="0.014"/>
+  <testcase name="logout_clearsUserId" classname="com.gmaingret.outlinergod.repository.AuthRepositoryTest" time="0.019"/>
+  <testcase name="logout_clearsAccessToken" classname="com.gmaingret.outlinergod.repository.AuthRepositoryTest" time="0.016"/>
+  <testcase name="googleSignIn_storesAccessToken" classname="com.gmaingret.outlinergod.repository.AuthRepositoryTest" time="0.011"/>
+  <testcase name="getMe_returnsUserProfile_onSuccess" classname="com.gmaingret.outlinergod.repository.AuthRepositoryTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

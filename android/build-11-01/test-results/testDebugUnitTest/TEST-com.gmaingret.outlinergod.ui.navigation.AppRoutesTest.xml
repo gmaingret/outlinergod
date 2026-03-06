@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.navigation.AppRoutesTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:12.417Z" hostname="GREGLAPTOP" time="0.005">
+  <properties/>
+  <testcase name="noRouteDuplicated" classname="com.gmaingret.outlinergod.ui.navigation.AppRoutesTest" time="0.002"/>
+  <testcase name="allSixRoutes_areDefined_andNonBlank" classname="com.gmaingret.outlinergod.ui.navigation.AppRoutesTest" time="0.0"/>
+  <testcase name="documentDetail_route_containsDocumentIdParam" classname="com.gmaingret.outlinergod.ui.navigation.AppRoutesTest" time="0.001"/>
+  <testcase name="nodeEditor_route_containsDocumentIdParam" classname="com.gmaingret.outlinergod.ui.navigation.AppRoutesTest" time="0.0"/>
+  <testcase name="documentList_route_isCorrectString" classname="com.gmaingret.outlinergod.ui.navigation.AppRoutesTest" time="0.0"/>
+  <testcase name="login_route_isCorrectString" classname="com.gmaingret.outlinergod.ui.navigation.AppRoutesTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

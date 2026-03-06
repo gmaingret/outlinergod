@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.network.KtorClientFactoryTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:30.060Z" hostname="GREGLAPTOP" time="0.368">
+  <properties/>
+  <testcase name="does not infinite retry when refresh fails" classname="com.gmaingret.outlinergod.network.KtorClientFactoryTest" time="0.3"/>
+  <testcase name="deserializes JSON response correctly" classname="com.gmaingret.outlinergod.network.KtorClientFactoryTest" time="0.056"/>
+  <testcase name="intercepts 401 and retries with refreshed token" classname="com.gmaingret.outlinergod.network.KtorClientFactoryTest" time="0.007"/>
+  <testcase name="attaches bearer token on every request" classname="com.gmaingret.outlinergod.network.KtorClientFactoryTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

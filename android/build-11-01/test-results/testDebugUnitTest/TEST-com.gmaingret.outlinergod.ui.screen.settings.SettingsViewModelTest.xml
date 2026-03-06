@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:26.525Z" hostname="GREGLAPTOP" time="0.354">
+  <properties/>
+  <testcase name="updateDensity invalidValue doesNotUpsert" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.098"/>
+  <testcase name="initialLoad withExistingSettings emitsSuccess" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.01"/>
+  <testcase name="updateTheme dark to light upsertsEntity" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.034"/>
+  <testcase name="updateDensity validValues accepted" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.026"/>
+  <testcase name="logout withNetworkFailure stillNavigatesToLogin" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.017"/>
+  <testcase name="toggleGuideLines flipsZeroToOne" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.022"/>
+  <testcase name="initialLoad withNoSettings insertsDefaults" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.016"/>
+  <testcase name="allMutations stampHlcOnUpdatedField" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.017"/>
+  <testcase name="toggleBacklinkBadge flipsOneToZero" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.018"/>
+  <testcase name="exportAllData success postsShareFileSideEffect" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.02"/>
+  <testcase name="exportAllData failure postsShowError" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.013"/>
+  <testcase name="logout withStoredToken navigatesToLogin" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.027"/>
+  <testcase name="updateTheme invalidValue doesNotUpsert" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsViewModelTest" time="0.031"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

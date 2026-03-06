@@ -25,11 +25,11 @@ interface NodeDao {
     @Update
     suspend fun updateNode(node: NodeEntity)
 
-    @Query("UPDATE nodes SET deleted_at = :deletedAt, deleted_hlc = :deletedHlc, updated_at = :updatedAt WHERE id = :nodeId")
-    suspend fun softDeleteNode(nodeId: String, deletedAt: Long, deletedHlc: String, updatedAt: Long)
+    @Query("UPDATE nodes SET deleted_at = :deletedAt, deleted_hlc = :deletedHlc, updated_at = :updatedAt, device_id = :deviceId WHERE id = :nodeId")
+    suspend fun softDeleteNode(nodeId: String, deletedAt: Long, deletedHlc: String, updatedAt: Long, deviceId: String)
 
-    @Query("UPDATE nodes SET deleted_at = :deletedAt, deleted_hlc = :deletedHlc, updated_at = :updatedAt WHERE id IN (:nodeIds)")
-    suspend fun softDeleteNodes(nodeIds: List<String>, deletedAt: Long, deletedHlc: String, updatedAt: Long)
+    @Query("UPDATE nodes SET deleted_at = :deletedAt, deleted_hlc = :deletedHlc, updated_at = :updatedAt, device_id = :deviceId WHERE id IN (:nodeIds)")
+    suspend fun softDeleteNodes(nodeIds: List<String>, deletedAt: Long, deletedHlc: String, updatedAt: Long, deviceId: String)
 
     @Query("""
         SELECT * FROM nodes

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.prototype.MarkdownVisualTransformationTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:30.961Z" hostname="GREGLAPTOP" time="0.016">
+  <properties/>
+  <testcase name="italic_appliesItalicSpanStyle" classname="com.gmaingret.outlinergod.prototype.MarkdownVisualTransformationTest" time="0.008"/>
+  <testcase name="offsetMapping_identityPreservesCursorAt0" classname="com.gmaingret.outlinergod.prototype.MarkdownVisualTransformationTest" time="0.0"/>
+  <testcase name="highlight_appliesBackgroundColor" classname="com.gmaingret.outlinergod.prototype.MarkdownVisualTransformationTest" time="0.0"/>
+  <testcase name="performance_under2ms" classname="com.gmaingret.outlinergod.prototype.MarkdownVisualTransformationTest" time="0.003"/>
+  <testcase name="strikethrough_appliesLineThrough" classname="com.gmaingret.outlinergod.prototype.MarkdownVisualTransformationTest" time="0.0"/>
+  <testcase name="bold_appliesBoldSpanStyle" classname="com.gmaingret.outlinergod.prototype.MarkdownVisualTransformationTest" time="0.001"/>
+  <testcase name="nestedOrdering_doesNotCrash" classname="com.gmaingret.outlinergod.prototype.MarkdownVisualTransformationTest" time="0.001"/>
+  <testcase name="offsetMapping_identityPreservesCursorAtEnd" classname="com.gmaingret.outlinergod.prototype.MarkdownVisualTransformationTest" time="0.001"/>
+  <testcase name="code_appliesMonospaceStyle" classname="com.gmaingret.outlinergod.prototype.MarkdownVisualTransformationTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

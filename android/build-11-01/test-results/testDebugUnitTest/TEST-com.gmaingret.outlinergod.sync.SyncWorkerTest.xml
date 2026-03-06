@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.sync.SyncWorkerTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:37.549Z" hostname="GREGLAPTOP" time="2.052">
+  <properties/>
+  <testcase name="doWork_refreshesToken_beforeSync" classname="com.gmaingret.outlinergod.sync.SyncWorkerTest" time="1.158"/>
+  <testcase name="doWork_returnsSuccess_onCleanRun" classname="com.gmaingret.outlinergod.sync.SyncWorkerTest" time="0.192"/>
+  <testcase name="doWork_returnsRetry_onPushFailure" classname="com.gmaingret.outlinergod.sync.SyncWorkerTest" time="0.084"/>
+  <testcase name="doWork_returnsFailure_whenTokenRefreshFails" classname="com.gmaingret.outlinergod.sync.SyncWorkerTest" time="0.123"/>
+  <testcase name="doWork_omitsSettings_whenNoPendingSettings" classname="com.gmaingret.outlinergod.sync.SyncWorkerTest" time="0.099"/>
+  <testcase name="doWork_appliesUpsert_forPulledNode" classname="com.gmaingret.outlinergod.sync.SyncWorkerTest" time="0.088"/>
+  <testcase name="doWork_returnsRetry_onNetworkPullFailure" classname="com.gmaingret.outlinergod.sync.SyncWorkerTest" time="0.118"/>
+  <testcase name="doWork_updatesLastSyncHlc_afterSuccess" classname="com.gmaingret.outlinergod.sync.SyncWorkerTest" time="0.096"/>
+  <testcase name="doWork_includesSettings_whenPendingSettingsExist" classname="com.gmaingret.outlinergod.sync.SyncWorkerTest" time="0.093"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

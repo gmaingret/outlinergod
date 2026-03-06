@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.MainActivityTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:26.888Z" hostname="GREGLAPTOP" time="0.05">
+  <properties/>
+  <testcase name="outlinerGodApp_isAnnotatedWithHiltAndroidApp" classname="com.gmaingret.outlinergod.MainActivityTest" time="0.005"/>
+  <testcase name="outlinerGodTheme_darkAndLight_areDistinct" classname="com.gmaingret.outlinergod.MainActivityTest" time="0.031"/>
+  <testcase name="mainActivity_extendsHiltGeneratedClass" classname="com.gmaingret.outlinergod.MainActivityTest" time="0.011"/>
+  <testcase name="mainActivity_hasSetContentInOnCreate" classname="com.gmaingret.outlinergod.MainActivityTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreenTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:20.524Z" hostname="GREGLAPTOP" time="0.027">
+  <properties/>
+  <testcase name="appRoutes_nodeEditor_containsDocumentIdParam" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreenTest" time="0.0"/>
+  <testcase name="generateNextSortOrder_emptyList_returnsInitialKey" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreenTest" time="0.004"/>
+  <testcase name="appRoutes_settings_isDefined" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreenTest" time="0.001"/>
+  <testcase name="generateNextSortOrder_singleItem_returnsKeyAfterIt" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreenTest" time="0.016"/>
+  <testcase name="documentListScreenKt_classExists" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreenTest" time="0.0"/>
+  <testcase name="generateNextSortOrder_sequentialCreation_maintainsSortOrder" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreenTest" time="0.001"/>
+  <testcase name="syncStatus_enum_hasThreeValues" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreenTest" time="0.001"/>
+  <testcase name="generateNextSortOrder_multipleItems_returnsKeyAfterMax" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListScreenTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,150 @@
+Starting a Gradle Daemon, 22 stopped Daemons could not be reused, use --status for details
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugBuildConfig
+> Task :app:checkDebugAarMetadata
+> Task :app:processDebugNavigationResources
+> Task :app:generateDebugResValues
+> Task :app:compileDebugNavigationResources
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:mergeDebugResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:processDebugUnitTestManifest
+> Task :app:javaPreCompileDebugUnitTest
+> Task :app:processDebugResources
+> Task :app:packageDebugUnitTestForUnitTest
+> Task :app:generateDebugUnitTestConfig
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
+> Task :app:compileDebugJavaWithJavac
+> Task :app:hiltAggregateDepsDebug
+> Task :app:hiltJavaCompileDebug
+> Task :app:processDebugJavaRes
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:transformDebugClassesWithAsm
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:kspDebugUnitTestKotlin
+
+> Task :app:compileDebugUnitTestKotlin
+w: file:///C:/Users/gmain/Dev/OutlinerGod/android/app/src/test/java/com/gmaingret/outlinergod/db/AppDatabaseTest.kt:41:20 Check for instance is always 'true'.
+
+> Task :app:compileDebugUnitTestJavaWithJavac
+> Task :app:hiltAggregateDepsDebugUnitTest
+> Task :app:hiltJavaCompileDebugUnitTest NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes
+> Task :app:transformDebugUnitTestClassesWithAsm
+
+> Task :app:testDebugUnitTest
+
+AppDatabaseMigrationTest > ftsUpdateTrigger_updatesIndexOnContentChange FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+AppDatabaseMigrationTest > searchByNote_returnsMatchingNode FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+AppDatabaseMigrationTest > multipleNodes_onlyMatchingReturned FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+AppDatabaseMigrationTest > softDeletedNode_notReturnedByFts FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+AppDatabaseMigrationTest > ftsInsertTrigger_indexesNewNode FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+AppDatabaseMigrationTest > searchByContent_returnsMatchingNode FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+SearchRepositoryTest > colorFilter_returnsOnlyColorMatchingNodes FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+SearchRepositoryTest > isCompleted_filter_returnsOnlyCompletedNodes FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+SearchRepositoryTest > softDeletedNode_notReturnedBySearch FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+SearchRepositoryTest > inTitle_postFilter_excludesNodesWithMatchOnlyInNote FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+SearchRepositoryTest > isNotCompleted_filter_returnsOnlyIncompleteNodes FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+SearchRepositoryTest > basicTextSearch_returnsMatchingNodes FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+SearchRepositoryTest > search_excludesNodesBelongingToDifferentUser FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+SearchRepositoryTest > inNote_postFilter_excludesNodesWithMatchOnlyInContent FAILED
+    android.database.sqlite.SQLiteException at ShadowLegacySQLiteConnection.java:869
+        Caused by: java.util.concurrent.ExecutionException at null:-1
+            Caused by: com.almworks.sqlite4java.SQLiteException at SQLiteConnection.java:1436
+
+BookmarkListViewModelTest > softDeleteBookmark calls dao with correct id and hlc FAILED
+    app.cash.turbine.TurbineAssertionError at BookmarkListViewModelTest.kt:141
+        Caused by: app.cash.turbine.TurbineTimeoutCancellationException at channel.kt:123
+            Caused by: app.cash.turbine.TurbineTimeoutCancellationException at BookmarkListViewModelTest.kt:141
+
+BookmarkListViewModelTest > onBookmarkTapped with document type posts NavigateToDocument FAILED
+    java.lang.AssertionError at DefaultAsserter.kt:16
+        Caused by: java.lang.AssertionError at BookmarkListViewModelTest.kt:113
+
+BookmarkListViewModelTest > onBookmarkTapped with node type posts NavigateToNodeEditor FAILED
+    java.lang.AssertionError at DefaultAsserter.kt:16
+        Caused by: java.lang.AssertionError at BookmarkListViewModelTest.kt:127
+
+280 tests completed, 17 failed
+
+> Task :app:testDebugUnitTest FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///C:/Users/gmain/Dev/OutlinerGod/android/app/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 2m 58s
+39 actionable tasks: 39 executed

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.screen.nodeeditor.NoteEditorTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:26.379Z" hostname="GREGLAPTOP" time="0.097">
+  <properties/>
+  <testcase name="switchToNote posts FocusContent when note already expanded" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NoteEditorTest" time="0.019"/>
+  <testcase name="toggleNote on multiple nodes tracks them independently" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NoteEditorTest" time="0.013"/>
+  <testcase name="noteWithContent isAlwaysExpanded via isNoteExpanded logic" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NoteEditorTest" time="0.011"/>
+  <testcase name="switchToNote expands note and posts FocusNote when not expanded" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NoteEditorTest" time="0.009"/>
+  <testcase name="toggleNote again removes nodeId from expandedNoteIds" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NoteEditorTest" time="0.014"/>
+  <testcase name="onNoteChanged writes to note field not content field" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NoteEditorTest" time="0.018"/>
+  <testcase name="toggleNote adds nodeId to expandedNoteIds" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NoteEditorTest" time="0.012"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.db.AppDatabaseMigrationTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:26.958Z" hostname="GREGLAPTOP" time="0.715">
+  <properties/>
+  <testcase name="databaseVersion_is2" classname="com.gmaingret.outlinergod.db.AppDatabaseMigrationTest" time="0.28"/>
+  <testcase name="emptySearchQuery_returnsEmptyList_withoutCallingFts" classname="com.gmaingret.outlinergod.db.AppDatabaseMigrationTest" time="0.065"/>
+  <testcase name="nodeDao_isAccessible" classname="com.gmaingret.outlinergod.db.AppDatabaseMigrationTest" time="0.093"/>
+  <testcase name="insertNode_andRetrieve_works" classname="com.gmaingret.outlinergod.db.AppDatabaseMigrationTest" time="0.115"/>
+  <testcase name="softDeletedNode_excludedFromActiveQuery" classname="com.gmaingret.outlinergod.db.AppDatabaseMigrationTest" time="0.16"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

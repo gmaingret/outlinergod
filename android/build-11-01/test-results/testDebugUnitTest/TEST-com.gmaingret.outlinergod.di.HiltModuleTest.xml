@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.di.HiltModuleTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:30.040Z" hostname="GREGLAPTOP" time="0.005">
+  <properties/>
+  <testcase name="outlinerGodApp_isAnnotatedWithHiltAndroidApp" classname="com.gmaingret.outlinergod.di.HiltModuleTest" time="0.0"/>
+  <testcase name="allFiveModules_haveModuleAnnotation" classname="com.gmaingret.outlinergod.di.HiltModuleTest" time="0.004"/>
+  <testcase name="authModule_isAnnotatedWithModule" classname="com.gmaingret.outlinergod.di.HiltModuleTest" time="0.0"/>
+  <testcase name="networkModule_isAnnotatedWithModule" classname="com.gmaingret.outlinergod.di.HiltModuleTest" time="0.0"/>
+  <testcase name="databaseModule_isAnnotatedWithModule" classname="com.gmaingret.outlinergod.di.HiltModuleTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

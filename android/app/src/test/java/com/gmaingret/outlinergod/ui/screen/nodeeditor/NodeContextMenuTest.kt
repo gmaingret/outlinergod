@@ -239,7 +239,7 @@ class NodeContextMenuTest {
             fakeNode(id = "n1", content = "Non-empty content", sortOrder = "a1"),
         )
         setupNodeDao(nodes)
-        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any()) } just Runs
+        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any(), any()) } just Runs
 
         val viewModel = createViewModel()
         viewModel.test(this) {
@@ -251,7 +251,7 @@ class NodeContextMenuTest {
             awaitState() // focusedNodeId set to preceding
         }
 
-        coVerify { nodeDao.softDeleteNodes(eq(listOf("n1")), any(), any(), any()) }
+        coVerify { nodeDao.softDeleteNodes(eq(listOf("n1")), any(), any(), any(), any()) }
     }
 
     // Test 6: deleteNode sets focus to preceding node
@@ -263,7 +263,7 @@ class NodeContextMenuTest {
         )
         setupNodeDao(nodes)
         val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
-        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any()) } just Runs
+        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any(), any()) } just Runs
 
         val viewModel = createViewModel()
         viewModel.test(this) {
@@ -302,7 +302,7 @@ class NodeContextMenuTest {
         )
         setupNodeDao(nodes)
         val capturedIds = slot<List<String>>()
-        coEvery { nodeDao.softDeleteNodes(capture(capturedIds), any(), any(), any()) } just Runs
+        coEvery { nodeDao.softDeleteNodes(capture(capturedIds), any(), any(), any(), any()) } just Runs
 
         val viewModel = createViewModel()
         viewModel.test(this) {

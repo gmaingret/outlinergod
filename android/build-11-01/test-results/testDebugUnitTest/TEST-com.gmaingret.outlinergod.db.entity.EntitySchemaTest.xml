@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.db.entity.EntitySchemaTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:30.014Z" hostname="GREGLAPTOP" time="0.025">
+  <properties/>
+  <testcase name="bookmarkEntity_targetDocumentId_isNullable" classname="com.gmaingret.outlinergod.db.entity.EntitySchemaTest" time="0.007"/>
+  <testcase name="allEntities_columnNames_areSnakeCase" classname="com.gmaingret.outlinergod.db.entity.EntitySchemaTest" time="0.015"/>
+  <testcase name="nodeEntity_hasAllEightHlcColumns" classname="com.gmaingret.outlinergod.db.entity.EntitySchemaTest" time="0.0"/>
+  <testcase name="documentEntity_hasAllFiveHlcColumns" classname="com.gmaingret.outlinergod.db.entity.EntitySchemaTest" time="0.0"/>
+  <testcase name="nodeEntity_hasNoChildrenField" classname="com.gmaingret.outlinergod.db.entity.EntitySchemaTest" time="0.0"/>
+  <testcase name="nodeEntity_sortOrder_isStringType" classname="com.gmaingret.outlinergod.db.entity.EntitySchemaTest" time="0.0"/>
+  <testcase name="nodeEntity_tableName_isNodes" classname="com.gmaingret.outlinergod.db.entity.EntitySchemaTest" time="0.0"/>
+  <testcase name="settingsEntity_userIdIsPrimaryKey" classname="com.gmaingret.outlinergod.db.entity.EntitySchemaTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

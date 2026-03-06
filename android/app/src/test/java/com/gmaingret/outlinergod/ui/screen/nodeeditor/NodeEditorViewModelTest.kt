@@ -236,7 +236,7 @@ class NodeEditorViewModelTest {
         )
         every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
         val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
-        coEvery { nodeDao.softDeleteNode(any(), any(), any(), any()) } just Runs
+        coEvery { nodeDao.softDeleteNode(any(), any(), any(), any(), any()) } just Runs
 
         val viewModel = createViewModel()
         viewModel.test(this) {
@@ -248,7 +248,7 @@ class NodeEditorViewModelTest {
             expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, focusedNodeId = "n0"))
         }
 
-        coVerify { nodeDao.softDeleteNode(eq("n1"), any(), any(), any()) }
+        coVerify { nodeDao.softDeleteNode(eq("n1"), any(), any(), any(), any()) }
     }
 
     @Test
@@ -259,7 +259,7 @@ class NodeEditorViewModelTest {
         )
         every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
         val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
-        coEvery { nodeDao.softDeleteNode(any(), any(), any(), any()) } just Runs
+        coEvery { nodeDao.softDeleteNode(any(), any(), any(), any(), any()) } just Runs
 
         val viewModel = createViewModel()
         viewModel.test(this) {
@@ -290,7 +290,7 @@ class NodeEditorViewModelTest {
             // No state change expected for non-empty node
         }
 
-        coVerify(exactly = 0) { nodeDao.softDeleteNode(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { nodeDao.softDeleteNode(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -446,8 +446,8 @@ class NodeEditorViewModelTest {
         )
         every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
         val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
-        coEvery { nodeDao.softDeleteNode(any(), any(), any(), any()) } just Runs
-        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any()) } just Runs
+        coEvery { nodeDao.softDeleteNode(any(), any(), any(), any(), any()) } just Runs
+        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any(), any()) } just Runs
 
         val viewModel = createViewModel()
         viewModel.test(this) {
@@ -459,7 +459,7 @@ class NodeEditorViewModelTest {
             expectState(NodeEditorUiState(documentId = testDocumentId, status = NodeEditorStatus.Success, flatNodes = expectedFlatNodes, focusedNodeId = "n0", canUndo = true, canRedo = false))
         }
 
-        coVerify { nodeDao.softDeleteNodes(any(), any(), any(), any()) }
+        coVerify { nodeDao.softDeleteNodes(any(), any(), any(), any(), any()) }
     }
 
     // --- Plan 14-01: Delete Undo tests ---
@@ -472,7 +472,7 @@ class NodeEditorViewModelTest {
         )
         every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
         val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
-        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any()) } just Runs
+        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any(), any()) } just Runs
 
         val viewModel = createViewModel()
         viewModel.test(this) {
@@ -494,7 +494,7 @@ class NodeEditorViewModelTest {
         )
         every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
         val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
-        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any()) } just Runs
+        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any(), any()) } just Runs
         coEvery { nodeDao.restoreNodes(any(), any(), any()) } just Runs
 
         val viewModel = createViewModel()
@@ -528,7 +528,7 @@ class NodeEditorViewModelTest {
         val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
 
         val deletedIdsSlot = slot<List<String>>()
-        coEvery { nodeDao.softDeleteNodes(capture(deletedIdsSlot), any(), any(), any()) } just Runs
+        coEvery { nodeDao.softDeleteNodes(capture(deletedIdsSlot), any(), any(), any(), any()) } just Runs
         coEvery { nodeDao.restoreNodes(any(), any(), any()) } just Runs
 
         val viewModel = createViewModel()
@@ -594,7 +594,7 @@ class NodeEditorViewModelTest {
         )
         every { nodeDao.getNodesByDocument(testDocumentId) } returns flowOf(nodes)
         val expectedFlatNodes = mapToFlatList(nodes, testDocumentId)
-        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any()) } just Runs
+        coEvery { nodeDao.softDeleteNodes(any(), any(), any(), any(), any()) } just Runs
         coEvery { nodeDao.restoreNodes(any(), any(), any()) } just Runs
         coEvery { nodeDao.updateNode(any()) } just Runs
 

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.screen.nodeeditor.DragAndDropTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:24.714Z" hostname="GREGLAPTOP" time="0.207">
+  <properties/>
+  <testcase name="indentNode reparentsUnderPrecedingSibling" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.DragAndDropTest" time="0.104"/>
+  <testcase name="outdentNode movesNodeUpOneLevel" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.DragAndDropTest" time="0.02"/>
+  <testcase name="reorderNodes verticalReorder sameParent updatesSortOrder" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.DragAndDropTest" time="0.022"/>
+  <testcase name="reorderNodes optimisticallyUpdatesInMemoryFlatNodes" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.DragAndDropTest" time="0.015"/>
+  <testcase name="reorderNodes stamps parentIdHlc and sortOrderHlc" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.DragAndDropTest" time="0.03"/>
+  <testcase name="reorderNodes clamps depth to nodeAbove depth plus one" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.DragAndDropTest" time="0.015"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

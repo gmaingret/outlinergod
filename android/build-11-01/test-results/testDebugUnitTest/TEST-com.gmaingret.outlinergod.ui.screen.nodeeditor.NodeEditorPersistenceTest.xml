@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorPersistenceTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:25.549Z" hostname="GREGLAPTOP" time="0.152">
+  <properties/>
+  <testcase name="onContentChanged stampsHlcTimestamp onWrite" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorPersistenceTest" time="0.028"/>
+  <testcase name="onContentChanged writesToRoom after300ms" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorPersistenceTest" time="0.024"/>
+  <testcase name="onContentChanged rapidSuccession coalescesToSingleWrite" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorPersistenceTest" time="0.02"/>
+  <testcase name="onContentChanged updatesInMemoryStateImmediately" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorPersistenceTest" time="0.013"/>
+  <testcase name="onNodeFocusLost flushesDebounce immediately" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorPersistenceTest" time="0.016"/>
+  <testcase name="onContentChanged doesNotWriteToRoom before300ms" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorPersistenceTest" time="0.028"/>
+  <testcase name="onNoteChanged writesToNoteHlc column" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorPersistenceTest" time="0.021"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

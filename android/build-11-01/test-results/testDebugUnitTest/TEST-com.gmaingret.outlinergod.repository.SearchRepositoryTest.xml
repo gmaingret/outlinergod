@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.repository.SearchRepositoryTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:31.173Z" hostname="GREGLAPTOP" time="0.068">
+  <properties/>
+  <testcase name="isCompleted_filter_addsCompletedCondition_toSql" classname="com.gmaingret.outlinergod.repository.SearchRepositoryTest" time="0.021"/>
+  <testcase name="basicTextSearch_callsSearchFts_withMatchQuery" classname="com.gmaingret.outlinergod.repository.SearchRepositoryTest" time="0.004"/>
+  <testcase name="emptyQuery_returnsEmptyList_withoutCallingDao" classname="com.gmaingret.outlinergod.repository.SearchRepositoryTest" time="0.003"/>
+  <testcase name="multipleOperators_combinedCorrectly" classname="com.gmaingret.outlinergod.repository.SearchRepositoryTest" time="0.004"/>
+  <testcase name="inTitle_postFilter_excludesNodesWithMatchOnlyInNote" classname="com.gmaingret.outlinergod.repository.SearchRepositoryTest" time="0.006"/>
+  <testcase name="ftsTermsHavePrefixStar_inSearchQuery" classname="com.gmaingret.outlinergod.repository.SearchRepositoryTest" time="0.005"/>
+  <testcase name="isNotCompleted_filter_addsCompletedZeroCondition_toSql" classname="com.gmaingret.outlinergod.repository.SearchRepositoryTest" time="0.005"/>
+  <testcase name="noFieldFilter_returnsAllFtsResults" classname="com.gmaingret.outlinergod.repository.SearchRepositoryTest" time="0.004"/>
+  <testcase name="colorFilter_addsColorCondition_toSql" classname="com.gmaingret.outlinergod.repository.SearchRepositoryTest" time="0.005"/>
+  <testcase name="operatorOnly_noFtsTerms_returnsEmptyList_withoutCallingDao" classname="com.gmaingret.outlinergod.repository.SearchRepositoryTest" time="0.004"/>
+  <testcase name="inNote_postFilter_excludesNodesWithMatchOnlyInContent" classname="com.gmaingret.outlinergod.repository.SearchRepositoryTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

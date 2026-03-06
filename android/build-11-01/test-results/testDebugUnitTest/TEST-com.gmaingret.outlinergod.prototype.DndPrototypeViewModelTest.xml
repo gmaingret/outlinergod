@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.prototype.DndPrototypeViewModelTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:30.429Z" hostname="GREGLAPTOP" time="0.005">
+  <properties/>
+  <testcase name="noChildrenLost_afterReparent" classname="com.gmaingret.outlinergod.prototype.DndPrototypeViewModelTest" time="0.002"/>
+  <testcase name="horizontalDragLeft_outdentsNode" classname="com.gmaingret.outlinergod.prototype.DndPrototypeViewModelTest" time="0.001"/>
+  <testcase name="verticalReorder_updatesListOrder" classname="com.gmaingret.outlinergod.prototype.DndPrototypeViewModelTest" time="0.0"/>
+  <testcase name="sortOrder_lexicographicInvariant" classname="com.gmaingret.outlinergod.prototype.DndPrototypeViewModelTest" time="0.002"/>
+  <testcase name="horizontalDragRight_indentsNode" classname="com.gmaingret.outlinergod.prototype.DndPrototypeViewModelTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

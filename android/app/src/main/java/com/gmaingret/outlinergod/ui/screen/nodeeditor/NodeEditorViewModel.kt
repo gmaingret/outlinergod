@@ -235,7 +235,7 @@ class NodeEditorViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         val hlc = hlcClock.generate(deviceId)
 
-        nodeDao.softDeleteNode(nodeId, now, hlc, now)
+        nodeDao.softDeleteNode(nodeId, now, hlc, now, deviceId)
 
         val precedingNodeId = if (index > 0) flatNodes[index - 1].entity.id else null
         reduce { state.copy(focusedNodeId = precedingNodeId) }
@@ -785,7 +785,7 @@ class NodeEditorViewModel @Inject constructor(
         undoDeletedIds.addLast(idsToDelete)
         redoStack.clear()
 
-        nodeDao.softDeleteNodes(idsToDelete, now, hlc, now)
+        nodeDao.softDeleteNodes(idsToDelete, now, hlc, now, deviceId)
 
         val precedingNodeId = if (index > 0) flatNodes[index - 1].entity.id else null
         reduce { state.copy(focusedNodeId = precedingNodeId, canUndo = true, canRedo = false) }

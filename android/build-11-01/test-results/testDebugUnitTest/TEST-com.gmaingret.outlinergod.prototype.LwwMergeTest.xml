@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.prototype.LwwMergeTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:30.440Z" hostname="GREGLAPTOP" time="0.519">
+  <properties/>
+  <testcase name="lwwMerge_commutative" classname="com.gmaingret.outlinergod.prototype.LwwMergeTest" time="0.357"/>
+  <testcase name="lwwMerge_idempotent" classname="com.gmaingret.outlinergod.prototype.LwwMergeTest" time="0.16"/>
+  <testcase name="lwwMerge_deleteWins" classname="com.gmaingret.outlinergod.prototype.LwwMergeTest" time="0.001"/>
+  <testcase name="lwwMerge_higherHlcWins" classname="com.gmaingret.outlinergod.prototype.LwwMergeTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

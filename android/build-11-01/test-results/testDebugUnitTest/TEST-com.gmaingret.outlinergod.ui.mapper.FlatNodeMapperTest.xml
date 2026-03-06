@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:12.087Z" hostname="GREGLAPTOP" time="0.278">
+  <properties/>
+  <testcase name="emptyList_returnsEmptyFlatList" classname="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" time="0.039"/>
+  <testcase name="singleTopLevelNode_depthZero" classname="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" time="0.003"/>
+  <testcase name="nestedNode_depthOne" classname="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" time="0.001"/>
+  <testcase name="collapsedNode_childrenExcluded" classname="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" time="0.001"/>
+  <testcase name="expandedNode_childrenIncluded" classname="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" time="0.001"/>
+  <testcase name="hasChildren_true_whenNodeHasActiveChildren" classname="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" time="0.001"/>
+  <testcase name="hasChildren_false_afterAllChildrenDeleted" classname="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" time="0.002"/>
+  <testcase name="sortOrder_lexicographic_notNumeric" classname="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" time="0.003"/>
+  <testcase name="orphanNode_appendedAtDepthZero" classname="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" time="0.001"/>
+  <testcase name="deletedNode_excludedFromResult" classname="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" time="0.001"/>
+  <testcase name="deepNesting_computesDepthCorrectly (property-based)" classname="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" time="0.203"/>
+  <testcase name="multipleRoots_allAtDepthZero" classname="com.gmaingret.outlinergod.ui.mapper.FlatNodeMapperTest" time="0.001"/>
+  <system-out><![CDATA[Warning: Kotest autoscan is enabled. This means Kotest will scan the classpath for extensions that are annotated with @AutoScan. To avoid this startup cost, disable autoscan by setting the system property 'kotest.framework.classpath.scanning.autoscan.disable=true'. In 6.0 this value will default to true. For further details see https://kotest.io/docs/next/framework/project-config.html#runtime-detection
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

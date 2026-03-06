@@ -1,0 +1,142 @@
+Starting a Gradle Daemon, 1 busy and 18 stopped Daemons could not be reused, use --status for details
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:packageDebugUnitTestForUnitTest UP-TO-DATE
+> Task :app:processDebugUnitTestManifest UP-TO-DATE
+> Task :app:generateDebugUnitTestConfig UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+
+> Task :app:kspDebugKotlin FAILED
+e: [ksp] [Hilt] failed to make parent directories.: java.lang.IllegalStateException: failed to make parent directories.
+	at com.google.devtools.ksp.common.impl.CodeGeneratorImpl.createNewFile(CodeGeneratorImpl.kt:158)
+	at com.google.devtools.ksp.common.impl.CodeGeneratorImpl.createNewFile(CodeGeneratorImpl.kt:69)
+	at dagger.spi.internal.shaded.androidx.room.compiler.processing.ksp.KspFiler.createNewFile(KspFiler.kt:152)
+	at dagger.spi.internal.shaded.androidx.room.compiler.processing.ksp.KspFiler.write(KspFiler.kt:44)
+	at dagger.spi.internal.shaded.androidx.room.compiler.processing.XFiler.write$default(XFiler.kt:30)
+	at dagger.hilt.android.processor.internal.viewmodel.ViewModelModuleGenerator.generate(ViewModelModuleGenerator.kt:94)
+	at dagger.hilt.android.processor.internal.viewmodel.ViewModelProcessingStep.processEach(ViewModelProcessingStep.kt:37)
+	at dagger.hilt.processor.internal.BaseProcessingStep.process(BaseProcessingStep.java:118)
+	at dagger.hilt.processor.internal.BaseProcessingStep.process(BaseProcessingStep.java:49)
+	at dagger.spi.internal.shaded.androidx.room.compiler.processing.CommonProcessorDelegate.processRound(XBasicAnnotationProcessor.kt:134)
+	at dagger.spi.internal.shaded.androidx.room.compiler.processing.ksp.KspBasicAnnotationProcessor.process(KspBasicAnnotationProcessor.kt:62)
+	at com.google.devtools.ksp.AbstractKotlinSymbolProcessingExtension$doAnalysis$8$1.invoke(KotlinSymbolProcessingExtension.kt:320)
+	at com.google.devtools.ksp.AbstractKotlinSymbolProcessingExtension$doAnalysis$8$1.invoke(KotlinSymbolProcessingExtension.kt:318)
+	at com.google.devtools.ksp.AbstractKotlinSymbolProcessingExtension.handleException(KotlinSymbolProcessingExtension.kt:430)
+	at com.google.devtools.ksp.AbstractKotlinSymbolProcessingExtension.doAnalysis(KotlinSymbolProcessingExtension.kt:318)
+	at org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(TopDownAnalyzerFacadeForJVM.kt:112)
+	at org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration$default(TopDownAnalyzerFacadeForJVM.kt:75)
+	at org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler.analyze$lambda$9(KotlinToJVMBytecodeCompiler.kt:356)
+	at org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport.analyzeAndReport(AnalyzerWithCompilerReport.kt:112)
+	at org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler.analyze(KotlinToJVMBytecodeCompiler.kt:347)
+	at org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler.runFrontendAndGenerateIrUsingClassicFrontend(KotlinToJVMBytecodeCompiler.kt:177)
+	at org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler.compileModules$cli(KotlinToJVMBytecodeCompiler.kt:102)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:169)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:43)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:102)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.exec(CLICompiler.kt:316)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:1554)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Unknown Source)
+	at java.base/java.security.AccessController.doPrivileged(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.lambda$run$0(Unknown Source)
+	at java.base/java.security.AccessController.doPrivileged(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+
+[1;31m[Hilt] Processing did not complete. See error above for details.[0m
+e: [ksp] [Hilt] failed to make parent directories.: java.lang.IllegalStateException: failed to make parent directories.
+	at com.google.devtools.ksp.common.impl.CodeGeneratorImpl.createNewFile(CodeGeneratorImpl.kt:158)
+	at com.google.devtools.ksp.common.impl.CodeGeneratorImpl.createNewFile(CodeGeneratorImpl.kt:69)
+	at dagger.spi.internal.shaded.androidx.room.compiler.processing.ksp.KspFiler.createNewFile(KspFiler.kt:152)
+	at dagger.spi.internal.shaded.androidx.room.compiler.processing.ksp.KspFiler.write(KspFiler.kt:44)
+	at dagger.hilt.processor.internal.Processors.generateAggregatingClass(Processors.java:99)
+	at dagger.hilt.processor.internal.Processors.generateAggregatingClass(Processors.java:72)
+	at dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator.generate(AggregatedDepsGenerator.java:55)
+	at dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessingStep.generateAggregatedDeps(AggregatedDepsProcessingStep.java:351)
+	at dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessingStep.processModule(AggregatedDepsProcessingStep.java:273)
+	at dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessingStep.processEach(AggregatedDepsProcessingStep.java:107)
+	at dagger.hilt.processor.internal.BaseProcessingStep.process(BaseProcessingStep.java:118)
+	at dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessingStep.process(AggregatedDepsProcessingStep.java:46)
+	at dagger.spi.internal.shaded.androidx.room.compiler.processing.CommonProcessorDelegate.processRound(XBasicAnnotationProcessor.kt:134)
+	at dagger.spi.internal.shaded.androidx.room.compiler.processing.ksp.KspBasicAnnotationProcessor.process(KspBasicAnnotationProcessor.kt:62)
+	at com.google.devtools.ksp.AbstractKotlinSymbolProcessingExtension$doAnalysis$8$1.invoke(KotlinSymbolProcessingExtension.kt:320)
+	at com.google.devtools.ksp.AbstractKotlinSymbolProcessingExtension$doAnalysis$8$1.invoke(KotlinSymbolProcessingExtension.kt:318)
+	at com.google.devtools.ksp.AbstractKotlinSymbolProcessingExtension.handleException(KotlinSymbolProcessingExtension.kt:430)
+	at com.google.devtools.ksp.AbstractKotlinSymbolProcessingExtension.doAnalysis(KotlinSymbolProcessingExtension.kt:318)
+	at org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(TopDownAnalyzerFacadeForJVM.kt:112)
+	at org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration$default(TopDownAnalyzerFacadeForJVM.kt:75)
+	at org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler.analyze$lambda$9(KotlinToJVMBytecodeCompiler.kt:356)
+	at org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport.analyzeAndReport(AnalyzerWithCompilerReport.kt:112)
+	at org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler.analyze(KotlinToJVMBytecodeCompiler.kt:347)
+	at org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler.runFrontendAndGenerateIrUsingClassicFrontend(KotlinToJVMBytecodeCompiler.kt:177)
+	at org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler.compileModules$cli(KotlinToJVMBytecodeCompiler.kt:102)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:169)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:43)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:102)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.exec(CLICompiler.kt:316)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:1554)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Unknown Source)
+	at java.base/java.security.AccessController.doPrivileged(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.lambda$run$0(Unknown Source)
+	at java.base/java.security.AccessController.doPrivileged(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+
+[1;31m[Hilt] Processing did not complete. See error above for details.[0m
+e: Error occurred in KSP, check log for detail
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:kspDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 43s
+24 actionable tasks: 2 executed, 22 up-to-date

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorScreenTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:25.703Z" hostname="GREGLAPTOP" time="0.02">
+  <properties/>
+  <testcase name="appNavHost_nodeEditorRoute_containsDocumentId" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorScreenTest" time="0.001"/>
+  <testcase name="nodeEditorStatus_hasLoadingSuccessError" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorScreenTest" time="0.002"/>
+  <testcase name="flatNode_depthField_isInt" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorScreenTest" time="0.011"/>
+  <testcase name="nodeEditorScreenKt_classExists" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorScreenTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.prototype.HlcClockTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:30.435Z" hostname="GREGLAPTOP" time="0.003">
+  <properties/>
+  <testcase name="hlcClock_generate_monotonic" classname="com.gmaingret.outlinergod.prototype.HlcClockTest" time="0.001"/>
+  <testcase name="hlcClock_receive_advancesPastIncoming" classname="com.gmaingret.outlinergod.prototype.HlcClockTest" time="0.001"/>
+  <testcase name="hlcClock_parseFormatRoundtrip" classname="com.gmaingret.outlinergod.prototype.HlcClockTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

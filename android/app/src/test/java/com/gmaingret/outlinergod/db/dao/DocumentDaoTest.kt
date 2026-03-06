@@ -111,7 +111,7 @@ class DocumentDaoTest {
     @Test
     fun softDeleteDocument_excludesFromActiveList() = runTest {
         dao.insertDocument(makeDoc(id = "d1"))
-        dao.softDeleteDocument("d1", deletedAt = 1000L, deletedHlc = "ZZZZ", updatedAt = 1000L)
+        dao.softDeleteDocument("d1", deletedAt = 1000L, deletedHlc = "ZZZZ", updatedAt = 1000L, deviceId = "test-device")
         val docs = dao.getAllDocuments("u1").first()
         assertTrue(docs.isEmpty())
     }

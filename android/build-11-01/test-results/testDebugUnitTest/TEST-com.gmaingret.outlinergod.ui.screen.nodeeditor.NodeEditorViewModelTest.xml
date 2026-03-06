@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:26.173Z" hostname="GREGLAPTOP" time="0.203">
+  <properties/>
+  <testcase name="onEnterPressed atStart insertsBlankNodeAbove" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.024"/>
+  <testcase name="onEnterPressed setsFocusedNodeId toNewNode" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.016"/>
+  <testcase name="loadDocument setsSuccessStatus withFlatNodes" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.01"/>
+  <testcase name="onNodeFocusGained setsFocusedNodeId" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.012"/>
+  <testcase name="onBackspaceOnEmptyNode softDeletesNode" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.018"/>
+  <testcase name="moveFocus Down advancesFocusIndex" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.013"/>
+  <testcase name="moveFocus Up atFirstNode doesNothing" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.013"/>
+  <testcase name="deleteNode softDeletesAndSetsFocusToPrecedingNode" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.019"/>
+  <testcase name="restoreNode clearsDeletedAt andSetsNewHlc" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.016"/>
+  <testcase name="loadDocument empty inserts root node and does not emit empty success" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.016"/>
+  <testcase name="onBackspaceOnEmptyNode setsFocusToPrecedingNode" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.012"/>
+  <testcase name="onEnterPressed splitContent atCursorPosition" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.019"/>
+  <testcase name="onBackspaceOnNonEmptyNode doesNotDelete" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeEditorViewModelTest" time="0.013"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

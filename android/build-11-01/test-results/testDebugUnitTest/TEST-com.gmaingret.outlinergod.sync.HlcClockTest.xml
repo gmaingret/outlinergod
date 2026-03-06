@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.sync.HlcClockTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:36.957Z" hostname="GREGLAPTOP" time="0.286">
+  <properties/>
+  <testcase name="generate_matchesFormat" classname="com.gmaingret.outlinergod.sync.HlcClockTest" time="0.002"/>
+  <testcase name="generate_isMonotonicallyIncreasing" classname="com.gmaingret.outlinergod.sync.HlcClockTest" time="0.001"/>
+  <testcase name="generate_incrementsCounter_onSameMillisecond" classname="com.gmaingret.outlinergod.sync.HlcClockTest" time="0.001"/>
+  <testcase name="receive_advancesWallPastIncoming" classname="com.gmaingret.outlinergod.sync.HlcClockTest" time="0.001"/>
+  <testcase name="receive_resetsCounter_whenWallAdvances" classname="com.gmaingret.outlinergod.sync.HlcClockTest" time="0.001"/>
+  <testcase name="compare_higherTimestamp_returnsPositive" classname="com.gmaingret.outlinergod.sync.HlcClockTest" time="0.0"/>
+  <testcase name="compare_higherCounter_returnsPositive" classname="com.gmaingret.outlinergod.sync.HlcClockTest" time="0.0"/>
+  <testcase name="wallDecimal_isExactlyThirteenChars (property-based)" classname="com.gmaingret.outlinergod.sync.HlcClockTest" time="0.09"/>
+  <testcase name="sortLexicographic_matchesGenerationOrder (property-based)" classname="com.gmaingret.outlinergod.sync.HlcClockTest" time="0.184"/>
+  <system-out><![CDATA[Warning: Kotest autoscan is enabled. This means Kotest will scan the classpath for extensions that are annotated with @AutoScan. To avoid this startup cost, disable autoscan by setting the system property 'kotest.framework.classpath.scanning.autoscan.disable=true'. In 6.0 this value will default to true. For further details see https://kotest.io/docs/next/framework/project-config.html#runtime-detection
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.sync.LwwMergeTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:37.246Z" hostname="GREGLAPTOP" time="0.03">
+  <properties/>
+  <testcase name="nodeMerge_isCommutative_perField" classname="com.gmaingret.outlinergod.sync.LwwMergeTest" time="0.016"/>
+  <testcase name="nodeMerge_higherContentHlcWins" classname="com.gmaingret.outlinergod.sync.LwwMergeTest" time="0.0"/>
+  <testcase name="nodeMerge_isIdempotent" classname="com.gmaingret.outlinergod.sync.LwwMergeTest" time="0.01"/>
+  <testcase name="nodeMerge_deleteWins_whenDeletedHlcIsHighest" classname="com.gmaingret.outlinergod.sync.LwwMergeTest" time="0.0"/>
+  <testcase name="nodeMerge_equalHlc_deterministicTiebreaker" classname="com.gmaingret.outlinergod.sync.LwwMergeTest" time="0.0"/>
+  <testcase name="nodeMerge_contentFieldIndependent_ofDeletion" classname="com.gmaingret.outlinergod.sync.LwwMergeTest" time="0.0"/>
+  <testcase name="documentMerge_titleField_higherHlcWins" classname="com.gmaingret.outlinergod.sync.LwwMergeTest" time="0.001"/>
+  <testcase name="nodeMerge_immutableFields_alwaysFromLocal" classname="com.gmaingret.outlinergod.sync.LwwMergeTest" time="0.0"/>
+  <testcase name="bookmarkMerge_sortOrderField_higherHlcWins" classname="com.gmaingret.outlinergod.sync.LwwMergeTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

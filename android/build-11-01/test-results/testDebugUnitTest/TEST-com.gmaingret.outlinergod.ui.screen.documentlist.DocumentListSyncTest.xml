@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListSyncTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:20.562Z" hostname="GREGLAPTOP" time="3.11">
+  <properties/>
+  <testcase name="triggerSync upserts nodes from pull response" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListSyncTest" time="2.755"/>
+  <testcase name="onScreenResumed calls triggerSync" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListSyncTest" time="0.085"/>
+  <testcase name="triggerSync sets Syncing then Idle on success" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListSyncTest" time="0.034"/>
+  <testcase name="triggerSync omits settings from push payload when no pending" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListSyncTest" time="0.066"/>
+  <testcase name="triggerSync updates lastSyncHlc after successful push" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListSyncTest" time="0.049"/>
+  <testcase name="triggerSync includes settings in push payload when pending" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListSyncTest" time="0.088"/>
+  <testcase name="triggerSync sets Error status on network failure" classname="com.gmaingret.outlinergod.ui.screen.documentlist.DocumentListSyncTest" time="0.03"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+]]></system-err>
+</testsuite>

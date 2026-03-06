@@ -1,0 +1,24 @@
+
+> Configure project :app
+e: file:///C:/Users/gmain/Dev/OutlinerGod/android/app/build.gradle.kts:63:17: Unresolved reference: jvmArgs
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file 'C:\Users\gmain\Dev\OutlinerGod\android\app\build.gradle.kts' line: 63
+
+* What went wrong:
+Script compilation error:
+
+  Line 63:                 jvmArgs("-Drobolectric.useNativeRuntime=true")
+                           ^ Unresolved reference: jvmArgs
+
+1 error
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 10s

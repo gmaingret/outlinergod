@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.screen.settings.SettingsScreenTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:26.483Z" hostname="GREGLAPTOP" time="0.02">
+  <properties/>
+  <testcase name="appNavHost_settingsRoute_isCorrect" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsScreenTest" time="0.0"/>
+  <testcase name="settingsScreenKt_classExists" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsScreenTest" time="0.003"/>
+  <testcase name="settingsEntity_density_validValues" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsScreenTest" time="0.001"/>
+  <testcase name="settingsUiState_hasLoadingSuccessError" classname="com.gmaingret.outlinergod.ui.screen.settings.SettingsScreenTest" time="0.011"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

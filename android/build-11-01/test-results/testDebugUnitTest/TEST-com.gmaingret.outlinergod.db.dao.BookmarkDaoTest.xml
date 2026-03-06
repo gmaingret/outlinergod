@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.db.dao.BookmarkDaoTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:28.102Z" hostname="GREGLAPTOP" time="0.418">
+  <properties/>
+  <testcase name="observeAllActive_excludesOtherUsers" classname="com.gmaingret.outlinergod.db.dao.BookmarkDaoTest" time="0.117"/>
+  <testcase name="softDeleteBookmark_setsTombstone" classname="com.gmaingret.outlinergod.db.dao.BookmarkDaoTest" time="0.081"/>
+  <testcase name="upsertBookmarks_insertsBatch" classname="com.gmaingret.outlinergod.db.dao.BookmarkDaoTest" time="0.065"/>
+  <testcase name="searchBookmark_withNullTargetIds_roundtrip" classname="com.gmaingret.outlinergod.db.dao.BookmarkDaoTest" time="0.071"/>
+  <testcase name="observeAllActive_excludesSoftDeletedBookmarks" classname="com.gmaingret.outlinergod.db.dao.BookmarkDaoTest" time="0.083"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

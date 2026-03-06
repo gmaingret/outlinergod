@@ -101,7 +101,7 @@ class NodeDaoTest {
     @Test
     fun softDeleteNode_setsTombstone_andExcludesFromActiveList() = runTest {
         dao.insertNode(makeNode(id = "n1"))
-        dao.softDeleteNode("n1", deletedAt = 1000L, deletedHlc = "ZZZZ", updatedAt = 1000L)
+        dao.softDeleteNode("n1", deletedAt = 1000L, deletedHlc = "ZZZZ", updatedAt = 1000L, deviceId = "test-device")
         val active = dao.getNodesByDocument("doc1").first()
         assertTrue(active.isEmpty())
         val node = dao.getNodeById("n1").first()

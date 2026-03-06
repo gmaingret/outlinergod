@@ -185,12 +185,15 @@ class DocumentListViewModelTest {
     @Test
     fun `deleteDocument soft deletes locally`() = runTest {
         every { documentDao.getAllDocuments("user-1") } returns flowOf(listOf(fakeDocument()))
-        coEvery { documentDao.softDeleteDocument(any(), any(), any(), any()) } just Runs
+        coEvery { documentDao.softDeleteDocument(any(), any(), any(), any(), any()) } just Runs
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.deleteDocument("doc-1")
+            // triggerSync called after delete; pull mock fails -> Syncing then Error
+            expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Syncing))
+            expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Error))
         }
-        coVerify { documentDao.softDeleteDocument(eq("doc-1"), any(), any(), any()) }
+        coVerify { documentDao.softDeleteDocument(eq("doc-1"), any(), any(), any(), any()) }
     }
 
     @Test

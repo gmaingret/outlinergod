@@ -230,7 +230,8 @@ class DocumentListViewModel @Inject constructor(
             val deviceId = authRepository.getDeviceId().first()
             val now = System.currentTimeMillis()
             val hlc = hlcClock.generate(deviceId)
-            documentDao.softDeleteDocument(id, now, hlc, now)
+            documentDao.softDeleteDocument(id, now, hlc, now, deviceId)
+            triggerSync()
         } catch (e: Exception) {
             postSideEffect(DocumentListSideEffect.ShowError(e.message ?: "Failed to delete document"))
         }

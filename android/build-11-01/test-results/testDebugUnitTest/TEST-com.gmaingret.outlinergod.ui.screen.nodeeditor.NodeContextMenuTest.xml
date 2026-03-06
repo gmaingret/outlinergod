@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeContextMenuTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:24.924Z" hostname="GREGLAPTOP" time="0.621">
+  <properties/>
+  <testcase name="addChildNode insertsNodeWithCorrectParentId" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeContextMenuTest" time="0.434"/>
+  <testcase name="onCompletedToggled flipsCompletedBit" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeContextMenuTest" time="0.022"/>
+  <testcase name="deleteNode recursivelyDeletesDescendants" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeContextMenuTest" time="0.053"/>
+  <testcase name="onColorChanged writesColorAndColorHlc toRoom" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeContextMenuTest" time="0.044"/>
+  <testcase name="deleteNode softDeletesNonEmptyNode" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeContextMenuTest" time="0.031"/>
+  <testcase name="deleteNode setsFocusToPrecedingNode" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeContextMenuTest" time="0.02"/>
+  <testcase name="onCompletedToggled flipsBackToZero" classname="com.gmaingret.outlinergod.ui.screen.nodeeditor.NodeContextMenuTest" time="0.016"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

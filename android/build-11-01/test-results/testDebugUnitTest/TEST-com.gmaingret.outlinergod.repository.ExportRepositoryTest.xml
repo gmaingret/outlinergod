@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gmaingret.outlinergod.repository.ExportRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-03-04T11:05:31.155Z" hostname="GREGLAPTOP" time="0.015">
+  <properties/>
+  <testcase name="exportAll success returns Result with File" classname="com.gmaingret.outlinergod.repository.ExportRepositoryTest" time="0.007"/>
+  <testcase name="exportAll networkError returns Result failure" classname="com.gmaingret.outlinergod.repository.ExportRepositoryTest" time="0.004"/>
+  <testcase name="exportAll failure returns Result with exception" classname="com.gmaingret.outlinergod.repository.ExportRepositoryTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

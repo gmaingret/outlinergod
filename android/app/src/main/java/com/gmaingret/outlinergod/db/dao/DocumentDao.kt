@@ -24,8 +24,8 @@ interface DocumentDao {
     @Update
     suspend fun updateDocument(document: DocumentEntity)
 
-    @Query("UPDATE documents SET deleted_at = :deletedAt, deleted_hlc = :deletedHlc, updated_at = :updatedAt WHERE id = :id")
-    suspend fun softDeleteDocument(id: String, deletedAt: Long, deletedHlc: String, updatedAt: Long)
+    @Query("UPDATE documents SET deleted_at = :deletedAt, deleted_hlc = :deletedHlc, updated_at = :updatedAt, device_id = :deviceId WHERE id = :id")
+    suspend fun softDeleteDocument(id: String, deletedAt: Long, deletedHlc: String, updatedAt: Long, deviceId: String)
 
     @Query("""
         SELECT * FROM documents
