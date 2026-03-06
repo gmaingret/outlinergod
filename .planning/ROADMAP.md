@@ -17,7 +17,7 @@
 
 - [x] **Phase 15: Scaffold** — Web client builds and is served by the existing Fastify container (completed 2026-03-06)
 - [x] **Phase 16: Auth** — User can sign in with Google and stay logged in across browser sessions (completed 2026-03-06)
-- [ ] **Phase 17: Document List** — User can create, view, rename, and delete documents
+- [x] **Phase 17: Document List** — User can create, view, rename, and delete documents (completed 2026-03-06)
 - [ ] **Phase 18: Node Editor + Sync** — User can read and edit nodes with formatting, keyboard shortcuts, zoom navigation, and data sync
 - [ ] **Phase 19: Drag-and-Drop** — User can drag nodes to reorder and reparent them
 
@@ -27,7 +27,7 @@
 |-------|----------------|--------|-----------|
 | 15. Scaffold | 2/2 | Complete    | 2026-03-06 |
 | 16. Auth | 3/3 | Complete    | 2026-03-06 |
-| 17. Document List | 1/2 | In Progress|  |
+| 17. Document List | 2/2 | Complete   | 2026-03-06 |
 | 18. Node Editor + Sync | 0/? | Not started | - |
 | 19. Drag-and-Drop | 0/? | Not started | - |
 
@@ -71,7 +71,7 @@ Plans:
   2. User can create a new document and see it appear in the list immediately
   3. User can rename a document and see the new name reflected in the list
   4. User can delete a document and it is removed from the list (and no longer visible on Android after sync)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 17-01-PLAN.md — DocumentListPage test scaffold (TDD Wave 0)
 - [ ] 17-02-PLAN.md — DocumentListPage implementation + App.tsx wiring (Wave 1)
