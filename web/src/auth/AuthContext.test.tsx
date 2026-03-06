@@ -45,11 +45,6 @@ describe('AUTH-02: silent refresh on mount', () => {
 
 describe('AUTH-01: login with Google id_token', () => {
   it('calls /api/auth/google with { id_token, device_id } and stores refresh token', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ token: 'new-access-token', refresh_token: 'new-rt' }),
-    })
-
     let loginFn: ((idToken: string) => Promise<void>) | null = null
     function LoginCapture() {
       const { login } = useAuth()
@@ -60,7 +55,7 @@ describe('AUTH-01: login with Google id_token', () => {
     render(<AuthProvider><LoginCapture /><StatusDisplay /></AuthProvider>)
     await waitFor(() => expect(screen.getByText('not-authed')).toBeInTheDocument())
 
-    // Trigger login
+    // Trigger login — no refresh_token in localStorage so mount makes no fetch call
     ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ token: 'at', refresh_token: 'rt', user: { id: 'uid' } }),
