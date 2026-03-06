@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: — web-client
 status: completed
-stopped_at: Completed 18-01-PLAN.md
-last_updated: "2026-03-06T11:18:12.496Z"
+stopped_at: Completed 18-02-PLAN.md
+last_updated: "2026-03-06T11:21:35.435Z"
 last_activity: "2026-03-06 — 17-02 complete: DocumentListPage CRUD, 18/18 tests pass, pnpm build exits 0"
 progress:
   total_phases: 19
   completed_phases: 13
   total_plans: 36
-  completed_plans: 33
+  completed_plans: 34
   percent: 97
 ---
 
@@ -18,12 +18,12 @@ progress:
 
 ## Current Position
 
-Phase: 17 — Document List (COMPLETE)
-Plan: 17-02 COMPLETE — DocumentListPage full CRUD implementation, all 12 tests green
-Status: Phase 17 complete (DOC-01..04 all done); ready for Phase 18 (Node Editor + Sync)
-Last activity: 2026-03-06 — 17-02 complete: DocumentListPage CRUD, 18/18 tests pass, pnpm build exits 0
+Phase: 18 — Node Editor + Sync (In Progress)
+Plan: 18-02 COMPLETE — treeHelpers.ts pure functions, all 14 tests green
+Status: 18-01 (test scaffolds) and 18-02 (treeHelpers implementation) done; ready for 18-03 (NodeEditorPage component)
+Last activity: 2026-03-06 — 18-02 complete: treeHelpers.ts 6 pure functions, 14/14 tests pass
 
-Progress: [██████████] 97% (v0.8: Phase 17 complete)
+Progress: [█████████░] 94% (v0.8: Phase 18 in progress)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -39,7 +39,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | 15 | Scaffold | SETUP-01, SETUP-02, SETUP-03 | Complete |
 | 16 | Auth | AUTH-01, AUTH-02, AUTH-03 | Complete (verified in Docker) |
 | 17 | Document List | DOC-01, DOC-02, DOC-03, DOC-04 | Complete |
-| 18 | Node Editor + Sync | EDIT-01..07, SYNC-01, SYNC-02 | Not started |
+| 18 | Node Editor + Sync | EDIT-01..07, SYNC-01, SYNC-02 | In Progress (18-01, 18-02 done) |
 | 19 | Drag-and-Drop | EDIT-08 | Not started |
 
 ## Open Tech Debt (carried from v0.7)
@@ -83,6 +83,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | D-WEB-12 | Delete confirmation uses role="dialog" — implementation must use semantic dialog element or role attribute | 17-01 | Enables getByRole('dialog') assertion in tests |
 | D-WEB-13 | async IIFE in useEffect for fetch — vitest mockReturnValueOnce returns plain object; await wraps in Promise.resolve but .then() throws "not a function" | 17-02 | All fetch calls in components must use async/await not .then() chains |
 | D-WEB-14 | Empty state splits "No documents yet" into child <span> — RTL getByText exact-matches element text; full sentence in one element fails partial assertion | 17-02 | Use child spans when partial RTL text assertions are needed |
+| D-WEB-15 | insertSiblingNode accepts pre-built TreeNode (not documentId); returns TreeNode[] roots — test file is authoritative over plan action text | 18-02 | NodeEditorPage must create the node object before calling insertSiblingNode |
 
 ## Key Architecture Notes (v0.8 web-client)
 
@@ -103,4 +104,4 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 ## Session Continuity
 
 Next action: Phase 18 — Node Editor + Sync
-Stopped at: Completed 18-01-PLAN.md
+Stopped at: Completed 18-02-PLAN.md
