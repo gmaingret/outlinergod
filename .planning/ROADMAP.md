@@ -6,7 +6,7 @@
 - ✅ **v0.6 integration-polish** — Phases 09–13 (shipped 2026-03-05)
 - ✅ **v0.7 user-feedback** — Phase 14 (shipped 2026-03-05)
 - ✅ **v0.8 web-client** — Phases 15–19 (shipped 2026-03-06)
-- 🔜 **v0.9 quality-hardening** — Phases 20–25 (not started)
+- 🔜 **v0.9 quality-hardening** — Phases 20–26 (not started)
 
 ---
 
@@ -22,6 +22,7 @@
 - [ ] **Phase 23: Data model & structure** — Proper attachment columns (not pipe-delimited string), move FractionalIndex to util/, delete orphan `backend/src/hlc.ts`, enable Room `exportSchema = true`, unify UndoSnapshot into single sealed class
 - [ ] **Phase 24: Test coverage gaps** — `DELETE /files` ownership test, NodeEditorViewModel debounce E2E test, FractionalIndex large-n edge cases, SyncWorker real conflict-resolution integration test, search post-filter multi-word test
 - [ ] **Phase 25: Backend maintenance** — Move SettingsSyncRecord/mergeSettings to merge.ts with tests, add periodic tombstone purge (every 24h), add `max_hlc` index on sync tables, align Node.js dev/Docker versions
+- [ ] **Phase 26: Android UX redesign** — Breadcrumb home icon + font reduction, last-opened document on launch, remove back arrow from node screen, context-sensitive bottom toolbar (editing vs. browsing modes), hamburger drawer (doc list + add + settings), glyph top-aligned
 
 ### Progress
 
@@ -33,6 +34,7 @@
 | 23. Data model & structure | 0/? | Not started | — |
 | 24. Test coverage gaps | 0/? | Not started | — |
 | 25. Backend maintenance | 0/? | Not started | — |
+| 26. Android UX redesign | 0/? | Not started | — |
 
 ### Phase Details
 
@@ -89,6 +91,19 @@
   3. `FractionalIndexTest` has edge-case tests for n ≥ 62 siblings and closely-bounded key pairs
   4. `SyncWorkerIntegrationTest` exercises conflict resolution against a real in-memory Room DB (no mock SyncRepository)
   5. `SearchRepositoryImpl` has tests for multi-word FTS queries and `in:note`/`in:title` with prefix `*` stripping
+
+#### Phase 26: Android UX redesign
+**Goal:** Overhaul Android navigation and toolbar chrome so the app feels more focused: no redundant navigation affordances, a persistent browsing toolbar when not editing, a drawer for document management, and consistent glyph alignment.
+**Depends on:** Nothing (pure UI changes, no data model impact)
+**Requirements:** (UX audit)
+**Success Criteria:**
+  1. **Breadcrumb** — Home icon (house) at the leftmost position navigates to the root document list; document name removed from breadcrumb trail; breadcrumb text is visually smaller than the current size
+  2. **Last-opened document** — When the app launches cold (or returns from background with no back stack), it opens the most recently viewed document directly instead of the document list; the home icon is the only way back to the list
+  3. **Back arrow** — The system/top-app-bar back arrow is hidden on the NodeEditorScreen; navigation back happens only via the breadcrumb home icon or Android system gesture
+  4. **Context-sensitive bottom toolbar** — When no node has focus (browse mode), the NodeActionToolbar is hidden and replaced by a global bottom bar with three buttons: hamburger menu (left), search (centre-left), bookmark (centre-right); when a node gains focus (edit mode), the global bar disappears and the NodeActionToolbar appears above the keyboard
+  5. **Hamburger drawer** — Tapping the hamburger icon slides open a modal drawer containing: the full document list (tapping navigates), an "Add document" button (creates + navigates), and a "Settings" button (navigates to SettingsScreen); the drawer closes on any navigation action
+  6. **Glyph alignment** — The bullet/zoom glyph in each node row is `Alignment.Top` aligned with the first line of the node content, regardless of how many lines the content wraps to
+  7. All existing 298+ Android tests pass; new ViewModel tests cover last-opened document persistence and toolbar mode switching
 
 #### Phase 25: Backend maintenance
 **Goal:** `SettingsSyncRecord` and `mergeSettings` live in `merge.ts` with full test coverage, tombstones are purged periodically (not just at startup), the sync pull endpoint has an indexed `max_hlc` column, and dev/Docker Node.js versions are aligned.

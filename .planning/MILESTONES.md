@@ -21,7 +21,7 @@
 
 ## v0.9 — quality-hardening (Not started)
 
-**Phases:** 20–25 | **Plans:** TBD | **Scope:** Security, tech debt, performance, test coverage
+**Phases:** 20–26 | **Plans:** TBD | **Scope:** Security, tech debt, performance, test coverage, Android UX
 
 **Goal:** No new features. Make the existing codebase production-safe, maintainable, and performant based on the 2026-03-06 codebase audit.
 
@@ -32,6 +32,7 @@
 - **Phase 23: Data model & structure** — Proper attachment columns, FractionalIndex → util/, delete orphan hlc.ts, Room exportSchema=true, UndoSnapshot sealed class
 - **Phase 24: Test coverage gaps** — File DELETE ownership test, debounce E2E test, FractionalIndex large-n, SyncWorker integration, search post-filter
 - **Phase 25: Backend maintenance** — SettingsSyncRecord → merge.ts, periodic tombstone purge, max_hlc index, Node.js version alignment
+- **Phase 26: Android UX redesign** — Breadcrumb home icon, last-opened doc on launch, remove back arrow, context-sensitive bottom toolbar (browse vs. edit mode), hamburger drawer (doc list + add + settings), glyph top-aligned
 
 ---
 
