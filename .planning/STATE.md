@@ -19,11 +19,11 @@ progress:
 ## Current Position
 
 Phase: 16 — Auth (IN PROGRESS)
-Plan: 16-01 complete
-Status: 16-01 done — Vitest test harness established; 4 AuthContext tests pass, ProtectedRoute stub in RED awaiting Plan 03
-Last activity: 2026-03-06 — 16-01 complete: Vitest test harness + failing stubs for AuthContext and ProtectedRoute
+Plan: 16-02 complete
+Status: 16-02 done — AuthProvider + useAuth implemented; backend accepts Android + Web Google OAuth tokens
+Last activity: 2026-03-06 — 16-02 complete: AuthProvider (token-in-memory + refresh-in-localStorage), backend dual-audience Google OAuth (Android + Web)
 
-Progress: [█████████░] 90% (v0.8: Phase 16 plan 1/3 done)
+Progress: [█████████░] 94% (v0.8: Phase 16 plan 2/3 done)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -37,7 +37,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
 | 15 | Scaffold | SETUP-01, SETUP-02, SETUP-03 | Complete |
-| 16 | Auth | AUTH-01, AUTH-02, AUTH-03 | In Progress (1/3 plans) |
+| 16 | Auth | AUTH-01, AUTH-02, AUTH-03 | In Progress (2/3 plans) |
 | 17 | Document List | DOC-01, DOC-02, DOC-03, DOC-04 | Not started |
 | 18 | Node Editor + Sync | EDIT-01..07, SYNC-01, SYNC-02 | Not started |
 | 19 | Drag-and-Drop | EDIT-08 | Not started |
@@ -73,6 +73,9 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | D-WEB-TEST-01 | vitest.config.ts separate from vite.config.ts to avoid @tailwindcss/vite plugin conflicts in test mode | 16-01 | Test mode doesn't load Tailwind plugin; prevents plugin collision errors |
 | D-WEB-TEST-02 | jsdom (not happy-dom) for broader @testing-library/react 16 compatibility | 16-01 | @testing-library/react 16 well-tested with jsdom |
 | D-WEB-TEST-03 | globals:true in vitest config — no import boilerplate needed for describe/it/expect in test files | 16-01 | Consistent with jest-dom style; cleaner test files |
+| D-WEB-05 | login() uses data.user?.id ?? decodeUserId(data.token) — fallback decodes userId from JWT sub claim | 16-02 | Defensive: handles auth response where user field may be absent |
+| D-WEB-06 | GOOGLE_WEB_CLIENT_ID added to root .env.example (not backend/.env) — docker-compose env_file: .env at project root | 16-02 | Env lives at project root; backend/.env does not exist |
+| D-WEB-07 | POST /api/auth/google now uses body.device_id ?? 'web-default' (was hardcoded 'default') | 16-02 | Web client sends device_id in body; backend now stores it correctly |
 
 ## Key Architecture Notes (v0.8 web-client)
 
@@ -92,5 +95,5 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Session Continuity
 
-Next action: Proceed to Phase 16 Plan 02 (AuthContext implementation) or Plan 03 (ProtectedRoute)
-Stopped at: 16-01-PLAN.md complete
+Next action: Proceed to Phase 16 Plan 03 (ProtectedRoute + LoginScreen + App wiring)
+Stopped at: 16-02-PLAN.md complete
