@@ -26,19 +26,19 @@
 
 ### Node Editor
 
-- [ ] **EDIT-01**: User can open a document and read all its nodes
-- [ ] **EDIT-02**: User can type in a node to edit its content
-- [ ] **EDIT-03**: Pressing Enter creates a new sibling node below
-- [ ] **EDIT-04**: Pressing Tab indents a node (makes it a child of the one above)
-- [ ] **EDIT-05**: Pressing Shift+Tab outdents a node (promotes it one level up)
-- [ ] **EDIT-06**: Bold, italic, and code formatting renders inline as the user types
-- [ ] **EDIT-07**: User can click the bullet glyph to zoom into a node's subtree
+- [x] **EDIT-01**: User can open a document and read all its nodes
+- [x] **EDIT-02**: User can type in a node to edit its content
+- [x] **EDIT-03**: Pressing Enter creates a new sibling node below
+- [x] **EDIT-04**: Pressing Tab indents a node (makes it a child of the one above)
+- [x] **EDIT-05**: Pressing Shift+Tab outdents a node (promotes it one level up)
+- [x] **EDIT-06**: Bold, italic, and code formatting renders inline as the user types
+- [x] **EDIT-07**: User can click the bullet glyph to zoom into a node's subtree
 - [ ] **EDIT-08**: User can drag nodes to reorder them
 
 ### Sync
 
-- [ ] **SYNC-01**: Document loads with latest data from the server
-- [ ] **SYNC-02**: Changes made in the browser sync to the server (and become visible on Android)
+- [x] **SYNC-01**: Document loads with latest data from the server
+- [x] **SYNC-02**: Changes made in the browser sync to the server (and become visible on Android)
 
 ## Future Requirements
 
@@ -77,16 +77,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOC-02 | Phase 17 | Complete |
 | DOC-03 | Phase 17 | Complete |
 | DOC-04 | Phase 17 | Complete |
-| EDIT-01 | Phase 18 | Pending |
-| EDIT-02 | Phase 18 | Pending |
-| EDIT-03 | Phase 18 | Pending |
-| EDIT-04 | Phase 18 | Pending |
-| EDIT-05 | Phase 18 | Pending |
-| EDIT-06 | Phase 18 | Pending |
-| EDIT-07 | Phase 18 | Pending |
+| EDIT-01 | Phase 18 | Complete |
+| EDIT-02 | Phase 18 | Complete |
+| EDIT-03 | Phase 18 | Complete |
+| EDIT-04 | Phase 18 | Complete |
+| EDIT-05 | Phase 18 | Complete |
+| EDIT-06 | Phase 18 | Complete |
+| EDIT-07 | Phase 18 | Complete |
 | EDIT-08 | Phase 19 | Pending |
-| SYNC-01 | Phase 18 | Pending |
-| SYNC-02 | Phase 18 | Pending |
+| SYNC-01 | Phase 18 | Complete |
+| SYNC-02 | Phase 18 | Complete |
 
 **Coverage:**
 - v0.8 requirements: 20 total

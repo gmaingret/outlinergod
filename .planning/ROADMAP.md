@@ -28,7 +28,7 @@
 | 15. Scaffold | 2/2 | Complete    | 2026-03-06 |
 | 16. Auth | 3/3 | Complete    | 2026-03-06 |
 | 17. Document List | 2/2 | Complete    | 2026-03-06 |
-| 18. Node Editor + Sync | 0/3 | Not started | - |
+| 18. Node Editor + Sync | 1/3 | In Progress|  |
 | 19. Drag-and-Drop | 0/? | Not started | - |
 
 ### Phase Details
@@ -87,7 +87,7 @@ Plans:
   4. Wrapping text in **bold** or *italic* markdown renders inline formatting as the user types
   5. Clicking a bullet glyph zooms the view into that node's subtree; pressing Back returns to the parent view
   6. Changes made in the browser appear on the Android app after the Android app syncs (and vice versa)
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 Plans:
 - [ ] 18-01-PLAN.md — Wave 0: HLC port + test scaffolds (treeHelpers + NodeEditorPage)
 - [ ] 18-02-PLAN.md — Tree helper pure functions (buildTree, filterSubtree, indent/outdent)
