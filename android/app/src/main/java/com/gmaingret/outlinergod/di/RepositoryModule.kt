@@ -10,6 +10,8 @@ import com.gmaingret.outlinergod.repository.impl.ExportRepositoryImpl
 import com.gmaingret.outlinergod.repository.impl.FileRepositoryImpl
 import com.gmaingret.outlinergod.repository.impl.SearchRepositoryImpl
 import com.gmaingret.outlinergod.repository.impl.SyncRepositoryImpl
+import com.gmaingret.outlinergod.sync.SyncOrchestrator
+import com.gmaingret.outlinergod.sync.SyncOrchestratorImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,4 +41,8 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideFileRepository(impl: FileRepositoryImpl): FileRepository = impl
+
+    @Provides
+    @Singleton
+    fun provideSyncOrchestrator(impl: SyncOrchestratorImpl): SyncOrchestrator = impl
 }
