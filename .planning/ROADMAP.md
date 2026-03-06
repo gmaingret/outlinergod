@@ -16,7 +16,7 @@
 ### Phases
 
 - [x] **Phase 15: Scaffold** — Web client builds and is served by the existing Fastify container (completed 2026-03-06)
-- [ ] **Phase 16: Auth** — User can sign in with Google and stay logged in across browser sessions
+- [x] **Phase 16: Auth** — User can sign in with Google and stay logged in across browser sessions (completed 2026-03-06)
 - [ ] **Phase 17: Document List** — User can create, view, rename, and delete documents
 - [ ] **Phase 18: Node Editor + Sync** — User can read and edit nodes with formatting, keyboard shortcuts, zoom navigation, and data sync
 - [ ] **Phase 19: Drag-and-Drop** — User can drag nodes to reorder and reparent them
@@ -26,7 +26,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 15. Scaffold | 2/2 | Complete    | 2026-03-06 |
-| 16. Auth | 2/3 | In Progress|  |
+| 16. Auth | 3/3 | Complete   | 2026-03-06 |
 | 17. Document List | 0/? | Not started | - |
 | 18. Node Editor + Sync | 0/? | Not started | - |
 | 19. Drag-and-Drop | 0/? | Not started | - |
@@ -56,7 +56,7 @@ Plans:
   2. After refreshing the browser, the user is still on the document list (not redirected to login)
   3. Navigating directly to /editor/:id without being signed in redirects to the login page
   4. The sign-in uses the same Google account that owns the user's Android data (data is visible after auth)
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [ ] 16-01-PLAN.md — Vitest infrastructure + test stubs (Wave 0)
 - [ ] 16-02-PLAN.md — AuthContext + backend dual-audience update (Wave 1)

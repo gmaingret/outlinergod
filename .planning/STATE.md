@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: — web-client
-status: in-progress
-stopped_at: 16-02 complete — AuthContext + dual audience backend
-last_updated: "2026-03-06T09:18:27Z"
+status: completed
+stopped_at: Completed 16-03-PLAN.md — awaiting checkpoint approval
+last_updated: "2026-03-06T09:23:44.849Z"
 last_activity: "2026-03-06 — 16-02 complete: AuthProvider (token-in-memory + refresh-in-localStorage), backend dual-audience Google OAuth (Android + Web)"
 progress:
   total_phases: 19
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 31
   completed_plans: 30
   percent: 94
@@ -19,11 +19,11 @@ progress:
 ## Current Position
 
 Phase: 16 — Auth (IN PROGRESS)
-Plan: 16-02 complete
-Status: 16-02 done — AuthProvider + useAuth implemented; backend accepts Android + Web Google OAuth tokens
-Last activity: 2026-03-06 — 16-02 complete: AuthProvider (token-in-memory + refresh-in-localStorage), backend dual-audience Google OAuth (Android + Web)
+Plan: 16-03 code complete — awaiting human verify checkpoint
+Status: 16-03 code done — ProtectedRoute + LoginPage + App router + Docker VITE_GOOGLE_CLIENT_ID plumbing
+Last activity: 2026-03-06 — 16-03 complete: ProtectedRoute, LoginPage, App.tsx, main.tsx, Dockerfile ARG, docker-compose.yml args
 
-Progress: [█████████░] 94% (v0.8: Phase 16 plan 2/3 done)
+Progress: [██████████] 97% (v0.8: Phase 16 all 3 plans code-complete, human verify pending)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -37,7 +37,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
 | 15 | Scaffold | SETUP-01, SETUP-02, SETUP-03 | Complete |
-| 16 | Auth | AUTH-01, AUTH-02, AUTH-03 | In Progress (2/3 plans) |
+| 16 | Auth | AUTH-01, AUTH-02, AUTH-03 | In Progress (3/3 — awaiting human verify) |
 | 17 | Document List | DOC-01, DOC-02, DOC-03, DOC-04 | Not started |
 | 18 | Node Editor + Sync | EDIT-01..07, SYNC-01, SYNC-02 | Not started |
 | 19 | Drag-and-Drop | EDIT-08 | Not started |
@@ -76,6 +76,8 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | D-WEB-05 | login() uses data.user?.id ?? decodeUserId(data.token) — fallback decodes userId from JWT sub claim | 16-02 | Defensive: handles auth response where user field may be absent |
 | D-WEB-06 | GOOGLE_WEB_CLIENT_ID added to root .env.example (not backend/.env) — docker-compose env_file: .env at project root | 16-02 | Env lives at project root; backend/.env does not exist |
 | D-WEB-07 | POST /api/auth/google now uses body.device_id ?? 'web-default' (was hardcoded 'default') | 16-02 | Web client sends device_id in body; backend now stores it correctly |
+| D-WEB-08 | tsconfig.app.json excludes test files — prevents tsc build failure from global.fetch without @types/node | 16-03 | pnpm build exits 0; vitest still handles test types independently |
+| D-WEB-09 | ProtectedRoute checks isLoading first then !accessToken — ensures silent refresh completes before redirect | 16-03 | Prevents flash-to-login on page refresh when valid refresh_token is in localStorage |
 
 ## Key Architecture Notes (v0.8 web-client)
 
@@ -95,5 +97,5 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Session Continuity
 
-Next action: Proceed to Phase 16 Plan 03 (ProtectedRoute + LoginScreen + App wiring)
-Stopped at: 16-02-PLAN.md complete
+Next action: Human verify checkpoint — test Google sign-in flow in browser, then Phase 17 (Document List)
+Stopped at: Completed 16-03-PLAN.md code tasks — awaiting human verify approval
