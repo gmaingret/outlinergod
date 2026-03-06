@@ -27,7 +27,7 @@
 |-------|----------------|--------|-----------|
 | 15. Scaffold | 2/2 | Complete    | 2026-03-06 |
 | 16. Auth | 3/3 | Complete    | 2026-03-06 |
-| 17. Document List | 2/2 | Complete   | 2026-03-06 |
+| 17. Document List | 2/2 | Complete    | 2026-03-06 |
 | 18. Node Editor + Sync | 0/? | Not started | - |
 | 19. Drag-and-Drop | 0/? | Not started | - |
 
