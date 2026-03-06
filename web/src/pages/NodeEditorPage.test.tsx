@@ -331,7 +331,7 @@ describe('SYNC-02 — Debounced push after content change', () => {
     renderEditor()
 
     // Wait for initial load using real async resolution
-    await vi.runAllTilesAsync()
+    await vi.runAllTimersAsync()
     await waitFor(() => {
       expect(screen.getByDisplayValue('Root node')).toBeInTheDocument()
     })
@@ -362,7 +362,7 @@ describe('SYNC-02 — Debounced push after content change', () => {
 
     renderEditor()
 
-    await vi.runAllTilesAsync()
+    await vi.runAllTimersAsync()
     await waitFor(() => {
       expect(screen.getByDisplayValue('Root node')).toBeInTheDocument()
     })
