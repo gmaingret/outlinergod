@@ -27,7 +27,7 @@
 |-------|----------------|--------|-----------|
 | 15. Scaffold | 2/2 | Complete    | 2026-03-06 |
 | 16. Auth | 3/3 | Complete    | 2026-03-06 |
-| 17. Document List | 0/? | Not started | - |
+| 17. Document List | 0/2 | Not started | - |
 | 18. Node Editor + Sync | 0/? | Not started | - |
 | 19. Drag-and-Drop | 0/? | Not started | - |
 
@@ -71,7 +71,10 @@ Plans:
   2. User can create a new document and see it appear in the list immediately
   3. User can rename a document and see the new name reflected in the list
   4. User can delete a document and it is removed from the list (and no longer visible on Android after sync)
-**Plans:** TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 17-01-PLAN.md — DocumentListPage test scaffold (TDD Wave 0)
+- [ ] 17-02-PLAN.md — DocumentListPage implementation + App.tsx wiring (Wave 1)
 
 #### Phase 18: Node Editor + Sync
 **Goal:** Users can open a document, read and edit all its nodes with inline formatting and keyboard shortcuts, zoom into subtrees, and have changes sync to the server.
