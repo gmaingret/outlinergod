@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: — web-client
-status: completed
+status: verifying
 stopped_at: Completed 15-02-PLAN.md — Phase 15 scaffold complete, proceed to Phase 16 Auth
-last_updated: "2026-03-06T08:33:31.109Z"
-last_activity: "2026-03-06 — 15-01 complete: Vite 7 + React 19 + Tailwind v4 in web/, Fastify serves SPA"
+last_updated: "2026-03-06T08:39:31.997Z"
+last_activity: "2026-03-06 — 15-02 complete: Docker image serves React SPA + Fastify API, verified on root@192.168.1.50"
 progress:
   total_phases: 19
   completed_phases: 11
   total_plans: 28
   completed_plans: 27
+  percent: 96
 ---
 
 # OutlinerGod Project State

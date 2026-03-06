@@ -25,7 +25,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 15. Scaffold | 2/2 | Complete   | 2026-03-06 |
+| 15. Scaffold | 2/2 | Complete    | 2026-03-06 |
 | 16. Auth | 0/? | Not started | - |
 | 17. Document List | 0/? | Not started | - |
 | 18. Node Editor + Sync | 0/? | Not started | - |
