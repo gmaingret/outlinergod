@@ -22,7 +22,9 @@ async function defaultVerifyGoogle(idToken: string): Promise<GooglePayload> {
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
   const ticket = await client.verifyIdToken({
     idToken,
-    audience: process.env.GOOGLE_CLIENT_ID,
+    audience: [process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_WEB_CLIENT_ID].filter(
+      (id): id is string => Boolean(id),
+    ),
   })
   const p = ticket.getPayload()!
   return {
@@ -69,7 +71,7 @@ export function createAuthRoutes(
     // Exchange a Google ID token for a backend JWT + refresh token.
     // -----------------------------------------------------------------------
     fastify.post('/auth/google', async (req, reply) => {
-      const body = req.body as { id_token?: string }
+      const body = req.body as { id_token?: string; device_id?: string }
 
       if (!body?.id_token) {
         return reply.status(400).send({ error: 'Missing id_token' })
@@ -117,7 +119,7 @@ export function createAuthRoutes(
         .prepare(
           'INSERT INTO refresh_tokens (token, user_id, device_id, expires_at, created_at, revoked) VALUES (?, ?, ?, ?, ?, 0)',
         )
-        .run(refreshToken, user.id, 'default', now + REFRESH_TOKEN_MS, now)
+        .run(refreshToken, user.id, body.device_id ?? 'web-default', now + REFRESH_TOKEN_MS, now)
 
       return reply.send({
         token,
