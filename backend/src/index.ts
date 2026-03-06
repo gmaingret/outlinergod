@@ -1,5 +1,8 @@
 import { mkdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import Fastify from 'fastify'
+import fastifyStatic from '@fastify/static'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import Database from 'better-sqlite3'
 import authPlugin from './middleware/auth.js'
@@ -80,9 +83,25 @@ export function buildApp(
   // Export route at /api/export
   void app.register(createExportRoutes(sqliteInstance), { prefix: '/api' })
 
-  // Placeholder root route
-  app.get('/', async (_req, reply) => {
-    return reply.send({ message: 'OutlinerGod API' })
+  // Serve React SPA from web/dist.
+  // In production Docker: /app/web/dist (set WEB_DIST_PATH env var).
+  // In dev (tsx src/server.ts): computed relative to src/ → ../../web/dist.
+  const __dirname = fileURLToPath(new URL('.', import.meta.url))
+  const webDistPath = process.env.WEB_DIST_PATH ?? join(__dirname, '..', '..', 'web', 'dist')
+
+  void app.register(fastifyStatic, {
+    root: webDistPath,
+    wildcard: false,  // CRITICAL: do not use wildcard: true — it creates GET /* that shadows /api routes
+  })
+
+  // SPA fallback: any GET that doesn't match an API route or static file returns index.html.
+  // This makes deep links work (e.g. /documents/123 loads the app, React Router handles routing).
+  // /api/* paths that are not registered return 404 as expected (not the SPA).
+  app.setNotFoundHandler((req, reply) => {
+    if (req.url.startsWith('/api/')) {
+      return reply.code(404).send({ error: 'Not Found' })
+    }
+    return reply.sendFile('index.html')
   })
 
   return app
