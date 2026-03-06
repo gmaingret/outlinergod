@@ -29,7 +29,7 @@
 | 16. Auth | 3/3 | Complete    | 2026-03-06 |
 | 17. Document List | 2/2 | Complete    | 2026-03-06 |
 | 18. Node Editor + Sync | 3/3 | Complete    | 2026-03-06 |
-| 19. Drag-and-Drop | 0/2 | Not started | - |
+| 19. Drag-and-Drop | 1/2 | In Progress|  |
 
 ### Phase Details
 
@@ -102,7 +102,7 @@ Plans:
   2. Dragging a node horizontally while repositioning changes its depth (reparents it as a child or sibling of the surrounding context)
   3. Dragging a node also moves its entire subtree — children follow the parent
   4. After a drag, the new order syncs to the server and is visible on Android after sync
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 19-01-PLAN.md — Install dnd-kit + flattenTree() + reorderNode() pure functions
 - [ ] 19-02-PLAN.md — FlatNodeList component + NodeEditorPage integration

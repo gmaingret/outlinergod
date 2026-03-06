@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: — web-client
-status: completed
-stopped_at: Phase 19 context gathered
-last_updated: "2026-03-06T12:24:10.585Z"
-last_activity: "2026-03-06 — 18-03 complete: NodeEditorPage, all 53 web tests pass"
+status: in-progress
+stopped_at: "Completed 19-01-PLAN.md"
+last_updated: "2026-03-06T14:03:14Z"
+last_activity: "2026-03-06 — 19-01 complete: flattenTree/reorderNode pure functions, 23 treeHelpers tests pass, dnd-kit installed"
 progress:
   total_phases: 19
   completed_phases: 14
-  total_plans: 36
-  completed_plans: 35
+  total_plans: 38
+  completed_plans: 36
   percent: 97
 ---
 
@@ -18,10 +18,10 @@ progress:
 
 ## Current Position
 
-Phase: 18 — Node Editor + Sync (COMPLETE)
-Plan: 18-03 COMPLETE — NodeEditorPage component, 13/13 tests green, pnpm build exits 0
-Status: 18-01 (test scaffolds), 18-02 (treeHelpers), 18-03 (NodeEditorPage) all done; Phase 18 complete
-Last activity: 2026-03-06 — 18-03 complete: NodeEditorPage, all 53 web tests pass
+Phase: 19 — Drag-and-Drop (IN PROGRESS)
+Plan: 19-01 COMPLETE — flattenTree/reorderNode pure functions, dnd-kit installed, 23 treeHelpers tests pass
+Status: 19-01 done; 19-02 (FlatNodeList component) remaining
+Last activity: 2026-03-06 — 19-01 complete: flattenTree/reorderNode pure functions, 23 treeHelpers tests pass, dnd-kit installed
 
 Progress: [██████████] 97% (v0.8: Phase 18 complete, Phase 19 Drag-and-Drop remaining)
 
@@ -40,7 +40,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | 16 | Auth | AUTH-01, AUTH-02, AUTH-03 | Complete (verified in Docker) |
 | 17 | Document List | DOC-01, DOC-02, DOC-03, DOC-04 | Complete |
 | 18 | Node Editor + Sync | EDIT-01..07, SYNC-01, SYNC-02 | Complete |
-| 19 | Drag-and-Drop | EDIT-08 | Not started |
+| 19 | Drag-and-Drop | EDIT-08 | In Progress (19-01 done) |
 
 ## Open Tech Debt (carried from v0.7)
 
@@ -87,6 +87,8 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | D-WEB-16 | jest shim in test-setup.ts delegates advanceTimersByTime to vi — RTL v16 only checks for jest global to detect fake timers, not vi | 18-03 | SYNC-02 waitFor tests complete in ~130ms instead of timing out (5s) |
 | D-WEB-17 | Bullet glyph (zoom in) rendered before collapse arrow in DOM — glyphs[0] is always the zoom button (test expects navigate on first glyph) | 18-03 | EDIT-07 glyph click test passes; mockNavigate is called |
 | D-WEB-18 | runAllTilesAsync typo in test file auto-fixed to runAllTimersAsync | 18-03 | SYNC-02 tests no longer throw TypeError on startup |
+| D-WEB-19 | reorderNode re-flattens after removal to resolve targetIndex against updated flat list (avoids off-by-one) | 19-01 | FlatNodeList caller passes targetIndex into updated list, not stale pre-removal list |
+| D-WEB-20 | reorderNode insert position derived by counting new parent's children before targetIndex in post-removal flat list | 19-01 | recomputeSortOrders handles final sort_order assignment after insertion |
 
 ## Key Architecture Notes (v0.8 web-client)
 

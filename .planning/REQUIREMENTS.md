@@ -33,7 +33,7 @@
 - [x] **EDIT-05**: Pressing Shift+Tab outdents a node (promotes it one level up)
 - [x] **EDIT-06**: Bold, italic, and code formatting renders inline as the user types
 - [x] **EDIT-07**: User can click the bullet glyph to zoom into a node's subtree
-- [ ] **EDIT-08**: User can drag nodes to reorder them
+- [x] **EDIT-08**: User can drag nodes to reorder them
 
 ### Sync
 
@@ -84,7 +84,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EDIT-05 | Phase 18 | Complete |
 | EDIT-06 | Phase 18 | Complete |
 | EDIT-07 | Phase 18 | Complete |
-| EDIT-08 | Phase 19 | Pending |
+| EDIT-08 | Phase 19 | Complete |
 | SYNC-01 | Phase 18 | Complete |
 | SYNC-02 | Phase 18 | Complete |
 
