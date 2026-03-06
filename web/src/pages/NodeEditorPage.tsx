@@ -137,7 +137,29 @@ export function NodeEditorPage() {
         ])
         if (nodesRes.ok) {
           const data = await nodesRes.json()
-          setNodes(buildTree(Array.isArray(data) ? data : data.items ?? []))
+          const loaded = buildTree(Array.isArray(data) ? data : data.nodes ?? [])
+          if (loaded.length === 0) {
+            const firstNodeId = generateNodeId()
+            const firstNode: TreeNode = {
+              id: firstNodeId,
+              document_id: docId ?? '',
+              content: '',
+              note: '',
+              parent_id: null,
+              sort_order: 'a0000',
+              completed: false,
+              color: 0,
+              collapsed: false,
+              deleted_at: null,
+              created_at: Date.now(),
+              updated_at: Date.now(),
+              children: [],
+            }
+            setNodes([firstNode])
+            focusNodeId.current = firstNodeId
+          } else {
+            setNodes(loaded)
+          }
         }
         if (docRes.ok) {
           const doc = await docRes.json()
@@ -268,6 +290,7 @@ export function NodeEditorPage() {
         const updated = insertSiblingNode([...prev], nodeId, newNode)
         return updated
       })
+      queueChange(newNode)
       focusNodeId.current = newNodeId
     } else if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault()
