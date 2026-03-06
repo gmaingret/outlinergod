@@ -2,26 +2,26 @@
 gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: web-client
-status: roadmap_ready
-last_updated: "2026-03-06T00:00:00.000Z"
-last_activity: 2026-03-06 — Roadmap created for v0.8 web-client (5 phases, 20/20 requirements mapped)
+status: in_progress
+last_updated: "2026-03-06T09:17:00.000Z"
+last_activity: 2026-03-06 — Phase 15 Plan 01 complete (web scaffold + Fastify SPA serving)
 progress:
-  total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 19
+  completed_phases: 10
+  total_plans: 28
+  completed_plans: 27
 ---
 
 # OutlinerGod Project State
 
 ## Current Position
 
-Phase: 15 — Scaffold (not started)
-Plan: —
-Status: Roadmap complete, ready for Phase 15 planning
-Last activity: 2026-03-06 — Roadmap v0.8 created
+Phase: 15 — Scaffold (in progress, 15-01 done)
+Plan: 15-01 complete
+Status: Plan 15-01 executed — web/ scaffold + Fastify SPA serving complete
+Last activity: 2026-03-06 — 15-01 complete: Vite 7 + React 19 + Tailwind v4 in web/, Fastify serves SPA
 
-Progress: [----------] 0/5 phases complete
+Progress: [█████████░] 15/5 phases (v0.8: 1/5 plans started)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -34,7 +34,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 15 | Scaffold | SETUP-01, SETUP-02, SETUP-03 | Not started |
+| 15 | Scaffold | SETUP-01, SETUP-02, SETUP-03 | In progress (15-01 done) |
 | 16 | Auth | AUTH-01, AUTH-02, AUTH-03 | Not started |
 | 17 | Document List | DOC-01, DOC-02, DOC-03, DOC-04 | Not started |
 | 18 | Node Editor + Sync | EDIT-01..07, SYNC-01, SYNC-02 | Not started |
@@ -51,6 +51,8 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 - ANDROID_HOME: /c/Users/gmain/AppData/Local/Android/Sdk
 - Run Android tests: export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr" && export ANDROID_HOME="/c/Users/gmain/AppData/Local/Android/Sdk" && cd android && ./gradlew test
 - Run backend tests: cd backend && pnpm test
+- Run web dev: cd web && pnpm dev (HMR at localhost:5173, /api proxied to :3000)
+- Run web build: cd web && pnpm build (output: web/dist/)
 - Git remote: https://github.com/gmaingret/outlinergod.git (branch: master)
 - Docker server: root@192.168.1.50, deploy path: /root/outlinergod
 - Domain: https://notes.gregorymaingret.fr
@@ -59,7 +61,10 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 | ID | Decision | Phase-Plan | Impact |
 |----|----------|------------|--------|
-| — | No decisions yet — roadmap just created | — | — |
+| D-WEB-01 | Tailwind v4 via @tailwindcss/vite — no tailwind.config.js or postcss.config.js | 15-01 | No config files needed; single @import in index.css |
+| D-WEB-02 | @fastify/static with wildcard: false to prevent /api/* route shadowing | 15-01 | Critical: wildcard: true would intercept all /api calls |
+| D-WEB-03 | /api/* prefix guard in setNotFoundHandler — unknown API paths return 404 not index.html | 15-01 | Preserves API contract; keeps test buildApp_unknownRoute_returns404 green |
+| D-WEB-04 | WEB_DIST_PATH env var for Docker override of computed dist path | 15-01 | Docker sets /app/web/dist; dev falls back to ../../web/dist relative to src/ |
 
 ## Key Architecture Notes (v0.8 web-client)
 
@@ -70,7 +75,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 - HLC: port `backend/src/hlc/hlc.ts` verbatim — must produce identical `<13-digit-ms>-<5-digit-counter>-<deviceId>` format
 - Content format decision pending: Tiptap HTML vs. Android markdown markers (`**bold**`) — resolve before Phase 18
 - CRITICAL PITFALLS:
-  - `@fastify/static` wildcard conflict: use `wildcard: false` + `setNotFoundHandler` (not `wildcard: true`)
+  - `@fastify/static` wildcard conflict: use `wildcard: false` + `setNotFoundHandler` (not `wildcard: true`) — CONFIRMED in 15-01
   - Google OAuth audience: `verifyIdToken` must accept the web client ID; update backend audience array if new credential created
   - GIS credential field: `{ id_token: response.credential }` — NOT `response.id_token` (undefined)
   - Contenteditable cursor: use Tiptap (manages own DOM); never raw `<div contenteditable>`
@@ -78,4 +83,5 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Session Continuity
 
-Next action: `/gsd:plan-phase 15` — plan Phase 15: Scaffold
+Next action: Continue Phase 15 — remaining plans in 15-scaffold (if any), or proceed to Phase 16 Auth
+Stopped at: Completed 15-01-PLAN.md

@@ -25,7 +25,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 15. Scaffold | 0/2 | In progress | - |
+| 15. Scaffold | 1/2 | In Progress|  |
 | 16. Auth | 0/? | Not started | - |
 | 17. Document List | 0/? | Not started | - |
 | 18. Node Editor + Sync | 0/? | Not started | - |
@@ -42,7 +42,7 @@
   2. The Fastify container serves the React SPA for any non-/api path (deep links return index.html, not 404)
   3. The Android app's sync calls to /api/* continue to return correct responses (no regression)
   4. A developer can run `pnpm dev` in `web/` and edit React code with hot reload at localhost:5173, with /api/* proxied to localhost:3000
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 15-01-PLAN.md — Scaffold web/ + Fastify SPA serving
 - [ ] 15-02-PLAN.md — Docker three-stage build + compose update

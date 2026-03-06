@@ -8,8 +8,8 @@
 ### Setup & Deployment
 
 - [ ] **SETUP-01**: Web client builds and deploys inside the existing Docker container at 192.168.1.50
-- [ ] **SETUP-02**: Web app is accessible at https://notes.gregorymaingret.fr in a browser
-- [ ] **SETUP-03**: /api/* routes continue to work for the Android app (no regression)
+- [x] **SETUP-02**: Web app is accessible at https://notes.gregorymaingret.fr in a browser
+- [x] **SETUP-03**: /api/* routes continue to work for the Android app (no regression)
 
 ### Authentication
 
@@ -68,8 +68,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | SETUP-01 | Phase 15 | Pending |
-| SETUP-02 | Phase 15 | Pending |
-| SETUP-03 | Phase 15 | Pending |
+| SETUP-02 | Phase 15 | Complete |
+| SETUP-03 | Phase 15 | Complete |
 | AUTH-01 | Phase 16 | Pending |
 | AUTH-02 | Phase 16 | Pending |
 | AUTH-03 | Phase 16 | Pending |
