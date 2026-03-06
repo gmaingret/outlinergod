@@ -28,7 +28,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 20. Security fixes | 0/? | Not started | — |
+| 20. Security fixes | 0/1 | Planned | — |
 | 21. Sync architecture | 0/? | Not started | — |
 | 22. Android performance | 0/? | Not started | — |
 | 23. Data model & structure | 0/? | Not started | — |
@@ -41,6 +41,9 @@
 #### Phase 20: Security fixes
 **Goal:** Close all security bugs identified in the codebase audit — no authenticated user can delete another user's files, JWT_SECRET is validated at startup, and stale refresh tokens are periodically purged.
 **Depends on:** Nothing
+**Plans:** 1 plan
+Plans:
+- [ ] 20-01-PLAN.md — DELETE ownership check, JWT_SECRET guard, refresh token purge
 **Requirements:** (security audit)
 **Success Criteria:**
   1. `DELETE /api/files/:filename` returns 403 if the file belongs to a different user
