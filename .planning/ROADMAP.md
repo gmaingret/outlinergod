@@ -5,6 +5,90 @@
 - ✅ **v0.4 android-core** — Phases 01–08 (shipped 2026-03-03)
 - ✅ **v0.6 integration-polish** — Phases 09–13 (shipped 2026-03-05)
 - ✅ **v0.7 user-feedback** — Phase 14 (shipped 2026-03-05)
+- 🔄 **v0.8 web-client** — Phases 15–19 (in progress)
+
+---
+
+## v0.8 — web-client (IN PROGRESS)
+
+**Goal:** Deliver a full-featured web outliner at https://notes.gregorymaingret.fr — auth, document CRUD, node editor with WYSIWYG, zoom navigation, sync, and DnD reordering.
+
+### Phases
+
+- [ ] **Phase 15: Scaffold** — Web client builds and is served by the existing Fastify container
+- [ ] **Phase 16: Auth** — User can sign in with Google and stay logged in across browser sessions
+- [ ] **Phase 17: Document List** — User can create, view, rename, and delete documents
+- [ ] **Phase 18: Node Editor + Sync** — User can read and edit nodes with formatting, keyboard shortcuts, zoom navigation, and data sync
+- [ ] **Phase 19: Drag-and-Drop** — User can drag nodes to reorder and reparent them
+
+### Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 15. Scaffold | 0/? | Not started | - |
+| 16. Auth | 0/? | Not started | - |
+| 17. Document List | 0/? | Not started | - |
+| 18. Node Editor + Sync | 0/? | Not started | - |
+| 19. Drag-and-Drop | 0/? | Not started | - |
+
+### Phase Details
+
+#### Phase 15: Scaffold
+**Goal:** The web client builds successfully and is served by the existing Fastify container; /api/* routes are unaffected.
+**Depends on:** Nothing (builds on existing backend)
+**Requirements:** SETUP-01, SETUP-02, SETUP-03
+**Success Criteria** (what must be TRUE when this phase completes):
+  1. Navigating to https://notes.gregorymaingret.fr in a browser loads a React page (not a 404 or blank screen)
+  2. The Fastify container serves the React SPA for any non-/api path (deep links return index.html, not 404)
+  3. The Android app's sync calls to /api/* continue to return correct responses (no regression)
+  4. A developer can run `pnpm dev` in `web/` and edit React code with hot reload at localhost:5173, with /api/* proxied to localhost:3000
+**Plans:** TBD
+
+#### Phase 16: Auth
+**Goal:** Users can sign in with Google in the browser using the same account as on Android, and stay signed in across page refreshes.
+**Depends on:** Phase 15
+**Requirements:** AUTH-01, AUTH-02, AUTH-03
+**Success Criteria** (what must be TRUE when this phase completes):
+  1. User can click "Sign in with Google" and complete the OAuth flow to reach the document list
+  2. After refreshing the browser, the user is still on the document list (not redirected to login)
+  3. Navigating directly to /editor/:id without being signed in redirects to the login page
+  4. The sign-in uses the same Google account that owns the user's Android data (data is visible after auth)
+**Plans:** TBD
+
+#### Phase 17: Document List
+**Goal:** Users can see all their documents and perform full CRUD from the browser.
+**Depends on:** Phase 16
+**Requirements:** DOC-01, DOC-02, DOC-03, DOC-04
+**Success Criteria** (what must be TRUE when this phase completes):
+  1. After signing in, the user sees a list of all their documents (same documents visible on Android)
+  2. User can create a new document and see it appear in the list immediately
+  3. User can rename a document and see the new name reflected in the list
+  4. User can delete a document and it is removed from the list (and no longer visible on Android after sync)
+**Plans:** TBD
+
+#### Phase 18: Node Editor + Sync
+**Goal:** Users can open a document, read and edit all its nodes with inline formatting and keyboard shortcuts, zoom into subtrees, and have changes sync to the server.
+**Depends on:** Phase 17
+**Requirements:** EDIT-01, EDIT-02, EDIT-03, EDIT-04, EDIT-05, EDIT-06, EDIT-07, SYNC-01, SYNC-02
+**Success Criteria** (what must be TRUE when this phase completes):
+  1. Opening a document from the list displays all its nodes in the correct tree hierarchy, with the latest server data
+  2. Typing in a node updates its content; pressing Enter creates a new sibling node below the cursor
+  3. Pressing Tab indents the current node (it becomes a child of the node above); pressing Shift+Tab outdents it one level
+  4. Wrapping text in **bold** or *italic* markdown renders inline formatting as the user types
+  5. Clicking a bullet glyph zooms the view into that node's subtree; pressing Back returns to the parent view
+  6. Changes made in the browser appear on the Android app after the Android app syncs (and vice versa)
+**Plans:** TBD
+
+#### Phase 19: Drag-and-Drop
+**Goal:** Users can drag any node to a new position in the tree, including reparenting to a different depth level.
+**Depends on:** Phase 18
+**Requirements:** EDIT-08
+**Success Criteria** (what must be TRUE when this phase completes):
+  1. A user can drag a node up or down the list and drop it in a new position; the tree order updates immediately
+  2. Dragging a node horizontally while repositioning changes its depth (reparents it as a child or sibling of the surrounding context)
+  3. Dragging a node also moves its entire subtree — children follow the parent
+  4. After a drag, the new order syncs to the server and is visible on Android after sync
+**Plans:** TBD
 
 ---
 
@@ -111,7 +195,7 @@
 
 ## Next Milestone
 
-Run `/gsd:new-milestone` to plan the next milestone.
+Run `/gsd:plan-phase 15` to begin planning Phase 15: Scaffold.
 
 Current known tech debt for consideration:
 - TD-D: NodeActionToolbar button set (8 buttons) diverged from Phase 10 plan spec (5 buttons) — documentation drift, no code issue

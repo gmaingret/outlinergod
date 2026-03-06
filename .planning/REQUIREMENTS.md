@@ -67,32 +67,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SETUP-01 | — | Pending |
-| SETUP-02 | — | Pending |
-| SETUP-03 | — | Pending |
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
-| DOC-04 | — | Pending |
-| EDIT-01 | — | Pending |
-| EDIT-02 | — | Pending |
-| EDIT-03 | — | Pending |
-| EDIT-04 | — | Pending |
-| EDIT-05 | — | Pending |
-| EDIT-06 | — | Pending |
-| EDIT-07 | — | Pending |
-| EDIT-08 | — | Pending |
-| SYNC-01 | — | Pending |
-| SYNC-02 | — | Pending |
+| SETUP-01 | Phase 15 | Pending |
+| SETUP-02 | Phase 15 | Pending |
+| SETUP-03 | Phase 15 | Pending |
+| AUTH-01 | Phase 16 | Pending |
+| AUTH-02 | Phase 16 | Pending |
+| AUTH-03 | Phase 16 | Pending |
+| DOC-01 | Phase 17 | Pending |
+| DOC-02 | Phase 17 | Pending |
+| DOC-03 | Phase 17 | Pending |
+| DOC-04 | Phase 17 | Pending |
+| EDIT-01 | Phase 18 | Pending |
+| EDIT-02 | Phase 18 | Pending |
+| EDIT-03 | Phase 18 | Pending |
+| EDIT-04 | Phase 18 | Pending |
+| EDIT-05 | Phase 18 | Pending |
+| EDIT-06 | Phase 18 | Pending |
+| EDIT-07 | Phase 18 | Pending |
+| EDIT-08 | Phase 19 | Pending |
+| SYNC-01 | Phase 18 | Pending |
+| SYNC-02 | Phase 18 | Pending |
 
 **Coverage:**
 - v0.8 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20 ⚠️
+- Mapped to phases: 20
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-06*
-*Last updated: 2026-03-06 after initial definition*
+*Last updated: 2026-03-06 after roadmap creation (v0.8 phases 15–19)*
