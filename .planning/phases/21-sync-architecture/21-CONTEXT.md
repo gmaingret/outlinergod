@@ -1,6 +1,6 @@
 # Phase 21: Sync architecture - Context
 
-**Gathered:** 2026-03-06
+**Gathered:** 2026-03-06 (updated 2026-03-06)
 **Status:** Ready for planning
 
 <domain>
@@ -36,6 +36,22 @@ Extract the pull-then-push sync cycle into a single `SyncOrchestrator` class so 
 - `NodeEditorViewModel.triggerSync()`: same 3-line pattern
 - `SyncWorker.doWork()`: remove manual refresh + entire pull/push block → delegate to `orchestrator.fullSync()`; map `Result.failure()` → `Result.failure()` (WorkManager), `Result.success()` → `Result.success()`
 
+### hasLocalData guard
+- Orchestrator **always includes** the `hasLocalData` guard: `val lastSyncHlc = if (documentDao.countDocuments(userId) > 0) storedHlc else "0"`
+- Uses `documentDao.countDocuments(userId)` — confirmed present at `DocumentDao.kt:31`
+- Makes all 3 callers behave identically on reinstall; NodeEditorViewModel was previously missing this guard
+
+### DAOs in orchestrator
+- `SyncOrchestratorImpl` constructor injects all 4 DAOs directly: `NodeDao`, `DocumentDao`, `BookmarkDao`, `SettingsDao`
+- `SyncRepository` stays thin — only `pull()` and `push()` — no upsert methods added
+- **SyncWorker removes ALL DAO injections** after refactor — only injects `SyncOrchestrator` and `AuthRepository`
+- ViewModels **keep their own DAO injections** for local mutations (onEnterPressed → NodeDao, etc.) — only the sync block is delegated
+
+### Test strategy for SyncOrchestrator
+- **Unit tests with MockK** — mock `SyncRepository`, `AuthRepository`, all 4 DAOs, `DataStore`
+- Required test cases: happy path, auth failure (no pull attempted), pull failure (no push attempted), push failure
+- **Existing `SyncWorkerIntegrationTest`** (Phase 12) updated to use `SyncOrchestrator` — tests run through the same delegation path
+
 ### Claude's Discretion
 - Exact Hilt module placement for `SyncOrchestrator` binding (new module vs. extension of RepositoryModule)
 - Whether `SyncOrchestrator` interface lives in `sync/` or `repository/` (impl always in `sync/`)
@@ -59,9 +75,11 @@ Extract the pull-then-push sync cycle into a single `SyncOrchestrator` class so 
 
 ### Integration Points
 - **3 callers to gut**: `NodeEditorViewModel.triggerSync()` (line 883), `DocumentListViewModel.triggerSync()` (line 67), `SyncWorker.doWork()` (line 39)
-- **New Hilt injection**: All 3 callers need `private val syncOrchestrator: SyncOrchestrator` added to their constructors (replaces the direct DAO calls for sync)
-- **DAOs stay in ViewModels**: NodeEditorViewModel and DocumentListViewModel still inject DAOs for their own local mutations (creating nodes, renaming documents, etc.) — only the sync block is delegated
-- **SyncWorker** still injects `SyncRepository` via the orchestrator; the orchestrator absorbs all the DAO injection that SyncWorker currently has for sync purposes
+- **New Hilt injection**: All 3 callers need `private val syncOrchestrator: SyncOrchestrator` added to their constructors
+- **DAOs stay in ViewModels**: NodeEditorViewModel and DocumentListViewModel still inject DAOs for their own local mutations — only the sync block is delegated
+- **SyncWorker**: ALL DAO injections removed; only `SyncOrchestrator` + `AuthRepository` remain
+- **Behavioral note**: `NodeEditorViewModel.triggerSync()` currently lacks the `hasLocalData` guard — orchestrator restores consistent behavior across all callers
+- **Upsert ordering**: Documents-before-nodes (matches DocumentListViewModel's ordering comment about application-level referential integrity)
 
 </code_context>
 
