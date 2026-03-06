@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: — web-client
-status: verifying
-stopped_at: Phase 17 context gathered
-last_updated: "2026-03-06T10:01:54.870Z"
-last_activity: "2026-03-06 — 16-03 verified: Google sign-in, refresh persistence, unauthenticated redirect all confirmed in live deployment"
+status: in-progress
+stopped_at: Completed 17-01-PLAN.md (test scaffold)
+last_updated: "2026-03-06T10:31:00Z"
+last_activity: "2026-03-06 — 17-01 complete: 12-test failing scaffold for DocumentListPage, RED state confirmed"
 progress:
   total_phases: 19
   completed_phases: 12
-  total_plans: 31
-  completed_plans: 30
+  total_plans: 33
+  completed_plans: 31
   percent: 97
 ---
 
@@ -18,12 +18,12 @@ progress:
 
 ## Current Position
 
-Phase: 16 — Auth (COMPLETE)
-Plan: 16-03 VERIFIED — human approval received (Docker deployment at http://192.168.1.50:3000)
-Status: Phase 16 fully done — AUTH-01, AUTH-02, AUTH-03 all verified live in production Docker
-Last activity: 2026-03-06 — 16-03 verified: Google sign-in, refresh persistence, unauthenticated redirect all confirmed in live deployment
+Phase: 17 — Document List (In Progress)
+Plan: 17-01 COMPLETE — test scaffold written, RED state confirmed
+Status: 17-01 done (12 failing tests); ready for 17-02 (implementation)
+Last activity: 2026-03-06 — 17-01 complete: 12-test failing scaffold for DocumentListPage, RED state confirmed
 
-Progress: [██████████] 97% (v0.8: Phase 16 complete, ready for Phase 17)
+Progress: [█████████░] 94% (v0.8: Phase 17 started, Plan 01 done)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -38,7 +38,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 |-------|------|--------------|--------|
 | 15 | Scaffold | SETUP-01, SETUP-02, SETUP-03 | Complete |
 | 16 | Auth | AUTH-01, AUTH-02, AUTH-03 | Complete (verified in Docker) |
-| 17 | Document List | DOC-01, DOC-02, DOC-03, DOC-04 | Not started |
+| 17 | Document List | DOC-01, DOC-02, DOC-03, DOC-04 | In progress (17-01 done) |
 | 18 | Node Editor + Sync | EDIT-01..07, SYNC-01, SYNC-02 | Not started |
 | 19 | Drag-and-Drop | EDIT-08 | Not started |
 
@@ -78,6 +78,9 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | D-WEB-07 | POST /api/auth/google now uses body.device_id ?? 'web-default' (was hardcoded 'default') | 16-02 | Web client sends device_id in body; backend now stores it correctly |
 | D-WEB-08 | tsconfig.app.json excludes test files — prevents tsc build failure from global.fetch without @types/node | 16-03 | pnpm build exits 0; vitest still handles test types independently |
 | D-WEB-09 | ProtectedRoute checks isLoading first then !accessToken — ensures silent refresh completes before redirect | 16-03 | Prevents flash-to-login on page refresh when valid refresh_token is in localStorage |
+| D-WEB-10 | Skeleton test uses .animate-pulse CSS class — DocumentListPage must use this Tailwind class for loading placeholders | 17-01 | Test assertion uses DOM query selector, not ARIA |
+| D-WEB-11 | Context menu on document row triggered by contextmenu event — fireEvent.contextMenu in tests | 17-01 | Consistent cross-browser; implementation must listen for onContextMenu |
+| D-WEB-12 | Delete confirmation uses role="dialog" — implementation must use semantic dialog element or role attribute | 17-01 | Enables getByRole('dialog') assertion in tests |
 
 ## Key Architecture Notes (v0.8 web-client)
 
@@ -97,5 +100,5 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Session Continuity
 
-Next action: Phase 17 — Document List (DOC-01..04)
-Stopped at: Phase 17 context gathered
+Next action: Phase 17 Plan 02 — DocumentListPage implementation (make 12 tests green)
+Stopped at: Completed 17-01-PLAN.md (test scaffold)

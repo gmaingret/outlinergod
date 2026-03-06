@@ -19,10 +19,10 @@
 
 ### Documents
 
-- [ ] **DOC-01**: User can see their list of documents
-- [ ] **DOC-02**: User can create a new document
-- [ ] **DOC-03**: User can rename a document
-- [ ] **DOC-04**: User can delete a document
+- [x] **DOC-01**: User can see their list of documents
+- [x] **DOC-02**: User can create a new document
+- [x] **DOC-03**: User can rename a document
+- [x] **DOC-04**: User can delete a document
 
 ### Node Editor
 
@@ -73,10 +73,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-01 | Phase 16 | Complete |
 | AUTH-02 | Phase 16 | Complete |
 | AUTH-03 | Phase 16 | Complete |
-| DOC-01 | Phase 17 | Pending |
-| DOC-02 | Phase 17 | Pending |
-| DOC-03 | Phase 17 | Pending |
-| DOC-04 | Phase 17 | Pending |
+| DOC-01 | Phase 17 | Complete |
+| DOC-02 | Phase 17 | Complete |
+| DOC-03 | Phase 17 | Complete |
+| DOC-04 | Phase 17 | Complete |
 | EDIT-01 | Phase 18 | Pending |
 | EDIT-02 | Phase 18 | Pending |
 | EDIT-03 | Phase 18 | Pending |
