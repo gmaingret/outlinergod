@@ -170,7 +170,7 @@ class DocumentListSyncTest {
 
         // Verify the DataStore was updated
         val hlcValue = dataStore.data.map { prefs ->
-            prefs[SyncConstants.LAST_SYNC_HLC_KEY]
+            prefs[SyncConstants.lastSyncHlcKey("user-1")]
         }.first()
         assertEquals("BBBB", hlcValue)
     }

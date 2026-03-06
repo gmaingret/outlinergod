@@ -44,8 +44,9 @@ class SyncWorker @AssistedInject constructor(
         }
 
         val deviceId = authRepository.getDeviceId().first()
+        val userId = authRepository.getUserId().filterNotNull().first()
         val lastSyncHlc = dataStore.data.map { prefs ->
-            prefs[SyncConstants.LAST_SYNC_HLC_KEY] ?: "0"
+            prefs[SyncConstants.lastSyncHlcKey(userId)] ?: "0"
         }.first()
 
         // Step 2: PULL changes from server
@@ -67,7 +68,6 @@ class SyncWorker @AssistedInject constructor(
         }
 
         // Step 3: PUSH local changes to server
-        val userId = authRepository.getUserId().filterNotNull().first()
         val pendingNodes = nodeDao.getPendingChanges(userId, lastSyncHlc, deviceId)
         val pendingDocs = documentDao.getPendingChanges(userId, lastSyncHlc, deviceId)
         val pendingBookmarks = bookmarkDao.getPendingChanges(userId, lastSyncHlc, deviceId)
@@ -100,7 +100,7 @@ class SyncWorker @AssistedInject constructor(
 
         // Step 4: Update last sync HLC
         dataStore.edit { prefs ->
-            prefs[SyncConstants.LAST_SYNC_HLC_KEY] = pushResponse.serverHlc
+            prefs[SyncConstants.lastSyncHlcKey(userId)] = pushResponse.serverHlc
         }
 
         return Result.success()

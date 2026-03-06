@@ -196,7 +196,7 @@ class SyncWorkerTest {
 
         assertEquals(ListenableWorker.Result.success(), result)
         val storedHlc = dataStore.data.map { prefs ->
-            prefs[SyncConstants.LAST_SYNC_HLC_KEY]
+            prefs[SyncConstants.lastSyncHlcKey("user-1")]
         }.first()
         assertEquals("CCCC", storedHlc)
     }

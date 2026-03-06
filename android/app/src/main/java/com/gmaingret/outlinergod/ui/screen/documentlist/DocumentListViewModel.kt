@@ -75,8 +75,9 @@ class DocumentListViewModel @Inject constructor(
             }
 
             val deviceId = authRepository.getDeviceId().first()
+            val userId = authRepository.getUserId().filterNotNull().first()
             val lastSyncHlc = dataStore.data.map { prefs ->
-                prefs[SyncConstants.LAST_SYNC_HLC_KEY] ?: "0"
+                prefs[SyncConstants.lastSyncHlcKey(userId)] ?: "0"
             }.first()
 
             // Pull changes from server
@@ -98,7 +99,6 @@ class DocumentListViewModel @Inject constructor(
             }
 
             // Build and push local changes
-            val userId = authRepository.getUserId().filterNotNull().first()
             val pendingNodes = nodeDao.getPendingChanges(userId, lastSyncHlc, deviceId)
             val pendingDocs = documentDao.getPendingChanges(userId, lastSyncHlc, deviceId)
             val pendingBookmarks = bookmarkDao.getPendingChanges(userId, lastSyncHlc, deviceId)
@@ -130,7 +130,7 @@ class DocumentListViewModel @Inject constructor(
 
                 // Update last sync HLC
                 dataStore.edit { prefs ->
-                    prefs[SyncConstants.LAST_SYNC_HLC_KEY] = response.serverHlc
+                    prefs[SyncConstants.lastSyncHlcKey(userId)] = response.serverHlc
                 }
             }
 

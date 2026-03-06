@@ -184,7 +184,7 @@ class SyncWorkerIntegrationTest {
 
         // Assert: the HLC was written to the real DataStore
         val storedHlc = dataStore.data.map { prefs ->
-            prefs[SyncConstants.LAST_SYNC_HLC_KEY]
+            prefs[SyncConstants.lastSyncHlcKey("user-integration")]
         }.first()
         assertNotNull(storedHlc)
         assertEquals(expectedServerHlc, storedHlc)
@@ -205,7 +205,7 @@ class SyncWorkerIntegrationTest {
 
         // Assert: nothing was written to DataStore
         val storedHlc = dataStore.data.map { prefs ->
-            prefs[SyncConstants.LAST_SYNC_HLC_KEY]
+            prefs[SyncConstants.lastSyncHlcKey("user-integration")]
         }.first()
         assertEquals(null, storedHlc)
     }
