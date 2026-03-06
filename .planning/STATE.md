@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: — web-client
-status: in-progress
-stopped_at: "Completed 19-01-PLAN.md"
-last_updated: "2026-03-06T14:03:14Z"
+status: completed
+stopped_at: Completed 19-02-PLAN.md
+last_updated: "2026-03-06T14:10:28.748Z"
 last_activity: "2026-03-06 — 19-01 complete: flattenTree/reorderNode pure functions, 23 treeHelpers tests pass, dnd-kit installed"
 progress:
   total_phases: 19
-  completed_phases: 14
+  completed_phases: 15
   total_plans: 38
-  completed_plans: 36
+  completed_plans: 37
   percent: 97
 ---
 
@@ -18,12 +18,12 @@ progress:
 
 ## Current Position
 
-Phase: 19 — Drag-and-Drop (IN PROGRESS)
-Plan: 19-01 COMPLETE — flattenTree/reorderNode pure functions, dnd-kit installed, 23 treeHelpers tests pass
-Status: 19-01 done; 19-02 (FlatNodeList component) remaining
-Last activity: 2026-03-06 — 19-01 complete: flattenTree/reorderNode pure functions, 23 treeHelpers tests pass, dnd-kit installed
+Phase: 19 — Drag-and-Drop (COMPLETE)
+Plan: 19-02 COMPLETE — FlatNodeList component with dnd-kit DndContext/SortableContext, 69 tests pass
+Status: Phase 19 complete; all 38 plans done; v0.8 milestone complete
+Last activity: 2026-03-06 — 19-02 complete: FlatNodeList with drag-to-reorder/reparent, 7 new tests, NodeRow removed, 69 total tests pass
 
-Progress: [██████████] 97% (v0.8: Phase 18 complete, Phase 19 Drag-and-Drop remaining)
+Progress: [██████████] 97% (v0.8: all phases complete)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -40,7 +40,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | 16 | Auth | AUTH-01, AUTH-02, AUTH-03 | Complete (verified in Docker) |
 | 17 | Document List | DOC-01, DOC-02, DOC-03, DOC-04 | Complete |
 | 18 | Node Editor + Sync | EDIT-01..07, SYNC-01, SYNC-02 | Complete |
-| 19 | Drag-and-Drop | EDIT-08 | In Progress (19-01 done) |
+| 19 | Drag-and-Drop | EDIT-08 | Complete |
 
 ## Open Tech Debt (carried from v0.7)
 
@@ -89,6 +89,8 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | D-WEB-18 | runAllTilesAsync typo in test file auto-fixed to runAllTimersAsync | 18-03 | SYNC-02 tests no longer throw TypeError on startup |
 | D-WEB-19 | reorderNode re-flattens after removal to resolve targetIndex against updated flat list (avoids off-by-one) | 19-01 | FlatNodeList caller passes targetIndex into updated list, not stale pre-removal list |
 | D-WEB-20 | reorderNode insert position derived by counting new parent's children before targetIndex in post-removal flat list | 19-01 | recomputeSortOrders handles final sort_order assignment after insertion |
+| D-WEB-21 | drag handle button uses aria-hidden='true' to keep getAllByRole('button') queries compatible with existing EDIT-07 test | 19-02 | Grip handle (index 0 in DOM) would otherwise be found by glyphs.indexOf(g)===0 and clicked instead of zoom button |
+| D-WEB-22 | FlatNodeList tests use document.querySelectorAll('[aria-label=drag handle]') not getByRole to count aria-hidden handles | 19-02 | aria-hidden removes handles from accessibility tree; querySelectorAll still finds them |
 
 ## Key Architecture Notes (v0.8 web-client)
 
@@ -108,5 +110,5 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Session Continuity
 
-Next action: Phase 19 — Drag-and-Drop (EDIT-08)
-Stopped at: Phase 19 context gathered
+Next action: v0.8 milestone COMPLETE — all 19 phases done, 38 plans complete
+Stopped at: Completed 19-02-PLAN.md
