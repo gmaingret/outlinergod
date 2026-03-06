@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.8
-milestone_name: — web-client
+milestone: v0.9
+milestone_name: — quality-hardening
 status: completed
-stopped_at: Completed 19-02-PLAN.md
-last_updated: "2026-03-06T14:14:18.360Z"
+stopped_at: Phase 20 context gathered
+last_updated: "2026-03-06T15:40:14.875Z"
 last_activity: "2026-03-06 — 19-02 complete: FlatNodeList with drag-to-reorder/reparent, 7 new tests, NodeRow removed, 69 total tests pass"
 progress:
-  total_phases: 19
+  total_phases: 26
   completed_phases: 15
   total_plans: 38
   completed_plans: 37
@@ -111,4 +111,4 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 ## Session Continuity
 
 Next action: Start v0.9 milestone — run `/gsd:plan-phase 20` to begin Phase 20 (Security fixes)
-Stopped at: v0.8 complete; v0.9 roadmap written (Phases 20–25), not started
+Stopped at: Phase 20 context gathered
