@@ -347,17 +347,20 @@ export function createDocumentRoutes(sqlite: InstanceType<typeof Database>) {
       }
 
       const now = Date.now()
+      // Generate a fresh HLC so the tombstone's deleted_hlc is newer than any client's
+      // lastSyncHlc — this is what Android's pull query filters on.
+      const hlc = hlcGenerate(SERVER_DEVICE_ID)
 
-      // Soft-delete all collected documents
+      // Soft-delete all collected documents (stamp deleted_hlc so clients see the tombstone)
       const docPlaceholders = deletedIds.map(() => '?').join(', ')
       sqlite
-        .prepare(`UPDATE documents SET deleted_at = ? WHERE id IN (${docPlaceholders})`)
-        .run(now, ...deletedIds)
+        .prepare(`UPDATE documents SET deleted_at = ?, deleted_hlc = ?, device_id = ?, updated_at = ? WHERE id IN (${docPlaceholders})`)
+        .run(now, hlc, SERVER_DEVICE_ID, now, ...deletedIds)
 
-      // Soft-delete all nodes within deleted documents
+      // Soft-delete all nodes within deleted documents (same HLC stamp)
       sqlite
-        .prepare(`UPDATE nodes SET deleted_at = ? WHERE document_id IN (${docPlaceholders}) AND deleted_at IS NULL`)
-        .run(now, ...deletedIds)
+        .prepare(`UPDATE nodes SET deleted_at = ?, deleted_hlc = ?, device_id = ?, updated_at = ? WHERE document_id IN (${docPlaceholders}) AND deleted_at IS NULL`)
+        .run(now, hlc, SERVER_DEVICE_ID, now, ...deletedIds)
 
       // TODO: file cleanup — skip filesystem operations (no files table integration yet)
 

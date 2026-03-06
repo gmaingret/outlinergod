@@ -588,9 +588,10 @@ describe('Document routes', () => {
       expect(body.deleted_ids).toContain(docId)
       expect(body.deleted_ids).toHaveLength(1)
 
-      // Verify deleted_at is set
-      const row = sqlite.prepare('SELECT deleted_at FROM documents WHERE id = ?').get(docId) as { deleted_at: number }
+      // Verify deleted_at and deleted_hlc are both set (deleted_hlc is required for Android sync)
+      const row = sqlite.prepare('SELECT deleted_at, deleted_hlc FROM documents WHERE id = ?').get(docId) as { deleted_at: number; deleted_hlc: string }
       expect(row.deleted_at).toBeGreaterThan(0)
+      expect(row.deleted_hlc).toMatch(/^\d{13}-\d{5}-server$/)
     })
 
     it('recursivelyDeletesChildDocuments', async () => {
