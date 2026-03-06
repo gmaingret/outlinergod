@@ -28,8 +28,8 @@ Add drag-to-reorder and drag-to-reparent to the existing web node editor. Users 
 - All affected nodes (dragged node + all descendants) queued into `pendingChanges` on drop for sync push
 
 ### Horizontal reparenting mechanic
-- Mouse X position (absolute, relative to page left edge) determines the target depth during drag
-- Formula: `targetDepth = Math.floor(mouseX / 24)` — each 24px = one indent level
+- Horizontal displacement from drag start (`delta.x` from dnd-kit `onDragMove`) determines the target depth during drag
+- Formula: `targetDepth = activeItem.depth + Math.round(delta.x / 24)` — each 24px = one indent level
 - Depth is clamped: `max = nodeAbove.depth + 1` (can never be more than one level deeper than the node above the drop target)
 - Can always drop at depth 0 (root level)
 - New parent resolution:

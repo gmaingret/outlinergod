@@ -119,3 +119,11 @@ None beyond the auto-fixed unused variable issue.
 ---
 *Phase: 19-drag-and-drop*
 *Completed: 2026-03-06*
+
+## Self-Check: PASSED
+
+- FOUND: web/src/editor/treeHelpers.ts (exports FlatNode, flattenTree, reorderNode)
+- FOUND: web/src/editor/treeHelpers.test.ts (23 tests passing)
+- FOUND: .planning/phases/19-drag-and-drop/19-01-SUMMARY.md
+- FOUND: commit 415d13a (chore: dnd-kit install)
+- FOUND: commit f94e1db (feat: flattenTree/reorderNode)
