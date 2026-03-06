@@ -110,5 +110,5 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Session Continuity
 
-Next action: v0.8 milestone COMPLETE — all 19 phases done, 38 plans complete
-Stopped at: Completed 19-02-PLAN.md
+Next action: Start v0.9 milestone — run `/gsd:plan-phase 20` to begin Phase 20 (Security fixes)
+Stopped at: v0.8 complete; v0.9 roadmap written (Phases 20–25), not started

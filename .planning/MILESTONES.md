@@ -19,6 +19,40 @@
 
 ---
 
+## v0.9 — quality-hardening (Not started)
+
+**Phases:** 20–25 | **Plans:** TBD | **Scope:** Security, tech debt, performance, test coverage
+
+**Goal:** No new features. Make the existing codebase production-safe, maintainable, and performant based on the 2026-03-06 codebase audit.
+
+**Planned phases:**
+- **Phase 20: Security fixes** — File DELETE ownership check, JWT_SECRET startup guard, refresh token purge
+- **Phase 21: Sync architecture** — Extract SyncOrchestrator; eliminate 3-copy sync logic
+- **Phase 22: Android performance** — `getNodeByIdSync` on keystroke, batch DnD updates, 62-sibling sort-order fix, SyncLogger debug guard
+- **Phase 23: Data model & structure** — Proper attachment columns, FractionalIndex → util/, delete orphan hlc.ts, Room exportSchema=true, UndoSnapshot sealed class
+- **Phase 24: Test coverage gaps** — File DELETE ownership test, debounce E2E test, FractionalIndex large-n, SyncWorker integration, search post-filter
+- **Phase 25: Backend maintenance** — SettingsSyncRecord → merge.ts, periodic tombstone purge, max_hlc index, Node.js version alignment
+
+---
+
+## v0.8 — web-client (Shipped: 2026-03-06)
+
+**Phases:** 15–19 | **Plans:** 19 | **Duration:** 2026-03-06
+
+**Delivered:** Full-featured web outliner at https://notes.gregorymaingret.fr — Google auth, document CRUD, node editor with WYSIWYG markdown, zoom navigation, sync with Android, and DnD reordering via dnd-kit.
+
+**Key accomplishments:**
+- React 19 + Vite 7 + Tailwind CSS 4 SPA served by the existing Fastify container (three-stage Docker build)
+- Google OAuth via GIS `google.accounts.id.initialize`; JWT in memory, refresh token in localStorage
+- HLC ported from backend TypeScript verbatim; produces identical `<13-digit-ms>-<5-digit-counter>-<deviceId>` format
+- Node editor with BasicTextField-style contenteditable, Enter=new sibling, Tab/Shift+Tab indent/outdent, **bold**/*italic* live rendering
+- dnd-kit SortableContext with horizontal-drag reparenting; reorderNode pure function handles subtree moves
+- Zoom-in: glyph click pushes new route; Back zooms out. Sync on mount + 30s inactivity timer (shared with Android)
+
+**Test suite:** 69 web tests (0 failures); Android 298/298; backend 267/267
+
+---
+
 ## v0.6 — integration-polish (Shipped: 2026-03-05)
 
 **Phases:** 09–13 | **Plans:** 12 | **Duration:** 2026-03-02 → 2026-03-05 (4 days)

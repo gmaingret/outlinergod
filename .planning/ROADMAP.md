@@ -5,11 +5,105 @@
 - ✅ **v0.4 android-core** — Phases 01–08 (shipped 2026-03-03)
 - ✅ **v0.6 integration-polish** — Phases 09–13 (shipped 2026-03-05)
 - ✅ **v0.7 user-feedback** — Phase 14 (shipped 2026-03-05)
-- 🔄 **v0.8 web-client** — Phases 15–19 (in progress)
+- ✅ **v0.8 web-client** — Phases 15–19 (shipped 2026-03-06)
+- 🔜 **v0.9 quality-hardening** — Phases 20–25 (not started)
 
 ---
 
-## v0.8 — web-client (IN PROGRESS)
+## v0.9 — quality-hardening (NOT STARTED)
+
+**Goal:** Eliminate all security bugs, critical tech debt, and performance bottlenecks identified in the codebase audit. No new features — this milestone makes the existing codebase production-safe and maintainable.
+
+### Phases
+
+- [ ] **Phase 20: Security fixes** — File DELETE ownership, JWT_SECRET startup guard, refresh token purge
+- [ ] **Phase 21: Sync architecture** — Extract SyncOrchestrator, eliminate 3-copy sync logic across NodeEditorViewModel / DocumentListViewModel / SyncWorker
+- [ ] **Phase 22: Android performance** — `getNodeByIdSync` on keystroke, batch DnD `persistReorderedNodes`, fix `recomputeFlatNodes` 62-sibling overflow, wrap SyncLogger in BuildConfig.DEBUG
+- [ ] **Phase 23: Data model & structure** — Proper attachment columns (not pipe-delimited string), move FractionalIndex to util/, delete orphan `backend/src/hlc.ts`, enable Room `exportSchema = true`, unify UndoSnapshot into single sealed class
+- [ ] **Phase 24: Test coverage gaps** — `DELETE /files` ownership test, NodeEditorViewModel debounce E2E test, FractionalIndex large-n edge cases, SyncWorker real conflict-resolution integration test, search post-filter multi-word test
+- [ ] **Phase 25: Backend maintenance** — Move SettingsSyncRecord/mergeSettings to merge.ts with tests, add periodic tombstone purge (every 24h), add `max_hlc` index on sync tables, align Node.js dev/Docker versions
+
+### Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 20. Security fixes | 0/? | Not started | — |
+| 21. Sync architecture | 0/? | Not started | — |
+| 22. Android performance | 0/? | Not started | — |
+| 23. Data model & structure | 0/? | Not started | — |
+| 24. Test coverage gaps | 0/? | Not started | — |
+| 25. Backend maintenance | 0/? | Not started | — |
+
+### Phase Details
+
+#### Phase 20: Security fixes
+**Goal:** Close all security bugs identified in the codebase audit — no authenticated user can delete another user's files, JWT_SECRET is validated at startup, and stale refresh tokens are periodically purged.
+**Depends on:** Nothing
+**Requirements:** (security audit)
+**Success Criteria:**
+  1. `DELETE /api/files/:filename` returns 403 if the file belongs to a different user
+  2. Server refuses to start if `JWT_SECRET` is absent or shorter than 32 characters
+  3. A background timer purges refresh tokens older than 90 days every 24 hours
+  4. All existing backend tests still pass; new ownership test added to `files.test.ts`
+
+#### Phase 21: Sync architecture
+**Goal:** The full pull-then-push sync cycle lives in exactly one place (`SyncOrchestrator`). ViewModels and SyncWorker delegate to it — no copy-paste sync logic.
+**Depends on:** Nothing
+**Requirements:** (tech debt audit)
+**Success Criteria:**
+  1. A `SyncOrchestrator` class (or extended `SyncRepository`) encapsulates pull/push/upsert/conflict-resolution/HLC-update
+  2. `NodeEditorViewModel.triggerSync()`, `DocumentListViewModel.triggerSync()`, and `SyncWorker.doWork()` all call the orchestrator — no direct pull/push logic in any of them
+  3. All 222+ Android tests still pass
+  4. A sync bug fix or new entity type requires editing exactly one file
+
+#### Phase 22: Android performance
+**Goal:** Eliminate the four identified Android performance bottlenecks: per-keystroke full-document fetch, unbatched DnD updates, 62-sibling sort-order overflow, and SyncLogger always active in release builds.
+**Depends on:** Nothing
+**Requirements:** (performance audit)
+**Success Criteria:**
+  1. `persistContentChange` calls `NodeDao.getNodeByIdSync(nodeId)` — not `getNodesByDocumentSync(documentId)`
+  2. `persistReorderedNodes` wraps all updates in a single Room transaction (or batch `@Query`)
+  3. A document with 100+ siblings at the same depth has stable, unique sort orders after any DnD operation
+  4. `SyncLogger.log()` is a no-op in release builds (`BuildConfig.DEBUG` guard)
+  5. All existing tests pass; a new test verifies sort-order uniqueness for n=100 siblings
+
+#### Phase 23: Data model & structure
+**Goal:** Attachment metadata lives in proper DB columns, FractionalIndex is in a production package, the orphan backend HLC file is deleted, Room schema export is enabled, and the undo stack uses a single cohesive type.
+**Depends on:** Nothing
+**Requirements:** (tech debt audit)
+**Success Criteria:**
+  1. `NodeEntity` has `attachment_url: String?` and `attachment_mime: String?` columns; no node content starts with `"ATTACH|"`
+  2. `FractionalIndex.kt` lives at `android/.../util/FractionalIndex.kt` — no production import from `prototype.*`
+  3. `backend/src/hlc.ts` (old hex-format file) is deleted; only `backend/src/hlc/hlc.ts` remains
+  4. `AppDatabase` sets `exportSchema = true`; schema JSON files are committed under `android/app/schemas/`
+  5. Undo state uses a single `UndoSnapshot` data class; `undoStack` and `undoDeletedIds` are replaced by one `ArrayDeque<UndoSnapshot>`
+  6. All existing tests pass; Room migration test covers the new attachment columns
+
+#### Phase 24: Test coverage gaps
+**Goal:** Close the five highest-priority test gaps identified in the audit.
+**Depends on:** Phase 21 (SyncOrchestrator exists before integration-testing it), Phase 23 (attachment columns before testing them)
+**Requirements:** (test audit)
+**Success Criteria:**
+  1. `files.test.ts` has a test: authenticated user B cannot delete user A's file (expects 403)
+  2. `NodeEditorViewModelTest` has an E2E test: rapid typing → focus-lost → sync-trigger does not double-write and correctly flushes to Room
+  3. `FractionalIndexTest` has edge-case tests for n ≥ 62 siblings and closely-bounded key pairs
+  4. `SyncWorkerIntegrationTest` exercises conflict resolution against a real in-memory Room DB (no mock SyncRepository)
+  5. `SearchRepositoryImpl` has tests for multi-word FTS queries and `in:note`/`in:title` with prefix `*` stripping
+
+#### Phase 25: Backend maintenance
+**Goal:** `SettingsSyncRecord` and `mergeSettings` live in `merge.ts` with full test coverage, tombstones are purged periodically (not just at startup), the sync pull endpoint has an indexed `max_hlc` column, and dev/Docker Node.js versions are aligned.
+**Depends on:** Nothing
+**Requirements:** (backend audit)
+**Success Criteria:**
+  1. `SettingsSyncRecord` and `mergeSettings()` are in `backend/src/merge.ts`; `sync.ts` imports them; merge tests cover settings
+  2. `purgeTombstones()` is called at startup AND on a 24-hour `setInterval`
+  3. `nodes`, `documents`, and `bookmarks` tables have an indexed `max_hlc TEXT GENERATED ALWAYS AS (MAX(...))` column used by the sync pull query
+  4. `backend/Dockerfile` and `docker-compose.yml` use `node:24-alpine`; no version mismatch with dev host
+  5. All 267+ backend tests pass
+
+---
+
+## v0.8 — web-client (SHIPPED 2026-03-06) ✅
 
 **Goal:** Deliver a full-featured web outliner at https://notes.gregorymaingret.fr — auth, document CRUD, node editor with WYSIWYG, zoom navigation, sync, and DnD reordering.
 
