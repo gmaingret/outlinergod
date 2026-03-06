@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: — web-client
 status: completed
-stopped_at: Completed 16-03-PLAN.md — awaiting checkpoint approval
+stopped_at: Phase 16 complete — AUTH verified in Docker at 192.168.1.50:3000
 last_updated: "2026-03-06T09:23:44.849Z"
-last_activity: "2026-03-06 — 16-02 complete: AuthProvider (token-in-memory + refresh-in-localStorage), backend dual-audience Google OAuth (Android + Web)"
+last_activity: "2026-03-06 — 16-03 verified: Google sign-in + refresh persistence + redirect all confirmed in live Docker deployment"
 progress:
   total_phases: 19
   completed_phases: 12
@@ -18,12 +18,12 @@ progress:
 
 ## Current Position
 
-Phase: 16 — Auth (IN PROGRESS)
-Plan: 16-03 code complete — awaiting human verify checkpoint
-Status: 16-03 code done — ProtectedRoute + LoginPage + App router + Docker VITE_GOOGLE_CLIENT_ID plumbing
-Last activity: 2026-03-06 — 16-03 complete: ProtectedRoute, LoginPage, App.tsx, main.tsx, Dockerfile ARG, docker-compose.yml args
+Phase: 16 — Auth (COMPLETE)
+Plan: 16-03 VERIFIED — human approval received (Docker deployment at http://192.168.1.50:3000)
+Status: Phase 16 fully done — AUTH-01, AUTH-02, AUTH-03 all verified live in production Docker
+Last activity: 2026-03-06 — 16-03 verified: Google sign-in, refresh persistence, unauthenticated redirect all confirmed in live deployment
 
-Progress: [██████████] 97% (v0.8: Phase 16 all 3 plans code-complete, human verify pending)
+Progress: [██████████] 97% (v0.8: Phase 16 complete, ready for Phase 17)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -37,7 +37,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
 | 15 | Scaffold | SETUP-01, SETUP-02, SETUP-03 | Complete |
-| 16 | Auth | AUTH-01, AUTH-02, AUTH-03 | In Progress (3/3 — awaiting human verify) |
+| 16 | Auth | AUTH-01, AUTH-02, AUTH-03 | Complete (verified in Docker) |
 | 17 | Document List | DOC-01, DOC-02, DOC-03, DOC-04 | Not started |
 | 18 | Node Editor + Sync | EDIT-01..07, SYNC-01, SYNC-02 | Not started |
 | 19 | Drag-and-Drop | EDIT-08 | Not started |
@@ -97,5 +97,5 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Session Continuity
 
-Next action: Human verify checkpoint — test Google sign-in flow in browser, then Phase 17 (Document List)
-Stopped at: Completed 16-03-PLAN.md code tasks — awaiting human verify approval
+Next action: Phase 17 — Document List (DOC-01..04)
+Stopped at: Phase 16 complete — all AUTH requirements verified in live Docker deployment
