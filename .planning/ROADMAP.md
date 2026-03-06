@@ -29,7 +29,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 20. Security fixes | 1/1 | Complete    | 2026-03-06 |
-| 21. Sync architecture | 0/2 | Planned     | — |
+| 21. Sync architecture | 1/2 | In Progress|  |
 | 22. Android performance | 0/? | Not started | — |
 | 23. Data model & structure | 0/? | Not started | — |
 | 24. Test coverage gaps | 0/? | Not started | — |
@@ -61,7 +61,7 @@ Plans:
   3. All 222+ Android tests still pass
   4. A sync bug fix or new entity type requires editing exactly one file
 
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 21-01-PLAN.md — SyncOrchestrator interface + SyncOrchestratorImpl + unit and integration tests (TDD)
 - [ ] 21-02-PLAN.md — Gut SyncWorker + DocumentListViewModel + NodeEditorViewModel + update caller tests

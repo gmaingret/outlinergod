@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.9
 milestone_name: — quality-hardening
 status: executing
-stopped_at: Phase 21 context gathered
-last_updated: "2026-03-06T17:20:22.076Z"
+stopped_at: Completed 21-01-PLAN.md — SyncOrchestratorImpl canonical sync cycle
+last_updated: "2026-03-06T18:03:50.935Z"
 last_activity: "2026-03-06 — 20-01 complete: IDOR fix + JWT guard + refresh token purge, 4 new tests, 280 total backend tests pass"
 progress:
   total_phases: 26
   completed_phases: 16
-  total_plans: 39
-  completed_plans: 38
+  total_plans: 41
+  completed_plans: 39
   percent: 97
 ---
 
@@ -18,12 +18,12 @@ progress:
 
 ## Current Position
 
-Phase: 20 — Security Fixes (COMPLETE)
-Plan: 20-01 COMPLETE — IDOR fix on file DELETE, JWT_SECRET startup guard, 90-day refresh token purge; 280/280 backend tests pass
-Status: Phase 20 complete; v0.9 security hardening milestone in progress
-Last activity: 2026-03-06 — 20-01 complete: IDOR fix + JWT guard + refresh token purge, 4 new tests, 280 total backend tests pass
+Phase: 21 — Sync Architecture (In Progress)
+Plan: 21-01 COMPLETE — SyncOrchestrator interface + SyncOrchestratorImpl canonical sync cycle; 8 new tests (4 unit + 4 integration) pass
+Status: Phase 21 in progress; 21-02 next (SyncWorker + ViewModels delegate to SyncOrchestrator)
+Last activity: 2026-03-06 — 21-01 complete: SyncOrchestratorImpl with runCatching/getOrThrow, hasLocalData guard, Hilt binding, 8 tests pass
 
-Progress: [██████████] 97% (v0.9: security-hardening phase 20 complete)
+Progress: [██████████] 95% (39/41 plans complete)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -110,5 +110,13 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Session Continuity
 
-Next action: Start v0.9 milestone — run `/gsd:plan-phase 20` to begin Phase 20 (Security fixes)
-Stopped at: Phase 21 context gathered
+Next action: Execute 21-02-PLAN.md — refactor SyncWorker and ViewModels to delegate to SyncOrchestrator
+Stopped at: Completed 21-01-PLAN.md — SyncOrchestratorImpl canonical sync cycle
+
+## Phase 21 Decisions
+
+| ID | Decision | Phase-Plan | Impact |
+|----|----------|------------|--------|
+| D-SYNC-01 | SyncOrchestratorImpl uses runCatching+getOrThrow (not getOrElse+retry) | 21-01 | WorkManager maps Result.failure() to retry in Plan 02; orchestrator stays pure |
+| D-SYNC-02 | hasLocalData guard preserved: countDocuments==0 forces lastSyncHlc="0" | 21-01 | Handles reinstall-with-DataStore-backup scenario |
+| D-SYNC-03 | Document upsert before node upsert in pull apply step | 21-01 | Foreign key constraint safety (nodes.document_id references documents.id) |
