@@ -7,15 +7,15 @@
 
 ### Setup & Deployment
 
-- [ ] **SETUP-01**: Web client builds and deploys inside the existing Docker container at 192.168.1.50
+- [x] **SETUP-01**: Web client builds and deploys inside the existing Docker container at 192.168.1.50
 - [x] **SETUP-02**: Web app is accessible at https://notes.gregorymaingret.fr in a browser
 - [x] **SETUP-03**: /api/* routes continue to work for the Android app (no regression)
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can sign in with Google (same account as on Android)
-- [ ] **AUTH-02**: User stays logged in after refreshing the browser
-- [ ] **AUTH-03**: User is redirected to login page if not authenticated
+- [x] **AUTH-01**: User can sign in with Google (same account as on Android)
+- [x] **AUTH-02**: User stays logged in after refreshing the browser
+- [x] **AUTH-03**: User is redirected to login page if not authenticated
 
 ### Documents
 
@@ -67,12 +67,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SETUP-01 | Phase 15 | Pending |
+| SETUP-01 | Phase 15 | Complete |
 | SETUP-02 | Phase 15 | Complete |
 | SETUP-03 | Phase 15 | Complete |
-| AUTH-01 | Phase 16 | Pending |
-| AUTH-02 | Phase 16 | Pending |
-| AUTH-03 | Phase 16 | Pending |
+| AUTH-01 | Phase 16 | Complete |
+| AUTH-02 | Phase 16 | Complete |
+| AUTH-03 | Phase 16 | Complete |
 | DOC-01 | Phase 17 | Pending |
 | DOC-02 | Phase 17 | Pending |
 | DOC-03 | Phase 17 | Pending |
