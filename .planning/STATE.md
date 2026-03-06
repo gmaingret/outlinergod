@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v0.9
 milestone_name: — quality-hardening
-status: completed
+status: executing
 stopped_at: Completed 20-01-PLAN.md
-last_updated: "2026-03-06T17:00:30.762Z"
-last_activity: "2026-03-06 — 20-01 complete: IDOR fix on DELETE /files, JWT_SECRET guard, 90-day refresh token purge; 280/280 backend tests pass"
+last_updated: "2026-03-06T17:03:46.796Z"
+last_activity: "2026-03-06 — 20-01 complete: IDOR fix + JWT guard + refresh token purge, 4 new tests, 280 total backend tests pass"
 progress:
   total_phases: 26
   completed_phases: 16
