@@ -5,6 +5,7 @@ import { getOrCreateDeviceId } from '../auth/api'
 import {
   buildTree,
   filterSubtree,
+  flattenTree,
   indentNode,
   insertSiblingNode,
   outdentNode,
@@ -292,6 +293,12 @@ export function NodeEditorPage() {
       })
       queueChange(newNode)
       focusNodeId.current = newNodeId
+    } else if (e.key === 'Backspace') {
+      const node = dfsFindNode(nodes, nodeId)
+      if (node && node.content === '' && node.children.length === 0) {
+        e.preventDefault()
+        handleDeleteNode(nodeId)
+      }
     } else if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault()
       setNodes(prev => indentNode([...prev], nodeId))
@@ -310,6 +317,33 @@ export function NodeEditorPage() {
       const updated = dfsToggleCollapsed(prev, nodeId)
       const node = dfsFindNode(updated, nodeId)
       if (node) queueChange(node)
+      return updated
+    })
+  }
+
+  function handleDeleteNode(nodeId: string) {
+    setNodes(prev => {
+      const node = dfsFindNode(prev, nodeId)
+      if (!node || node.children.length > 0) return prev
+
+      // Find previous node in flat list to restore focus
+      const flat = flattenTree(prev)
+      const idx = flat.findIndex(fn => fn.node.id === nodeId)
+      const prevNodeId = idx > 0 ? flat[idx - 1].node.id : null
+
+      // Mark deleted and queue sync
+      const deletedNode = { ...node, deleted_at: Date.now() }
+      queueChange(deletedNode)
+
+      // Remove from tree
+      function dfsRemove(nodes: TreeNode[]): TreeNode[] {
+        return nodes
+          .filter(n => n.id !== nodeId)
+          .map(n => ({ ...n, children: dfsRemove(n.children) }))
+      }
+      const updated = dfsRemove(prev)
+
+      if (prevNodeId) focusNodeId.current = prevNodeId
       return updated
     })
   }
