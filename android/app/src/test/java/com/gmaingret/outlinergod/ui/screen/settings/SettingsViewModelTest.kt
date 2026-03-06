@@ -1,10 +1,15 @@
 package com.gmaingret.outlinergod.ui.screen.settings
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.SettingsEntity
 import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.ExportRepository
 import com.gmaingret.outlinergod.sync.HlcClock
+import com.gmaingret.outlinergod.sync.SyncConstants
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -14,16 +19,22 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.orbitmvi.orbit.test.test
 import java.io.File
 
@@ -31,10 +42,15 @@ import java.io.File
 class SettingsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
+    private val testScope = TestScope(testDispatcher)
     private lateinit var settingsDao: SettingsDao
     private lateinit var authRepository: AuthRepository
     private lateinit var hlcClock: HlcClock
     private lateinit var exportRepository: ExportRepository
+    private lateinit var dataStore: DataStore<Preferences>
+
+    @get:Rule
+    val tempDir = TemporaryFolder()
 
     private fun fakeSettings(
         userId: String = "u1",
@@ -63,6 +79,9 @@ class SettingsViewModelTest {
         authRepository = mockk()
         hlcClock = mockk()
         exportRepository = mockk()
+        dataStore = PreferenceDataStoreFactory.create(scope = testScope) {
+            tempDir.newFile("settings_test.preferences_pb")
+        }
         every { authRepository.getAccessToken() } returns flowOf("u1")
         every { authRepository.getUserId() } returns flowOf("u1")
         every { authRepository.getDeviceId() } returns flowOf("device-1")
@@ -75,7 +94,7 @@ class SettingsViewModelTest {
     }
 
     private fun createViewModel(): SettingsViewModel {
-        return SettingsViewModel(settingsDao, authRepository, hlcClock, exportRepository)
+        return SettingsViewModel(settingsDao, authRepository, hlcClock, exportRepository, dataStore)
     }
 
     @Test
@@ -230,6 +249,26 @@ class SettingsViewModelTest {
             containerHost.logout()
             expectSideEffect(SettingsSideEffect.NavigateToLogin)
         }
+    }
+
+    @Test
+    fun `logout clearsLastSyncHlcFromDataStore`() = runTest {
+        val settings = fakeSettings()
+        every { settingsDao.getSettings("u1") } returns flowOf(settings)
+        every { authRepository.getRefreshToken() } returns flowOf("refresh-tok-123")
+        coEvery { authRepository.logout("refresh-tok-123") } returns Result.success(Unit)
+        // Seed a non-empty HLC value first
+        val hlcKey = SyncConstants.lastSyncHlcKey("u1")
+        dataStore.edit { prefs -> prefs[hlcKey] = "1741234567890-00001-device-1" }
+        val viewModel = createViewModel()
+        viewModel.test(this) {
+            containerHost.loadSettings()
+            expectState(SettingsUiState.Success(settings = settings))
+            containerHost.logout()
+            expectSideEffect(SettingsSideEffect.NavigateToLogin)
+        }
+        val hlcAfterLogout = dataStore.data.map { it[hlcKey] }.first()
+        assertNull("lastSyncHlc should be cleared after logout", hlcAfterLogout)
     }
 
     @Test

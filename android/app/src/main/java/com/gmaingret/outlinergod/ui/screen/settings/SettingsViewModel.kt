@@ -1,11 +1,15 @@
 package com.gmaingret.outlinergod.ui.screen.settings
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.SettingsEntity
 import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.ExportRepository
 import com.gmaingret.outlinergod.sync.HlcClock
+import com.gmaingret.outlinergod.sync.SyncConstants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -18,7 +22,8 @@ class SettingsViewModel @Inject constructor(
     private val settingsDao: SettingsDao,
     private val authRepository: AuthRepository,
     private val hlcClock: HlcClock,
-    private val exportRepository: ExportRepository
+    private val exportRepository: ExportRepository,
+    private val dataStore: DataStore<Preferences>
 ) : ViewModel(), ContainerHost<SettingsUiState, SettingsSideEffect> {
 
     override val container = container<SettingsUiState, SettingsSideEffect>(SettingsUiState.Loading)
@@ -107,6 +112,10 @@ class SettingsViewModel @Inject constructor(
 
     fun logout() = intent {
         try {
+            // Clear the sync cursor so the next login does a full pull from scratch.
+            // This ensures documents created on other devices while offline are not missed.
+            val currentUserId = authRepository.getUserId().filterNotNull().first()
+            dataStore.edit { prefs -> prefs.remove(SyncConstants.lastSyncHlcKey(currentUserId)) }
             val refreshToken = authRepository.getRefreshToken().filterNotNull().first()
             authRepository.logout(refreshToken)
                 .onSuccess { postSideEffect(SettingsSideEffect.NavigateToLogin) }
