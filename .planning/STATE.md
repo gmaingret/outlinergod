@@ -1,13 +1,14 @@
 ---
 gsd_state_version: 1.0
 milestone: v0.8
-milestone_name: web-client
-status: in_progress
-last_updated: "2026-03-06T09:17:00.000Z"
-last_activity: 2026-03-06 — Phase 15 Plan 01 complete (web scaffold + Fastify SPA serving)
+milestone_name: — web-client
+status: completed
+stopped_at: "Checkpoint 15-02 Task 2: awaiting human-verify (docker compose up + curl checks)"
+last_updated: "2026-03-06T08:21:20.716Z"
+last_activity: "2026-03-06 — 15-01 complete: Vite 7 + React 19 + Tailwind v4 in web/, Fastify serves SPA"
 progress:
   total_phases: 19
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 28
   completed_plans: 27
 ---
@@ -65,12 +66,14 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | D-WEB-02 | @fastify/static with wildcard: false to prevent /api/* route shadowing | 15-01 | Critical: wildcard: true would intercept all /api calls |
 | D-WEB-03 | /api/* prefix guard in setNotFoundHandler — unknown API paths return 404 not index.html | 15-01 | Preserves API contract; keeps test buildApp_unknownRoute_returns404 green |
 | D-WEB-04 | WEB_DIST_PATH env var for Docker override of computed dist path | 15-01 | Docker sets /app/web/dist; dev falls back to ../../web/dist relative to src/ |
+| D-DOCKER-01 | Three-stage Dockerfile (web-builder, ts-builder, runner) — context moved from ./backend to project root | 15-02 | Enables single image with both React SPA and Fastify API |
+| D-DOCKER-02 | All backend COPY paths prefixed backend/ due to context change; root .dockerignore supersedes backend/.dockerignore | 15-02 | Required by context:. in docker-compose.yml |
 
 ## Key Architecture Notes (v0.8 web-client)
 
 - Web client lives at `web/` (parallel to `android/` and `backend/`)
 - Vite 7 builds to `web/dist/`; Fastify serves via `@fastify/static` with `wildcard: false` + `setNotFoundHandler`
-- Two-stage Docker build: Node builder stage compiles React; final stage copies `web/dist/` into the image
+- Three-stage Docker build: web-builder (Vite/React SPA), ts-builder (TypeScript/Fastify), runner (production image with both artifacts)
 - Auth: JWT in memory, refresh token in `localStorage`; device_id stable UUID in `localStorage`
 - HLC: port `backend/src/hlc/hlc.ts` verbatim — must produce identical `<13-digit-ms>-<5-digit-counter>-<deviceId>` format
 - Content format decision pending: Tiptap HTML vs. Android markdown markers (`**bold**`) — resolve before Phase 18
@@ -84,4 +87,4 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 ## Session Continuity
 
 Next action: Continue Phase 15 — remaining plans in 15-scaffold (if any), or proceed to Phase 16 Auth
-Stopped at: Completed 15-01-PLAN.md
+Stopped at: Checkpoint 15-02 Task 2: awaiting human-verify (docker compose up + curl checks)
