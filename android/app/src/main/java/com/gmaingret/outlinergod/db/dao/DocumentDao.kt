@@ -27,6 +27,9 @@ interface DocumentDao {
     @Query("UPDATE documents SET deleted_at = :deletedAt, deleted_hlc = :deletedHlc, updated_at = :updatedAt, device_id = :deviceId WHERE id = :id")
     suspend fun softDeleteDocument(id: String, deletedAt: Long, deletedHlc: String, updatedAt: Long, deviceId: String)
 
+    @Query("SELECT COUNT(*) FROM documents WHERE user_id = :userId AND deleted_at IS NULL")
+    suspend fun countDocuments(userId: String): Int
+
     @Query("""
         SELECT * FROM documents
         WHERE user_id = :userId

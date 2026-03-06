@@ -45,20 +45,23 @@ class SyncWorker @AssistedInject constructor(
 
         val deviceId = authRepository.getDeviceId().first()
         val userId = authRepository.getUserId().filterNotNull().first()
-        val lastSyncHlc = dataStore.data.map { prefs ->
+        val storedHlc = dataStore.data.map { prefs ->
             prefs[SyncConstants.lastSyncHlcKey(userId)] ?: "0"
         }.first()
+        // If Room is empty (e.g. reinstall with DataStore backup restored), force full pull.
+        val hasLocalData = documentDao.countDocuments(userId) > 0
+        val lastSyncHlc = if (hasLocalData) storedHlc else "0"
 
         // Step 2: PULL changes from server
         val pullResult = syncRepository.pull(since = lastSyncHlc, deviceId = deviceId)
         val pullResponse = pullResult.getOrElse { return Result.retry() }
 
-        // Apply pulled data using upsert (server wins for new data)
-        if (pullResponse.nodes.isNotEmpty()) {
-            nodeDao.upsertNodes(pullResponse.nodes.map { it.toNodeEntity() })
-        }
+        // Apply pulled data — documents before nodes (application-level ordering).
         if (pullResponse.documents.isNotEmpty()) {
             documentDao.upsertDocuments(pullResponse.documents.map { it.toDocumentEntity() })
+        }
+        if (pullResponse.nodes.isNotEmpty()) {
+            nodeDao.upsertNodes(pullResponse.nodes.map { it.toNodeEntity() })
         }
         if (pullResponse.bookmarks.isNotEmpty()) {
             bookmarkDao.upsertBookmarks(pullResponse.bookmarks.map { it.toBookmarkEntity() })

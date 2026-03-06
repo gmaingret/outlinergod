@@ -76,19 +76,24 @@ class DocumentListViewModel @Inject constructor(
 
             val deviceId = authRepository.getDeviceId().first()
             val userId = authRepository.getUserId().filterNotNull().first()
-            val lastSyncHlc = dataStore.data.map { prefs ->
+            val storedHlc = dataStore.data.map { prefs ->
                 prefs[SyncConstants.lastSyncHlcKey(userId)] ?: "0"
             }.first()
+            // If Room is empty (e.g. reinstall with DataStore backup restored), force full pull
+            // so we re-download everything regardless of the stale HLC cursor.
+            val hasLocalData = documentDao.countDocuments(userId) > 0
+            val lastSyncHlc = if (hasLocalData) storedHlc else "0"
 
             // Pull changes from server
             val pullResult = syncRepository.pull(since = lastSyncHlc, deviceId = deviceId)
             pullResult.getOrThrow().let { response ->
-                // Upsert pulled data into local DB
-                if (response.nodes.isNotEmpty()) {
-                    nodeDao.upsertNodes(response.nodes.map { it.toNodeEntity() })
-                }
+                // Upsert pulled data into local DB — documents must come before nodes
+                // so that any referential integrity is satisfied at the application level.
                 if (response.documents.isNotEmpty()) {
                     documentDao.upsertDocuments(response.documents.map { it.toDocumentEntity() })
+                }
+                if (response.nodes.isNotEmpty()) {
+                    nodeDao.upsertNodes(response.nodes.map { it.toNodeEntity() })
                 }
                 if (response.bookmarks.isNotEmpty()) {
                     bookmarkDao.upsertBookmarks(response.bookmarks.map { it.toBookmarkEntity() })
