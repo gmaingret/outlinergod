@@ -223,6 +223,15 @@ export function createFileRoutes(sqlite: InstanceType<typeof Database>) {
         return reply.status(400).send({ error: 'Invalid filename' })
       }
 
+      // Ownership check: look up DB record before any disk operation.
+      const row = sqlite
+        .prepare('SELECT * FROM files WHERE filename = ?')
+        .get(filename) as { filename: string; user_id: string } | undefined
+
+      if (row && row.user_id !== req.user!.id) {
+        return reply.status(403).send({ error: 'Forbidden' })
+      }
+
       const fullPath = join(uploadsPath, filename)
 
       try {
@@ -231,9 +240,13 @@ export function createFileRoutes(sqlite: InstanceType<typeof Database>) {
         return reply.status(404).send({ error: 'File not found' })
       }
 
+      // Orphaned file (exists on disk but no DB record) — reject without deleting.
+      if (!row) {
+        return reply.status(404).send({ error: 'File not found' })
+      }
+
       await rm(fullPath)
 
-      // Also remove DB record if it exists
       sqlite.prepare('DELETE FROM files WHERE filename = ?').run(filename)
 
       return reply.status(200).send({ deleted: true })

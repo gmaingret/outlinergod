@@ -466,6 +466,8 @@ describe('Files routes', () => {
     const validFilename = '3fa85f64-5717-4562-b3fc-2c963f66afa6.jpg'
 
     it('returns200_deletedTrue_onSuccess', async () => {
+      seedFileRow(sqlite, validFilename, 'user-a')
+
       const res = await app.inject({
         method: 'DELETE',
         url: `/api/files/${validFilename}`,
@@ -490,9 +492,39 @@ describe('Files routes', () => {
     })
 
     it('returns404_whenFileNotFound', async () => {
+      seedFileRow(sqlite, validFilename, 'user-a')
+
       vi.mocked(stat).mockRejectedValueOnce(
         Object.assign(new Error('ENOENT'), { code: 'ENOENT' }),
       )
+
+      const res = await app.inject({
+        method: 'DELETE',
+        url: `/api/files/${validFilename}`,
+        headers: { authorization: `Bearer ${tokenA}` },
+      })
+
+      expect(res.statusCode).toBe(404)
+      expect(res.json()).toEqual({ error: 'File not found' })
+    })
+
+    it('returns403_whenUserBDeletesUserAFile', async () => {
+      seedFileRow(sqlite, validFilename, 'user-a')
+
+      const res = await app.inject({
+        method: 'DELETE',
+        url: `/api/files/${validFilename}`,
+        headers: { authorization: `Bearer ${tokenB}` },
+      })
+
+      expect(res.statusCode).toBe(403)
+      expect(res.json()).toEqual({ error: 'Forbidden' })
+      expect(vi.mocked(rm)).not.toHaveBeenCalled()
+    })
+
+    it('returns404_whenFileHasNoDbRecord', async () => {
+      // No seedFileRow — DB record does not exist
+      // stat mock resolves OK (file exists on disk but has no DB record)
 
       const res = await app.inject({
         method: 'DELETE',
