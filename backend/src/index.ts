@@ -18,6 +18,7 @@ import { createHealthRoute } from './routes/health.js'
 import { runMigrations } from './db/migrate.js'
 import { createConnection } from './db/connection.js'
 import { purgeTombstones } from './tombstone.js'
+import { purgeStaleRefreshTokens } from './refresh-token-purge.js'
 
 /**
  * Application factory. Builds and returns a Fastify instance without calling
@@ -131,9 +132,20 @@ export async function startServer(port: number, dbPath: string): Promise<void> {
     process.exit(1)
   }
 
+  // JWT_SECRET guard — must be before buildApp so server refuses to start with weak secret.
+  const jwtSecret = process.env.JWT_SECRET ?? ''
+  if (jwtSecret.length < 32) {
+    console.error('FATAL: JWT_SECRET must be at least 32 characters')
+    process.exit(1)
+  }
+
   // Purge tombstones older than 90 days. Keeps the SQLite database size
   // manageable over time without requiring manual maintenance.
   purgeTombstones(sqlite)
+
+  // Purge stale refresh tokens once at startup, then every 24 hours.
+  purgeStaleRefreshTokens(sqlite)
+  setInterval(() => purgeStaleRefreshTokens(sqlite), 24 * 60 * 60 * 1000)
 
   // Routes are registered inside buildApp() — migrations have already run above.
   const app = buildApp(sqlite)
