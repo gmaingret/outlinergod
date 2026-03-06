@@ -26,7 +26,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 15. Scaffold | 2/2 | Complete    | 2026-03-06 |
-| 16. Auth | 0/? | Not started | - |
+| 16. Auth | 0/3 | Not started | - |
 | 17. Document List | 0/? | Not started | - |
 | 18. Node Editor + Sync | 0/? | Not started | - |
 | 19. Drag-and-Drop | 0/? | Not started | - |
@@ -56,7 +56,11 @@ Plans:
   2. After refreshing the browser, the user is still on the document list (not redirected to login)
   3. Navigating directly to /editor/:id without being signed in redirects to the login page
   4. The sign-in uses the same Google account that owns the user's Android data (data is visible after auth)
-**Plans:** TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 16-01-PLAN.md — Vitest infrastructure + test stubs (Wave 0)
+- [ ] 16-02-PLAN.md — AuthContext + backend dual-audience update (Wave 1)
+- [ ] 16-03-PLAN.md — ProtectedRoute + LoginPage + App.tsx + Docker plumbing (Wave 2)
 
 #### Phase 17: Document List
 **Goal:** Users can see all their documents and perform full CRUD from the browser.
