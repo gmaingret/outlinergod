@@ -10,6 +10,7 @@ import {
   outdentNode,
   type TreeNode,
 } from '../editor/treeHelpers'
+import { FlatNodeList } from '../editor/FlatNodeList'
 import { hlcGenerate } from '../sync/hlc'
 
 // ---- Types ----
@@ -92,82 +93,6 @@ function dfsFindNode(nodes: TreeNode[], nodeId: string): TreeNode | null {
 
 function generateNodeId(): string {
   return crypto.randomUUID()
-}
-
-// ---- NodeRow component ----
-
-interface NodeRowProps {
-  node: TreeNode
-  depth: number
-  onContentChange: (nodeId: string, value: string) => void
-  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>, nodeId: string) => void
-  onGlyphClick: (nodeId: string) => void
-  onCollapseToggle: (nodeId: string) => void
-  inputRefs: React.MutableRefObject<Map<string, HTMLInputElement>>
-}
-
-function NodeRow({
-  node,
-  depth,
-  onContentChange,
-  onKeyDown,
-  onGlyphClick,
-  onCollapseToggle,
-  inputRefs,
-}: NodeRowProps) {
-  const hasChildren = node.children.length > 0
-
-  return (
-    <div>
-      <div
-        className="flex items-center py-1"
-        style={{ paddingLeft: `${depth * 16}px` }}
-      >
-        {/* Bullet glyph — always zooms in */}
-        <button
-          data-node-id={node.id}
-          onClick={() => onGlyphClick(node.id)}
-          className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer"
-          aria-label="zoom in"
-        >
-          ●
-        </button>
-        {/* Directional arrow for collapse/expand — only shown when node has children */}
-        {hasChildren && (
-          <button
-            onClick={() => onCollapseToggle(node.id)}
-            className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer text-xs"
-            aria-label={node.collapsed ? 'expand' : 'collapse'}
-          >
-            {node.collapsed ? '▸' : '▾'}
-          </button>
-        )}
-        <input
-          ref={el => {
-            if (el) inputRefs.current.set(node.id, el)
-            else inputRefs.current.delete(node.id)
-          }}
-          type="text"
-          value={node.content}
-          onChange={e => onContentChange(node.id, e.target.value)}
-          onKeyDown={e => onKeyDown(e, node.id)}
-          className="flex-1 ml-1 outline-none text-sm text-gray-900 bg-transparent"
-        />
-      </div>
-      {!node.collapsed && node.children.map(child => (
-        <NodeRow
-          key={child.id}
-          node={child}
-          depth={depth + 1}
-          onContentChange={onContentChange}
-          onKeyDown={onKeyDown}
-          onGlyphClick={onGlyphClick}
-          onCollapseToggle={onCollapseToggle}
-          inputRefs={inputRefs}
-        />
-      ))}
-    </div>
-  )
 }
 
 // ---- Main Page ----
@@ -396,36 +321,32 @@ export function NodeEditorPage() {
       return (
         <div className="p-4">
           <h1 className="text-lg font-semibold text-gray-900 mb-3">{subtree.content}</h1>
-          {subtree.children.map(child => (
-            <NodeRow
-              key={child.id}
-              node={child}
-              depth={0}
-              onContentChange={handleContentChange}
-              onKeyDown={handleKeyDown}
-              onGlyphClick={handleGlyphClick}
-              onCollapseToggle={handleCollapseToggle}
-              inputRefs={inputRefs}
-            />
-          ))}
-        </div>
-      )
-    }
-
-    return (
-      <div className="p-4">
-        {nodes.map(node => (
-          <NodeRow
-            key={node.id}
-            node={node}
-            depth={0}
+          <FlatNodeList
+            roots={subtree.children}
+            onTreeChange={setNodes}
+            queueChange={queueChange}
             onContentChange={handleContentChange}
             onKeyDown={handleKeyDown}
             onGlyphClick={handleGlyphClick}
             onCollapseToggle={handleCollapseToggle}
             inputRefs={inputRefs}
           />
-        ))}
+        </div>
+      )
+    }
+
+    return (
+      <div className="p-4">
+        <FlatNodeList
+          roots={nodes}
+          onTreeChange={setNodes}
+          queueChange={queueChange}
+          onContentChange={handleContentChange}
+          onKeyDown={handleKeyDown}
+          onGlyphClick={handleGlyphClick}
+          onCollapseToggle={handleCollapseToggle}
+          inputRefs={inputRefs}
+        />
       </div>
     )
   }
