@@ -12,6 +12,7 @@ provides:
   - Three-stage Dockerfile (web-builder + ts-builder + runner) building React SPA into the backend image
   - Root .dockerignore excluding android/, .git/, .planning/ from Docker build context
   - docker-compose.yml with context:. and explicit dockerfile path
+  - WEB_DIST_PATH=/app/web/dist in docker-compose.yml env section (fixes path resolution in container)
 affects:
   - "Phase 16 Auth (container deployment path)"
   - "All future phases requiring production deployment"
@@ -23,6 +24,7 @@ tech-stack:
     - "Multi-stage Docker build: web-builder compiles React SPA, ts-builder compiles TypeScript, runner copies both artifacts"
     - "Root .dockerignore pattern: exclude large directories (android/, .git/) from build context"
     - "docker-compose context: project root with explicit dockerfile: backend/Dockerfile"
+    - "WEB_DIST_PATH env var in docker-compose.yml overrides the relative path computed by index.ts at runtime"
 
 key-files:
   created:
@@ -36,43 +38,47 @@ key-decisions:
   - "D-DOCKER-02: All backend COPY paths prefixed with backend/ because context is now project root, not ./backend"
   - "D-DOCKER-03: web/dist/ excluded from .dockerignore — web-builder stage compiles from source, not pre-built artifacts"
   - "D-DOCKER-04: Root .dockerignore supersedes backend/.dockerignore (Docker reads from context root)"
+  - "D-DOCKER-05: WEB_DIST_PATH=/app/web/dist added to docker-compose.yml environment — Fastify's path.join resolves relative to /app/dist/ in the container, giving the wrong /web/dist path without the override"
 
 patterns-established:
-  - "Pattern 1: Multi-stage Docker: web-builder stage outputs to /web/dist, runner copies to /app/web/dist matching WEB_DIST_PATH=/app/web/dist"
+  - "Pattern 1: Multi-stage Docker: web-builder stage outputs to /web/dist, runner copies to /app/web/dist; docker-compose sets WEB_DIST_PATH=/app/web/dist to override the runtime path.join resolution"
 
 requirements-completed: [SETUP-01, SETUP-02, SETUP-03]
 
 # Metrics
-duration: 10min
+duration: 25min
 completed: 2026-03-06
 ---
 
 # Phase 15 Plan 02: Docker Three-Stage Build Summary
 
-**Three-stage Dockerfile packaging React SPA (web-builder) + TypeScript backend (ts-builder) into a single production container (runner), with root .dockerignore keeping build context lean**
+**Three-stage Dockerfile packaging React SPA (web-builder) + TypeScript backend (ts-builder) into a single production container (runner), verified serving both the React SPA and Fastify API on root@192.168.1.50**
 
 ## Performance
 
-- **Duration:** ~10 min
+- **Duration:** ~25 min (including human-verify checkpoint)
 - **Started:** 2026-03-06T08:19:40Z
-- **Completed:** 2026-03-06T08:30:00Z
-- **Tasks:** 1/2 (Task 2 is checkpoint:human-verify — awaiting manual curl verification)
-- **Files modified:** 3
+- **Completed:** 2026-03-06T09:31:48Z
+- **Tasks:** 2/2
+- **Files modified:** 3 (+ docker-compose.yml updated again by user)
 
 ## Accomplishments
 - Rewrote `backend/Dockerfile` from two-stage to three-stage build with correct project-root-relative COPY paths
 - Updated `docker-compose.yml` to use `context: .` and `dockerfile: backend/Dockerfile`
 - Created root `.dockerignore` excluding `android/`, `.git/`, `.planning/`, `node_modules/`, `dist/` directories
+- All 5 production curl checks passed on root@192.168.1.50 — container serves React SPA and Fastify API
+- `WEB_DIST_PATH=/app/web/dist` env var added to docker-compose.yml to fix runtime path resolution in Docker
 
 ## Task Commits
 
 1. **Task 1: Three-stage Dockerfile + .dockerignore + docker-compose.yml** - `2a335c9` (feat)
+2. **Task 1 fix: WEB_DIST_PATH env var for Docker path resolution** - `b887d62` (fix, committed by user during verification)
 
-**Plan metadata:** (pending — awaiting checkpoint approval)
+**Plan metadata:** `28e82cc` (docs: checkpoint), final update below
 
 ## Files Created/Modified
-- `backend/Dockerfile` - Three-stage build: web-builder (Vite/React), ts-builder (TypeScript/Fastify), runner (production image)
-- `docker-compose.yml` - Context changed from `./backend` to `.`, explicit `dockerfile: backend/Dockerfile`
+- `backend/Dockerfile` - Three-stage build: web-builder (Vite/React), ts-builder (TypeScript/Fastify), runner (production image with both artifacts)
+- `docker-compose.yml` - Context changed from `./backend` to `.`, explicit `dockerfile: backend/Dockerfile`, `WEB_DIST_PATH=/app/web/dist` added to environment
 - `.dockerignore` - Root-level exclusions: android/, .git/, .planning/, .claude/, node_modules/, dist/
 
 ## Decisions Made
@@ -80,6 +86,7 @@ completed: 2026-03-06
 - D-DOCKER-02: All backend COPY paths now prefixed `backend/` due to context change
 - D-DOCKER-03: `web/dist/` excluded from .dockerignore — always built from source inside Docker
 - D-DOCKER-04: Root .dockerignore supersedes `backend/.dockerignore`
+- D-DOCKER-05: WEB_DIST_PATH=/app/web/dist in docker-compose.yml env — path.join in index.ts resolves relative to /app/dist/ in the container, producing /web/dist (wrong) without the override
 
 ## Deviations from Plan
 
@@ -87,40 +94,36 @@ completed: 2026-03-06
 
 **1. [Rule 3 - Blocking] Docker not in shell PATH — automated build verification skipped**
 - **Found during:** Task 1 verification
-- **Issue:** `docker` binary not available in the bash shell used by Claude Code (Docker Desktop is installed but not in PATH for this shell session)
-- **Fix:** Skipped automated `docker compose build` verification — deferred to Task 2 checkpoint where user runs curl checks after `docker compose up -d`
+- **Issue:** `docker` binary not available in the bash shell used by Claude Code
+- **Fix:** Deferred to Task 2 human-verify checkpoint — user ran build + curl checks directly
 - **Files modified:** None
-- **Impact:** All file changes are correct per plan spec; build verification is the purpose of the human-verify checkpoint
+- **Impact:** All file changes were correct; verification was the purpose of the checkpoint
+
+**2. [Rule 1 - Bug] WEB_DIST_PATH missing from docker-compose.yml environment**
+- **Found during:** Task 2 human-verify (production deployment)
+- **Issue:** `path.join(__dirname, '../../web/dist')` in `backend/src/index.ts` resolves to `/web/dist` inside the container (where `__dirname` is `/app/dist`), but the React SPA is copied to `/app/web/dist`. Fastify could not find the static files.
+- **Fix:** Added `WEB_DIST_PATH=/app/web/dist` to the `environment` section in `docker-compose.yml` — the env var overrides the computed path at startup
+- **Files modified:** `docker-compose.yml`
+- **Verification:** `curl http://localhost:3000/` returns React SPA HTML; `curl http://localhost:3000/foo/bar` returns same HTML (deep-link fallback confirmed)
+- **Committed in:** `b887d62` (committed by user during verification)
 
 ---
 
-**Total deviations:** 1 (environment constraint, not a code issue)
-**Impact on plan:** No code scope change. Human-verify checkpoint already planned for this.
+**Total deviations:** 2 (1 environment constraint, 1 bug fix)
+**Impact on plan:** Bug fix was required for correctness — container would have served API-only without the WEB_DIST_PATH override. No scope creep.
 
 ## Issues Encountered
-- Docker CLI not in bash PATH in this shell environment. `docker compose build` must be run by the user directly.
+- Docker CLI not in bash PATH in this shell environment — all Docker operations performed manually by user.
+- Note on `/api/health` 404: the health route is registered at `/health` (no `/api` prefix by design). `/api/health` returning 404 is expected and correct. The check `curl http://localhost:3000/api/health` returns 404 JSON (not HTML), confirming the `/api/*` guard in setNotFoundHandler is working correctly.
 
 ## User Setup Required
 
-Run these commands to verify Task 2:
-```bash
-cd /c/Users/gmain/Dev/OutlinerGod
-docker compose build
-docker compose up -d
-# Wait ~10 seconds
-curl http://localhost:3000/health
-curl http://localhost:3000/
-curl http://localhost:3000/foo/bar
-curl http://localhost:3000/api/health
-docker compose down
-```
-
-Expected: health returns JSON, / returns HTML with "OutlinerGod", /foo/bar returns same HTML, /api/health returns JSON.
+None — production deployment already performed at `root@192.168.1.50:/root/outlinergod`. Container is running.
 
 ## Next Phase Readiness
-- Once Task 2 checkpoint is approved: Phase 15 complete, proceed to Phase 16 Auth
-- Docker image serves both Fastify API (/api/*) and React SPA (all other paths)
-- Production deployment: `ssh root@192.168.1.50`, `cd /root/outlinergod`, `git pull origin master`, `docker compose up -d --build`
+- Phase 15 complete. All SETUP requirements satisfied: SETUP-01, SETUP-02, SETUP-03.
+- Single container serves React SPA at all non-/api paths + Fastify API at /api/* and /health
+- Proceed to Phase 16 Auth
 
 ---
 *Phase: 15-scaffold*

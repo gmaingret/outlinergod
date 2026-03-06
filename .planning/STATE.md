@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.8
 milestone_name: — web-client
 status: completed
-stopped_at: "Checkpoint 15-02 Task 2: awaiting human-verify (docker compose up + curl checks)"
-last_updated: "2026-03-06T08:21:20.716Z"
+stopped_at: Completed 15-02-PLAN.md — Phase 15 scaffold complete, proceed to Phase 16 Auth
+last_updated: "2026-03-06T08:33:31.109Z"
 last_activity: "2026-03-06 — 15-01 complete: Vite 7 + React 19 + Tailwind v4 in web/, Fastify serves SPA"
 progress:
   total_phases: 19
@@ -17,12 +17,12 @@ progress:
 
 ## Current Position
 
-Phase: 15 — Scaffold (in progress, 15-01 done)
-Plan: 15-01 complete
-Status: Plan 15-01 executed — web/ scaffold + Fastify SPA serving complete
-Last activity: 2026-03-06 — 15-01 complete: Vite 7 + React 19 + Tailwind v4 in web/, Fastify serves SPA
+Phase: 15 — Scaffold (COMPLETE)
+Plan: 15-02 complete
+Status: Phase 15 complete — three-stage Docker build verified on production server
+Last activity: 2026-03-06 — 15-02 complete: Docker image serves React SPA + Fastify API, verified on root@192.168.1.50
 
-Progress: [█████████░] 15/5 phases (v0.8: 1/5 plans started)
+Progress: [██████████] 96% (v0.8: Phase 15 complete, 2/2 plans done)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -35,7 +35,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 15 | Scaffold | SETUP-01, SETUP-02, SETUP-03 | In progress (15-01 done) |
+| 15 | Scaffold | SETUP-01, SETUP-02, SETUP-03 | Complete |
 | 16 | Auth | AUTH-01, AUTH-02, AUTH-03 | Not started |
 | 17 | Document List | DOC-01, DOC-02, DOC-03, DOC-04 | Not started |
 | 18 | Node Editor + Sync | EDIT-01..07, SYNC-01, SYNC-02 | Not started |
@@ -68,6 +68,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | D-WEB-04 | WEB_DIST_PATH env var for Docker override of computed dist path | 15-01 | Docker sets /app/web/dist; dev falls back to ../../web/dist relative to src/ |
 | D-DOCKER-01 | Three-stage Dockerfile (web-builder, ts-builder, runner) — context moved from ./backend to project root | 15-02 | Enables single image with both React SPA and Fastify API |
 | D-DOCKER-02 | All backend COPY paths prefixed backend/ due to context change; root .dockerignore supersedes backend/.dockerignore | 15-02 | Required by context:. in docker-compose.yml |
+| D-DOCKER-05 | WEB_DIST_PATH=/app/web/dist must be set in docker-compose.yml environment — path.join resolves to /web/dist (wrong) without it | 15-02 | Critical: container serves 404 on / without this env var |
 
 ## Key Architecture Notes (v0.8 web-client)
 
@@ -83,8 +84,9 @@ See: .planning/PROJECT.md (updated 2026-03-06)
   - GIS credential field: `{ id_token: response.credential }` — NOT `response.id_token` (undefined)
   - Contenteditable cursor: use Tiptap (manages own DOM); never raw `<div contenteditable>`
   - HLC parity: validate with test vectors against `backend/src/hlc/hlc.ts` before connecting to live data
+  - WEB_DIST_PATH in docker-compose.yml: MUST be `/app/web/dist` — path.join from __dirname (/app/dist) gives wrong /web/dist without it — CONFIRMED in 15-02
 
 ## Session Continuity
 
-Next action: Continue Phase 15 — remaining plans in 15-scaffold (if any), or proceed to Phase 16 Auth
-Stopped at: Checkpoint 15-02 Task 2: awaiting human-verify (docker compose up + curl checks)
+Next action: Proceed to Phase 16 Auth (AUTH-01, AUTH-02, AUTH-03)
+Stopped at: Completed 15-02-PLAN.md — Phase 15 scaffold complete, proceed to Phase 16 Auth
