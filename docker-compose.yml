@@ -8,6 +8,8 @@ services:
     ports:
       - "3000:3000"
     env_file: .env
+    environment:
+      WEB_DIST_PATH: /app/web/dist
     restart: unless-stopped
 
 volumes:
