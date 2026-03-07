@@ -113,6 +113,17 @@ None - no external service configuration required.
 - Phase 24 migration tests can now use `MigrationTestHelper` with the committed schema files to validate MIGRATION_1_2 and MIGRATION_2_3
 - No blockers — all success criteria met
 
+## Self-Check: PASSED
+
+- FOUND: android/app/schemas/com.gmaingret.outlinergod.db.AppDatabase/3.json (tracked in git, restored from HEAD)
+- FOUND: .planning/phases/23-data-model-structure/23-04-SUMMARY.md
+- FOUND: commit 2a49050 (feat: enable exportSchema=true and commit Room schema v3)
+- FOUND: commit 76eb294 (fix: restore 23-04 state — exportSchema=true with schema JSON committed)
+- FOUND: commit c5bbcdd (docs: complete plan metadata)
+- VERIFIED: AppDatabase.kt has exportSchema = true
+- VERIFIED: build.gradle.kts has ksp { arg("room.schemaLocation", ...) } block
+- VERIFIED: 3.json contains attachment_url column in createSql
+
 ---
 *Phase: 23-data-model-structure*
 *Completed: 2026-03-07*
