@@ -157,7 +157,7 @@ dependencies {
 ksp {
     // room.schemaLocation is intentionally omitted — exportSchema=false avoids a
     // kotlinx-serialization version conflict (AbstractMethodError in FieldBundle$$serializer)
-    // introduced by Room 2.8.4's migration-jvm bundle requiring serialization 1.8.1 while
+    // introduced by Room 2.8.4's migration-jvm module requiring serialization 1.8.1 while
     // the pre-compiled bundle classes were built against 1.7.x.
     // Migration tests use AppDatabase.buildInMemory() directly and do not need schema JSON.
 }
