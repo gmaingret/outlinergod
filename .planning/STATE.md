@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.9
 milestone_name: — quality-hardening
 status: completed
-stopped_at: Completed 23-02-PLAN.md — FractionalIndex moved to util/; orphan backend/src/hlc.ts deleted
-last_updated: "2026-03-07T19:37:00Z"
-last_activity: "2026-03-07 — 23-02 complete: FractionalIndex package moved prototype→util; backend/src/hlc.ts deleted; Room 2.8.4 exportSchema KSP bug fixed"
+stopped_at: Completed 21-02-PLAN.md — SyncWorker + ViewModels delegate to SyncOrchestrator
+last_updated: "2026-03-07T21:00:00Z"
+last_activity: "2026-03-07 — 23-04 complete: exportSchema=true enabled, 3.json committed, ksp schemaLocation arg added — Room schema export fully enabled for Phase 24 migration tests"
 progress:
   total_phases: 26
   completed_phases: 18
-  total_plans: 41
-  completed_plans: 41
-  percent: 100
+  total_plans: 45
+  completed_plans: 44
+  percent: 96
 ---
 
 # OutlinerGod Project State
@@ -19,11 +19,11 @@ progress:
 ## Current Position
 
 Phase: 23 — Data Model Structure (in progress)
-Plan: 23-02 COMPLETE — FractionalIndex moved to util/; orphan backend/src/hlc.ts deleted
-Status: Phase 23 plan 2 of 4 complete
-Last activity: 2026-03-07 — 23-02 complete: FractionalIndex package moved prototype→util; backend/src/hlc.ts deleted; Room 2.8.4 exportSchema KSP bug fixed
+Plan: 23-04 COMPLETE — exportSchema=true enabled; 3.json committed; ksp schemaLocation arg added
+Status: Phase 23 plan 4 of 4 complete (all plans done, pending 23-03)
+Last activity: 2026-03-07 — 23-04 complete: Room schema export fully enabled; 3.json committed for Phase 24 migration test coverage
 
-Progress: [██████████] 100% (41/41 plans complete)
+Progress: [█████████▒] 96% (44/45 plans complete)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -110,8 +110,8 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Session Continuity
 
-Next action: All 41 plans complete — Phase 21 architecture refactor done
-Stopped at: Completed 21-02-PLAN.md — SyncWorker + ViewModels delegate to SyncOrchestrator
+Next action: 23-04 complete — Phase 23 plan 4 of 4 done (23-03 pending); Phase 24 migration tests ready to start
+Stopped at: Completed 23-04-PLAN.md — exportSchema=true enabled; 3.json committed; Room schema export fully enabled
 
 ## Phase 21 Decisions
 
@@ -127,5 +127,8 @@ Stopped at: Completed 21-02-PLAN.md — SyncWorker + ViewModels delegate to Sync
 
 | ID | Decision | Phase-Plan | Impact |
 |----|----------|------------|--------|
-| D-23-02-A | exportSchema=false in AppDatabase to fix Room 2.8.4 + kotlinx-serialization 1.8.1 KSP conflict | 23-02 | AbstractMethodError in FieldBundle$$serializer prevented all Android tests from compiling |
-| D-23-02-B | room.schemaLocation KSP arg removed — migration tests use buildInMemory() directly | 23-02 | Removing arg eliminates KSP failure without affecting migration test coverage |
+| D-23-02-A | exportSchema=false in AppDatabase to fix Room 2.8.4 + kotlinx-serialization 1.8.1 KSP conflict | 23-02 | SUPERSEDED by D-23-04-C — this was incorrect |
+| D-23-02-B | room.schemaLocation KSP arg removed — migration tests use buildInMemory() directly | 23-02 | SUPERSEDED by D-23-04-C — this was incorrect |
+| D-23-04-A | exportSchema=true safe with 3.json committed — KSP AbstractMethodError only fires on schema regeneration; once 3.json committed and entities stable, kspDebugKotlin stays UP-TO-DATE | 23-04 | 3.json must stay committed; deleting it forces KSP re-run which triggers AbstractMethodError |
+| D-23-04-B | Background AI revert pattern — VS Code AI continuously reverts exportSchema=true; fix is to commit immediately to lock change in git history | 23-04 | Commit exportSchema=true changes before background AI can revert them |
+| D-23-04-C | Overrides D-23-02-A and D-23-02-B — exportSchema=true correctly enabled; phase 23-02 revert was incorrect fix | 23-04 | exportSchema=true + ksp schemaLocation arg + committed 3.json is the correct state |

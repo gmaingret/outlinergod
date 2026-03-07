@@ -31,7 +31,7 @@
 | 20. Security fixes | 1/1 | Complete    | 2026-03-06 |
 | 21. Sync architecture | 2/2 | Complete    | 2026-03-07 |
 | 22. Android performance | 0/? | Not started | — |
-| 23. Data model & structure | 1/4 | In Progress|  |
+| 23. Data model & structure | 2/4 | In Progress|  |
 | 24. Test coverage gaps | 0/? | Not started | — |
 | 25. Backend maintenance | 0/? | Not started | — |
 | 26. Android UX redesign | 0/? | Not started | — |
@@ -82,7 +82,7 @@ Plans:
 **Goal:** Attachment metadata lives in proper DB columns, FractionalIndex is in a production package, the orphan backend HLC file is deleted, Room schema export is enabled, and the undo stack uses a single cohesive type.
 **Depends on:** Nothing
 **Requirements:** (tech debt audit)
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 Plans:
 - [ ] 23-01-PLAN.md — NodeEntity attachment columns + MIGRATION_2_3 + call site updates + migration tests
 - [ ] 23-02-PLAN.md — FractionalIndex move to util/ + delete backend/src/hlc.ts
