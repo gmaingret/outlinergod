@@ -155,6 +155,5 @@ dependencies {
 }
 
 ksp {
-    // room.schemaLocation intentionally omitted: exportSchema=false avoids AbstractMethodError
-    // in Room 2.8.4 FieldBundle$$serializer vs kotlinx-serialization 1.8.1 during KSP.
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
