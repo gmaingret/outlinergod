@@ -420,7 +420,6 @@ fun NodeEditorScreen(
     }
 }
 
-private val ATTACH_REGEX = Regex("""^ATTACH\|(.+?)\|(.+?)\|(.+)$""")
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -444,7 +443,7 @@ private fun NodeRow(
 ) {
     val focusRequester = remember { FocusRequester() }
     val noteFocusRequester = remember { FocusRequester() }
-    val isAttachment = flatNode.entity.content.startsWith("ATTACH|")
+    val isAttachment = flatNode.entity.attachmentUrl != null
     var textFieldValue by remember(flatNode.entity.id) {
         val displayText = flatNode.entity.content.ifEmpty { ZWS }
         mutableStateOf(TextFieldValue(displayText, selection = TextRange(displayText.length)))
@@ -501,24 +500,23 @@ private fun NodeRow(
             Spacer(modifier = Modifier.width(4.dp))
 
             // Content field (or attachment display)
-            val attachMatch = if (isAttachment) ATTACH_REGEX.find(flatNode.entity.content) else null
-            if (attachMatch != null) {
-                val mimeType = attachMatch.groupValues[1]
-                val filename = attachMatch.groupValues[2]
-                val relativeUrl = attachMatch.groupValues[3]
-                val isImage = mimeType.startsWith("image/")
+            if (isAttachment) {
+                val attachUrl = flatNode.entity.attachmentUrl ?: ""
+                val attachMime = flatNode.entity.attachmentMime ?: ""
+                val displayName = attachUrl.substringAfterLast("/").ifEmpty { "attachment" }
+                val isImage = attachMime.startsWith("image/")
                 if (isImage) {
-                    val fullUrl = BuildConfig.BASE_URL + relativeUrl
+                    val fullUrl = BuildConfig.BASE_URL + attachUrl
                     Column(modifier = Modifier.weight(1f)) {
                         AsyncImage(
                             model = fullUrl,
-                            contentDescription = filename,
+                            contentDescription = displayName,
                             imageLoader = imageLoader,
                             contentScale = ContentScale.FillWidth,
                             modifier = Modifier.fillMaxWidth()
                         )
                         Text(
-                            text = filename,
+                            text = displayName,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             maxLines = 1,
@@ -538,7 +536,7 @@ private fun NodeRow(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = filename,
+                            text = displayName,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                             maxLines = 1,

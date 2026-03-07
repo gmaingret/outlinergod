@@ -95,10 +95,10 @@ class AppDatabaseMigrationTest {
         // Insert a row with the old ATTACH| content format using raw SQL
         rawDb.execSQL(
             """INSERT INTO nodes (id, document_id, user_id, content, content_hlc, note, note_hlc,
-               sort_order, sort_order_hlc, completed, completed_hlc, color, color_hlc,
+               parent_id_hlc, sort_order, sort_order_hlc, completed, completed_hlc, color, color_hlc,
                collapsed, collapsed_hlc, deleted_hlc, device_id, created_at, updated_at)
                VALUES ('n_old', 'doc1', 'user1', 'ATTACH|image/png|photo.jpg|https://host/file.jpg',
-               '', '', '', 'b0', '', 0, '', 0, '', 0, '', '', '', 1000, 1000)"""
+               '', '', '', '', 'b0', '', 0, '', 0, '', 0, '', '', '', 1000, 1000)"""
         )
         // Run the MIGRATION_2_3 UPDATE SQL directly
         rawDb.execSQL("""

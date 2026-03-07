@@ -75,7 +75,8 @@ class EntitySchemaTest {
             "sortOrder", "sortOrderHlc", "completed", "completedHlc",
             "color", "colorHlc", "collapsed", "collapsedHlc",
             "deletedAt", "deletedHlc", "deviceId",
-            "createdAt", "updatedAt"
+            "createdAt", "updatedAt",
+            "attachmentUrl", "attachmentMime"
         )
         assertEquals("NodeEntity should have exactly the 'nodes' table columns",
             expectedColumns, props)

@@ -61,8 +61,9 @@ android {
             all {
                 it.jvmArgs("-Xmx3072m", "-XX:+HeapDumpOnOutOfMemoryError")
                 it.maxHeapSize = "3072m"
-                it.reports.junitXml.outputLocation.set(layout.buildDirectory.dir("test-results-new/${it.name}"))
-                it.reports.html.outputLocation.set(layout.buildDirectory.dir("reports-new/tests/${it.name}"))
+                // Use separate output dirs to avoid Windows file-lock conflicts with Android Studio
+                it.reports.junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/${it.name}"))
+                it.reports.html.outputLocation.set(layout.buildDirectory.dir("reports/tests/${it.name}"))
             }
         }
     }
@@ -154,5 +155,9 @@ dependencies {
 }
 
 ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
+    // room.schemaLocation is intentionally omitted — exportSchema=false avoids a
+    // kotlinx-serialization version conflict (AbstractMethodError in FieldBundle$$serializer)
+    // introduced by Room 2.8.4's migration-jvm bundle requiring serialization 1.8.1 while
+    // the pre-compiled bundle classes were built against 1.7.x.
+    // Migration tests use AppDatabase.buildInMemory() directly and do not need schema JSON.
 }
