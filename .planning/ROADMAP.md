@@ -82,9 +82,9 @@ Plans:
 **Goal:** Attachment metadata lives in proper DB columns, FractionalIndex is in a production package, the orphan backend HLC file is deleted, Room schema export is enabled, and the undo stack uses a single cohesive type.
 **Depends on:** Nothing
 **Requirements:** (tech debt audit)
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 Plans:
-- [ ] 23-01-PLAN.md — NodeEntity attachment columns + MIGRATION_2_3 + call site updates + migration tests
+- [x] 23-01-PLAN.md — NodeEntity attachment columns + MIGRATION_2_3 + call site updates + migration tests
 - [ ] 23-02-PLAN.md — FractionalIndex move to util/ + delete backend/src/hlc.ts
 - [ ] 23-03-PLAN.md — UndoSnapshot unified data class in NodeEditorViewModel
 - [ ] 23-04-PLAN.md — exportSchema = true + schema JSON generation + commit

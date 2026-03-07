@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v0.9
 milestone_name: — quality-hardening
 status: completed
-stopped_at: Completed 21-02-PLAN.md — SyncWorker + ViewModels delegate to SyncOrchestrator
-last_updated: "2026-03-07T21:00:00Z"
-last_activity: "2026-03-07 — 23-04 complete: exportSchema=true enabled, 3.json committed, ksp schemaLocation arg added — Room schema export fully enabled for Phase 24 migration tests"
+stopped_at: Completed 23-01-PLAN.md — NodeEntity v3 with attachment_url/attachment_mime columns and MIGRATION_2_3
+last_updated: "2026-03-07T21:30:00Z"
+last_activity: "2026-03-07 — 23-01 SUMMARY complete: NodeEntity v3 attachment columns, MIGRATION_2_3 SQLite data migration, 7/7 migration tests passing"
 progress:
   total_phases: 26
   completed_phases: 18
