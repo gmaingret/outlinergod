@@ -13,6 +13,8 @@ When opening this project for the first time (no `PLAN.md` exists yet):
 
 When `PLAN.md` already exists: skip planning and ask which phase to execute.
 
+> **Note:** `PLAN.md` is a legacy file covering only phases 0–6. The project has progressed well beyond that. For current phase status, completed work, and next steps, read `.planning/ROADMAP.md` and `.planning/STATE.md` — these are the authoritative source of truth for all phases 7 and beyond.
+
 ---
 
 ## What This Project Is
