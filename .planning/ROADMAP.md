@@ -315,7 +315,7 @@ Plans:
 
 ### Phase 12: integration-e2e ✅
 **Goal:** Close tech debt (TD-2, TD-4), wire zoom-in navigation, harden backend (rate limiting, tombstone purge), SyncWorker integration test
-**Plans:** 5 plans — 12-01 through 12-05-PLAN.md
+**Plans:** 5/5 plans complete
 **Status:** Complete (all 5 plans done, 14/14 must-haves verified, implemented in commit d798e35)
 
 ### Phase 13: v0.6-gap-closure ✅
