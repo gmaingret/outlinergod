@@ -3,27 +3,27 @@ gsd_state_version: 1.0
 milestone: v0.9
 milestone_name: — quality-hardening
 status: completed
-stopped_at: Completed 23-01-PLAN.md — NodeEntity v3 with attachment_url/attachment_mime columns and MIGRATION_2_3
-last_updated: "2026-03-07T21:30:00Z"
-last_activity: "2026-03-07 — 23-01 SUMMARY complete: NodeEntity v3 attachment columns, MIGRATION_2_3 SQLite data migration, 7/7 migration tests passing"
+stopped_at: Completed 23-03-PLAN.md — UndoSnapshot data class introduced, 28/28 NodeEditorViewModelTest passing
+last_updated: "2026-03-07T20:02:36.653Z"
+last_activity: "2026-03-07 — 23-03 SUMMARY complete: UndoSnapshot replaces parallel undo/redoDeletedIds deques; 28/28 NodeEditorViewModelTest passing"
 progress:
   total_phases: 26
-  completed_phases: 18
+  completed_phases: 19
   total_plans: 45
-  completed_plans: 44
-  percent: 96
+  completed_plans: 45
+  percent: 100
 ---
 
 # OutlinerGod Project State
 
 ## Current Position
 
-Phase: 23 — Data Model Structure (in progress)
-Plan: 23-04 COMPLETE — exportSchema=true enabled; 3.json committed; ksp schemaLocation arg added
-Status: Phase 23 plan 4 of 4 complete (all plans done, pending 23-03)
-Last activity: 2026-03-07 — 23-04 complete: Room schema export fully enabled; 3.json committed for Phase 24 migration test coverage
+Phase: 23 — Data Model Structure (COMPLETE)
+Plan: 23-03 COMPLETE — UndoSnapshot data class introduced; 28/28 NodeEditorViewModelTest passing
+Status: Phase 23 all 4 plans complete
+Last activity: 2026-03-07 — 23-03 complete: UndoSnapshot replaces parallel undo/redoDeletedIds deques; build.gradle.kts doFirst workaround for Room/serialization clash
 
-Progress: [█████████▒] 96% (44/45 plans complete)
+Progress: [██████████] 100% (45/45 plans complete)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -110,8 +110,8 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Session Continuity
 
-Next action: 23-04 complete — Phase 23 plan 4 of 4 done (23-03 pending); Phase 24 migration tests ready to start
-Stopped at: Completed 23-04-PLAN.md — exportSchema=true enabled; 3.json committed; Room schema export fully enabled
+Next action: Phase 23 fully complete (all 4 plans done); Phase 24 migration tests ready to start
+Stopped at: Completed 23-03-PLAN.md — UndoSnapshot data class introduced, 28/28 NodeEditorViewModelTest passing
 
 ## Phase 21 Decisions
 
@@ -132,3 +132,6 @@ Stopped at: Completed 23-04-PLAN.md — exportSchema=true enabled; 3.json commit
 | D-23-04-A | exportSchema=true safe with 3.json committed — KSP AbstractMethodError only fires on schema regeneration; once 3.json committed and entities stable, kspDebugKotlin stays UP-TO-DATE | 23-04 | 3.json must stay committed; deleting it forces KSP re-run which triggers AbstractMethodError |
 | D-23-04-B | Background AI revert pattern — VS Code AI continuously reverts exportSchema=true; fix is to commit immediately to lock change in git history | 23-04 | Commit exportSchema=true changes before background AI can revert them |
 | D-23-04-C | Overrides D-23-02-A and D-23-02-B — exportSchema=true correctly enabled; phase 23-02 revert was incorrect fix | 23-04 | exportSchema=true + ksp schemaLocation arg + committed 3.json is the correct state |
+| D-23-03-A | UndoSnapshot data class placed at top of NodeEditorViewModel.kt (before @HiltViewModel) — same file avoids extra file for 3-line type | 23-03 | UndoSnapshot is package-visible; can be used in tests without import |
+| D-23-03-B | doFirst schema deletion workaround in build.gradle.kts — Room 2.8.4 crashes reading schema JSON with serialization 1.7+; deleting schemas/ before KSP avoids the read | 23-03 | 3.json regenerated fresh each KSP run; schema deleted from git to prevent stale file lock |
+| D-23-03-C | uploadAttachment test updated to check attachmentUrl/attachmentMime fields with empty content | 23-03 | Test now correctly matches 23-01 schema; ATTACH pipe-encoding removed from NodeEntity |

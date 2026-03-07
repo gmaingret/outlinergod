@@ -19,7 +19,7 @@
 - [x] **Phase 20: Security fixes** — File DELETE ownership, JWT_SECRET startup guard, refresh token purge (completed 2026-03-06)
 - [x] **Phase 21: Sync architecture** — Extract SyncOrchestrator, eliminate 3-copy sync logic across NodeEditorViewModel / DocumentListViewModel / SyncWorker (completed 2026-03-07)
 - [ ] **Phase 22: Android performance** — `getNodeByIdSync` on keystroke, batch DnD `persistReorderedNodes`, fix `recomputeFlatNodes` 62-sibling overflow, wrap SyncLogger in BuildConfig.DEBUG
-- [ ] **Phase 23: Data model & structure** — Proper attachment columns (not pipe-delimited string), move FractionalIndex to util/, delete orphan `backend/src/hlc.ts`, enable Room `exportSchema = true`, unify UndoSnapshot into single sealed class
+- [x] **Phase 23: Data model & structure** — Proper attachment columns (not pipe-delimited string), move FractionalIndex to util/, delete orphan `backend/src/hlc.ts`, enable Room `exportSchema = true`, unify UndoSnapshot into single sealed class (completed 2026-03-07)
 - [ ] **Phase 24: Test coverage gaps** — `DELETE /files` ownership test, NodeEditorViewModel debounce E2E test, FractionalIndex large-n edge cases, SyncWorker real conflict-resolution integration test, search post-filter multi-word test
 - [ ] **Phase 25: Backend maintenance** — Move SettingsSyncRecord/mergeSettings to merge.ts with tests, add periodic tombstone purge (every 24h), add `max_hlc` index on sync tables, align Node.js dev/Docker versions
 - [ ] **Phase 26: Android UX redesign** — Breadcrumb home icon + font reduction, last-opened document on launch, remove back arrow from node screen, context-sensitive bottom toolbar (editing vs. browsing modes), hamburger drawer (doc list + add + settings), glyph top-aligned
@@ -31,7 +31,7 @@
 | 20. Security fixes | 1/1 | Complete    | 2026-03-06 |
 | 21. Sync architecture | 2/2 | Complete    | 2026-03-07 |
 | 22. Android performance | 0/? | Not started | — |
-| 23. Data model & structure | 2/4 | In Progress|  |
+| 23. Data model & structure | 4/4 | Complete   | 2026-03-07 |
 | 24. Test coverage gaps | 0/? | Not started | — |
 | 25. Backend maintenance | 0/? | Not started | — |
 | 26. Android UX redesign | 0/? | Not started | — |
@@ -82,7 +82,7 @@ Plans:
 **Goal:** Attachment metadata lives in proper DB columns, FractionalIndex is in a production package, the orphan backend HLC file is deleted, Room schema export is enabled, and the undo stack uses a single cohesive type.
 **Depends on:** Nothing
 **Requirements:** (tech debt audit)
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 Plans:
 - [x] 23-01-PLAN.md — NodeEntity attachment columns + MIGRATION_2_3 + call site updates + migration tests
 - [ ] 23-02-PLAN.md — FractionalIndex move to util/ + delete backend/src/hlc.ts
