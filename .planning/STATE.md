@@ -3,27 +3,27 @@ gsd_state_version: 1.0
 milestone: v0.9
 milestone_name: — quality-hardening
 status: executing
-stopped_at: Completed 21-01-PLAN.md — SyncOrchestratorImpl canonical sync cycle
-last_updated: "2026-03-06T18:03:50.935Z"
-last_activity: "2026-03-06 — 20-01 complete: IDOR fix + JWT guard + refresh token purge, 4 new tests, 280 total backend tests pass"
+stopped_at: Completed 21-02-PLAN.md — SyncWorker + ViewModels delegate to SyncOrchestrator
+last_updated: "2026-03-07T09:00:00Z"
+last_activity: "2026-03-07 — 21-02 complete: SyncWorker/DocumentListViewModel/NodeEditorViewModel gutted to 3-line delegation; 13 test files updated; Phase 21 COMPLETE"
 progress:
   total_phases: 26
-  completed_phases: 16
+  completed_phases: 18
   total_plans: 41
-  completed_plans: 39
-  percent: 97
+  completed_plans: 41
+  percent: 100
 ---
 
 # OutlinerGod Project State
 
 ## Current Position
 
-Phase: 21 — Sync Architecture (In Progress)
-Plan: 21-01 COMPLETE — SyncOrchestrator interface + SyncOrchestratorImpl canonical sync cycle; 8 new tests (4 unit + 4 integration) pass
-Status: Phase 21 in progress; 21-02 next (SyncWorker + ViewModels delegate to SyncOrchestrator)
-Last activity: 2026-03-06 — 21-01 complete: SyncOrchestratorImpl with runCatching/getOrThrow, hasLocalData guard, Hilt binding, 8 tests pass
+Phase: 21 — Sync Architecture (COMPLETE)
+Plan: 21-02 COMPLETE — SyncWorker + ViewModels delegate to SyncOrchestrator; Phase 21 architecture refactor complete
+Status: Phase 21 COMPLETE; all 41/41 plans done
+Last activity: 2026-03-07 — 21-02 complete: 3-line delegation pattern in SyncWorker/DocumentListViewModel/NodeEditorViewModel; SyncOrchestrator is single source of sync logic
 
-Progress: [██████████] 95% (39/41 plans complete)
+Progress: [██████████] 100% (41/41 plans complete)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -110,8 +110,8 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Session Continuity
 
-Next action: Execute 21-02-PLAN.md — refactor SyncWorker and ViewModels to delegate to SyncOrchestrator
-Stopped at: Completed 21-01-PLAN.md — SyncOrchestratorImpl canonical sync cycle
+Next action: All 41 plans complete — Phase 21 architecture refactor done
+Stopped at: Completed 21-02-PLAN.md — SyncWorker + ViewModels delegate to SyncOrchestrator
 
 ## Phase 21 Decisions
 
@@ -120,3 +120,5 @@ Stopped at: Completed 21-01-PLAN.md — SyncOrchestratorImpl canonical sync cycl
 | D-SYNC-01 | SyncOrchestratorImpl uses runCatching+getOrThrow (not getOrElse+retry) | 21-01 | WorkManager maps Result.failure() to retry in Plan 02; orchestrator stays pure |
 | D-SYNC-02 | hasLocalData guard preserved: countDocuments==0 forces lastSyncHlc="0" | 21-01 | Handles reinstall-with-DataStore-backup scenario |
 | D-SYNC-03 | Document upsert before node upsert in pull apply step | 21-01 | Foreign key constraint safety (nodes.document_id references documents.id) |
+| D-SYNC-04 | SyncRepository removed from SyncWorker, DocumentListViewModel, NodeEditorViewModel constructors | 21-02 | Confirmed no remaining usages; callers now inject SyncOrchestrator only |
+| D-SYNC-05 | authRepository retained in SyncWorker constructor despite no doWork() usage | 21-02 | Kept per CONTEXT.md spec for potential future use |

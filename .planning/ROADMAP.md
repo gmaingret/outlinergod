@@ -17,7 +17,7 @@
 ### Phases
 
 - [x] **Phase 20: Security fixes** — File DELETE ownership, JWT_SECRET startup guard, refresh token purge (completed 2026-03-06)
-- [ ] **Phase 21: Sync architecture** — Extract SyncOrchestrator, eliminate 3-copy sync logic across NodeEditorViewModel / DocumentListViewModel / SyncWorker
+- [x] **Phase 21: Sync architecture** — Extract SyncOrchestrator, eliminate 3-copy sync logic across NodeEditorViewModel / DocumentListViewModel / SyncWorker (completed 2026-03-07)
 - [ ] **Phase 22: Android performance** — `getNodeByIdSync` on keystroke, batch DnD `persistReorderedNodes`, fix `recomputeFlatNodes` 62-sibling overflow, wrap SyncLogger in BuildConfig.DEBUG
 - [ ] **Phase 23: Data model & structure** — Proper attachment columns (not pipe-delimited string), move FractionalIndex to util/, delete orphan `backend/src/hlc.ts`, enable Room `exportSchema = true`, unify UndoSnapshot into single sealed class
 - [ ] **Phase 24: Test coverage gaps** — `DELETE /files` ownership test, NodeEditorViewModel debounce E2E test, FractionalIndex large-n edge cases, SyncWorker real conflict-resolution integration test, search post-filter multi-word test
@@ -29,7 +29,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 20. Security fixes | 1/1 | Complete    | 2026-03-06 |
-| 21. Sync architecture | 1/2 | In Progress|  |
+| 21. Sync architecture | 2/2 | Complete   | 2026-03-07 |
 | 22. Android performance | 0/? | Not started | — |
 | 23. Data model & structure | 0/? | Not started | — |
 | 24. Test coverage gaps | 0/? | Not started | — |
@@ -61,7 +61,7 @@ Plans:
   3. All 222+ Android tests still pass
   4. A sync bug fix or new entity type requires editing exactly one file
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 21-01-PLAN.md — SyncOrchestrator interface + SyncOrchestratorImpl + unit and integration tests (TDD)
 - [ ] 21-02-PLAN.md — Gut SyncWorker + DocumentListViewModel + NodeEditorViewModel + update caller tests
