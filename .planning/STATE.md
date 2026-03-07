@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v0.9
 milestone_name: — quality-hardening
 status: completed
-stopped_at: Completed 21-02-PLAN.md — SyncWorker + ViewModels delegate to SyncOrchestrator
-last_updated: "2026-03-07T08:19:46.737Z"
-last_activity: "2026-03-07 — 21-02 complete: 3-line delegation pattern in SyncWorker/DocumentListViewModel/NodeEditorViewModel; SyncOrchestrator is single source of sync logic"
+stopped_at: Completed 23-02-PLAN.md — FractionalIndex moved to util/; orphan backend/src/hlc.ts deleted
+last_updated: "2026-03-07T19:37:00Z"
+last_activity: "2026-03-07 — 23-02 complete: FractionalIndex package moved prototype→util; backend/src/hlc.ts deleted; Room 2.8.4 exportSchema KSP bug fixed"
 progress:
   total_phases: 26
   completed_phases: 18
@@ -18,10 +18,10 @@ progress:
 
 ## Current Position
 
-Phase: 21 — Sync Architecture (COMPLETE)
-Plan: 21-02 COMPLETE — SyncWorker + ViewModels delegate to SyncOrchestrator; Phase 21 architecture refactor complete
-Status: Phase 21 COMPLETE; all 41/41 plans done
-Last activity: 2026-03-07 — 21-02 complete: 3-line delegation pattern in SyncWorker/DocumentListViewModel/NodeEditorViewModel; SyncOrchestrator is single source of sync logic
+Phase: 23 — Data Model Structure (in progress)
+Plan: 23-02 COMPLETE — FractionalIndex moved to util/; orphan backend/src/hlc.ts deleted
+Status: Phase 23 plan 2 of 4 complete
+Last activity: 2026-03-07 — 23-02 complete: FractionalIndex package moved prototype→util; backend/src/hlc.ts deleted; Room 2.8.4 exportSchema KSP bug fixed
 
 Progress: [██████████] 100% (41/41 plans complete)
 
@@ -122,3 +122,10 @@ Stopped at: Completed 21-02-PLAN.md — SyncWorker + ViewModels delegate to Sync
 | D-SYNC-03 | Document upsert before node upsert in pull apply step | 21-01 | Foreign key constraint safety (nodes.document_id references documents.id) |
 | D-SYNC-04 | SyncRepository removed from SyncWorker, DocumentListViewModel, NodeEditorViewModel constructors | 21-02 | Confirmed no remaining usages; callers now inject SyncOrchestrator only |
 | D-SYNC-05 | authRepository retained in SyncWorker constructor despite no doWork() usage | 21-02 | Kept per CONTEXT.md spec for potential future use |
+
+## Phase 23 Decisions
+
+| ID | Decision | Phase-Plan | Impact |
+|----|----------|------------|--------|
+| D-23-02-A | exportSchema=false in AppDatabase to fix Room 2.8.4 + kotlinx-serialization 1.8.1 KSP conflict | 23-02 | AbstractMethodError in FieldBundle$$serializer prevented all Android tests from compiling |
+| D-23-02-B | room.schemaLocation KSP arg removed — migration tests use buildInMemory() directly | 23-02 | Removing arg eliminates KSP failure without affecting migration test coverage |
