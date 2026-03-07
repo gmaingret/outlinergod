@@ -58,6 +58,12 @@ android {
         unitTests {
             isReturnDefaultValues = true
             isIncludeAndroidResources = true
+            all {
+                it.jvmArgs("-Xmx3072m", "-XX:+HeapDumpOnOutOfMemoryError")
+                it.maxHeapSize = "3072m"
+                it.reports.junitXml.outputLocation.set(layout.buildDirectory.dir("test-results-new/${it.name}"))
+                it.reports.html.outputLocation.set(layout.buildDirectory.dir("reports-new/tests/${it.name}"))
+            }
         }
     }
 }
