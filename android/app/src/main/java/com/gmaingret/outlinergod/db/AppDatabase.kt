@@ -23,7 +23,7 @@ import com.gmaingret.outlinergod.db.entity.SettingsEntity
         SettingsEntity::class
     ],
     version = 3,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun nodeDao(): NodeDao
