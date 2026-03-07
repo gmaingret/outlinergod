@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.9
 milestone_name: — quality-hardening
 status: completed
-stopped_at: Completed 23-03-PLAN.md — UndoSnapshot data class introduced, 28/28 NodeEditorViewModelTest passing
-last_updated: "2026-03-07T20:02:36.653Z"
-last_activity: "2026-03-07 — 23-03 SUMMARY complete: UndoSnapshot replaces parallel undo/redoDeletedIds deques; 28/28 NodeEditorViewModelTest passing"
+stopped_at: Completed 23-05-PLAN.md — doFirst hook removed from build.gradle.kts, Room schema 3.json committed, kspDebugKotlin UP-TO-DATE
+last_updated: "2026-03-07T22:22:24.057Z"
+last_activity: "2026-03-07 — 23-03 complete: UndoSnapshot replaces parallel undo/redoDeletedIds deques; build.gradle.kts doFirst workaround for Room/serialization clash"
 progress:
   total_phases: 26
   completed_phases: 19
-  total_plans: 45
-  completed_plans: 45
+  total_plans: 46
+  completed_plans: 46
   percent: 100
 ---
 
@@ -19,11 +19,11 @@ progress:
 ## Current Position
 
 Phase: 23 — Data Model Structure (COMPLETE)
-Plan: 23-03 COMPLETE — UndoSnapshot data class introduced; 28/28 NodeEditorViewModelTest passing
-Status: Phase 23 all 4 plans complete
-Last activity: 2026-03-07 — 23-03 complete: UndoSnapshot replaces parallel undo/redoDeletedIds deques; build.gradle.kts doFirst workaround for Room/serialization clash
+Plan: 23-05 COMPLETE — doFirst hook removed from build.gradle.kts; Room schema 3.json committed; kspDebugKotlin UP-TO-DATE
+Status: Phase 23 all 5 plans complete (including gap closure 23-05)
+Last activity: 2026-03-07 — 23-05 complete: destructive doFirst removed, 3.json committed to git, Phase 24 MigrationTestHelper unblocked
 
-Progress: [██████████] 100% (45/45 plans complete)
+Progress: [██████████] 100% (46/46 plans complete)
 
 **Core value:** Self-hosted, offline-first outliner that works identically on Android and in the browser — your notes stay on your server.
 **Current focus:** v0.8 web-client — React + Vite web client at https://notes.gregorymaingret.fr
@@ -110,8 +110,8 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Session Continuity
 
-Next action: Phase 23 fully complete (all 4 plans done); Phase 24 migration tests ready to start
-Stopped at: Completed 23-03-PLAN.md — UndoSnapshot data class introduced, 28/28 NodeEditorViewModelTest passing
+Next action: Phase 23 fully complete (all 5 plans done, including gap closure 23-05); Phase 24 migration tests ready to start; 3.json committed and MigrationTestHelper unblocked
+Stopped at: Completed 23-05-PLAN.md — doFirst hook removed from build.gradle.kts, Room schema 3.json committed, kspDebugKotlin UP-TO-DATE
 
 ## Phase 21 Decisions
 
@@ -135,3 +135,5 @@ Stopped at: Completed 23-03-PLAN.md — UndoSnapshot data class introduced, 28/2
 | D-23-03-A | UndoSnapshot data class placed at top of NodeEditorViewModel.kt (before @HiltViewModel) — same file avoids extra file for 3-line type | 23-03 | UndoSnapshot is package-visible; can be used in tests without import |
 | D-23-03-B | doFirst schema deletion workaround in build.gradle.kts — Room 2.8.4 crashes reading schema JSON with serialization 1.7+; deleting schemas/ before KSP avoids the read | 23-03 | 3.json regenerated fresh each KSP run; schema deleted from git to prevent stale file lock |
 | D-23-03-C | uploadAttachment test updated to check attachmentUrl/attachmentMime fields with empty content | 23-03 | Test now correctly matches 23-01 schema; ATTACH pipe-encoding removed from NodeEntity |
+| D-23-05-A | Remove doFirst deleteRecursively hook; manually delete 3.json once to allow KSP fresh write, commit result — kspDebugKotlin stays UP-TO-DATE thereafter (overrides D-23-03-B workaround) | 23-05 | 3.json committed; Phase 24 MigrationTestHelper unblocked; AbstractMethodError cannot fire when KSP is UP-TO-DATE |
+| D-23-05-B | --rerun-tasks invalidates KSP incremental cache and triggers AbstractMethodError even with 3.json committed; never use --rerun-tasks after 3.json is committed | 23-05 | Avoid --rerun-tasks flag in this project; use clean builds only if needed |
