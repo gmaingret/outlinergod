@@ -1,8 +1,5 @@
 package com.gmaingret.outlinergod.ui.screen.documentlist
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.datastore.preferences.core.Preferences
 import com.gmaingret.outlinergod.db.dao.BookmarkDao
 import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.db.dao.NodeDao
@@ -10,8 +7,8 @@ import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.DocumentEntity
 import com.gmaingret.outlinergod.db.entity.NodeEntity
 import com.gmaingret.outlinergod.repository.AuthRepository
-import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
+import com.gmaingret.outlinergod.sync.SyncOrchestrator
 import com.gmaingret.outlinergod.ui.common.SyncStatus
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -24,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -32,27 +28,20 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
 import org.orbitmvi.orbit.test.test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DocumentListViewModelTest {
 
-    @get:Rule
-    val tempDir = TemporaryFolder()
-
     private val testDispatcher = StandardTestDispatcher()
-    private val testScope = TestScope(testDispatcher)
     private lateinit var documentDao: DocumentDao
     private lateinit var nodeDao: NodeDao
     private lateinit var bookmarkDao: BookmarkDao
     private lateinit var settingsDao: SettingsDao
     private lateinit var authRepository: AuthRepository
-    private lateinit var syncRepository: SyncRepository
+    private lateinit var syncOrchestrator: SyncOrchestrator
     private lateinit var hlcClock: HlcClock
-    private lateinit var dataStore: DataStore<Preferences>
 
     @Before
     fun setUp() {
@@ -62,17 +51,14 @@ class DocumentListViewModelTest {
         bookmarkDao = mockk(relaxed = true)
         settingsDao = mockk(relaxed = true)
         authRepository = mockk()
-        syncRepository = mockk(relaxed = true)
+        syncOrchestrator = mockk(relaxed = true)
         hlcClock = mockk()
-        dataStore = PreferenceDataStoreFactory.create(scope = testScope) {
-            tempDir.newFile("test_prefs.preferences_pb")
-        }
         every { authRepository.getAccessToken() } returns flowOf("user-1")
         every { authRepository.getUserId() } returns flowOf("user-1")
         every { authRepository.getDeviceId() } returns flowOf("device-1")
         every { hlcClock.generate(any()) } returns "1636300202430-00000-device-1"
         // Default: sync fails fast so createDocument tests can consume the resulting state transitions
-        coEvery { syncRepository.pull(any(), any()) } returns Result.failure(RuntimeException("sync not mocked"))
+        coEvery { syncOrchestrator.fullSync() } returns Result.failure(RuntimeException("sync not mocked"))
     }
 
     @After
@@ -111,9 +97,8 @@ class DocumentListViewModelTest {
             bookmarkDao = bookmarkDao,
             settingsDao = settingsDao,
             authRepository = authRepository,
-            syncRepository = syncRepository,
-            hlcClock = hlcClock,
-            dataStore = dataStore
+            syncOrchestrator = syncOrchestrator,
+            hlcClock = hlcClock
         )
     }
 
@@ -146,7 +131,7 @@ class DocumentListViewModelTest {
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.createDocument("Doc", "document", null, "V")
-            // triggerSync is called after insert; pull mock fails → Syncing then Error
+            // triggerSync is called after insert; orchestrator fails → Syncing then Error
             expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Syncing))
             expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Error))
         }
@@ -162,7 +147,7 @@ class DocumentListViewModelTest {
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.createDocument("Doc", "document", null, "V")
-            // triggerSync is called after insert; pull mock fails → Syncing then Error
+            // triggerSync is called after insert; orchestrator fails → Syncing then Error
             expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Syncing))
             expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Error))
         }
@@ -189,7 +174,7 @@ class DocumentListViewModelTest {
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.deleteDocument("doc-1")
-            // triggerSync called after delete; pull mock fails -> Syncing then Error
+            // triggerSync called after delete; orchestrator fails -> Syncing then Error
             expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Syncing))
             expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Error))
         }
@@ -220,7 +205,7 @@ class DocumentListViewModelTest {
         val viewModel = createViewModel()
         viewModel.test(this) {
             containerHost.renameDocument("doc-1", "New Name")
-            // triggerSync is called after rename; pull mock fails → Syncing then Error
+            // triggerSync is called after rename; orchestrator fails → Syncing then Error
             expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Syncing))
             expectState(DocumentListUiState.Success(syncStatus = SyncStatus.Error))
         }

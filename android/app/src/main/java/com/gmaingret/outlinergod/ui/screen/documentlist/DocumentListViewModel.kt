@@ -1,36 +1,22 @@
 package com.gmaingret.outlinergod.ui.screen.documentlist
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import com.gmaingret.outlinergod.sync.SyncConstants
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gmaingret.outlinergod.db.dao.BookmarkDao
 import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.db.dao.NodeDao
 import com.gmaingret.outlinergod.db.dao.SettingsDao
-import com.gmaingret.outlinergod.ui.common.SyncStatus
 import com.gmaingret.outlinergod.db.entity.DocumentEntity
 import com.gmaingret.outlinergod.db.entity.NodeEntity
-import com.gmaingret.outlinergod.network.model.SyncPushPayload
-import com.gmaingret.outlinergod.sync.toNodeEntity
-import com.gmaingret.outlinergod.sync.toDocumentEntity
-import com.gmaingret.outlinergod.sync.toBookmarkEntity
-import com.gmaingret.outlinergod.sync.toSettingsEntity
-import com.gmaingret.outlinergod.sync.toNodeSyncRecord
-import com.gmaingret.outlinergod.sync.toDocumentSyncRecord
-import com.gmaingret.outlinergod.sync.toBookmarkSyncRecord
-import com.gmaingret.outlinergod.sync.toSettingsSyncRecord
 import com.gmaingret.outlinergod.repository.AuthRepository
-import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
+import com.gmaingret.outlinergod.sync.SyncOrchestrator
+import com.gmaingret.outlinergod.ui.common.SyncStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.viewmodel.container
@@ -43,9 +29,8 @@ class DocumentListViewModel @Inject constructor(
     private val bookmarkDao: BookmarkDao,
     private val settingsDao: SettingsDao,
     private val authRepository: AuthRepository,
-    private val syncRepository: SyncRepository,
+    private val syncOrchestrator: SyncOrchestrator,
     private val hlcClock: HlcClock,
-    private val dataStore: DataStore<Preferences>
 ) : ViewModel(), ContainerHost<DocumentListUiState, DocumentListSideEffect> {
 
     override val container = container<DocumentListUiState, DocumentListSideEffect>(DocumentListUiState.Loading)
@@ -67,93 +52,17 @@ class DocumentListViewModel @Inject constructor(
     }
 
     fun triggerSync() = intent {
-        try {
-            // Set syncing status
-            reduce {
-                when (val current = state) {
-                    is DocumentListUiState.Success -> current.copy(syncStatus = SyncStatus.Syncing)
-                    else -> DocumentListUiState.Success(syncStatus = SyncStatus.Syncing)
-                }
+        reduce {
+            when (val s = state) {
+                is DocumentListUiState.Success -> s.copy(syncStatus = SyncStatus.Syncing)
+                else -> DocumentListUiState.Success(syncStatus = SyncStatus.Syncing)
             }
-
-            val deviceId = authRepository.getDeviceId().first()
-            val userId = authRepository.getUserId().filterNotNull().first()
-            val storedHlc = dataStore.data.map { prefs ->
-                prefs[SyncConstants.lastSyncHlcKey(userId)] ?: "0"
-            }.first()
-            // If Room is empty (e.g. reinstall with DataStore backup restored), force full pull
-            // so we re-download everything regardless of the stale HLC cursor.
-            val hasLocalData = documentDao.countDocuments(userId) > 0
-            val lastSyncHlc = if (hasLocalData) storedHlc else "0"
-
-            // Pull changes from server
-            val pullResult = syncRepository.pull(since = lastSyncHlc, deviceId = deviceId)
-            pullResult.getOrThrow().let { response ->
-                // Upsert pulled data into local DB — documents must come before nodes
-                // so that any referential integrity is satisfied at the application level.
-                if (response.documents.isNotEmpty()) {
-                    documentDao.upsertDocuments(response.documents.map { it.toDocumentEntity() })
-                }
-                if (response.nodes.isNotEmpty()) {
-                    nodeDao.upsertNodes(response.nodes.map { it.toNodeEntity() })
-                }
-                if (response.bookmarks.isNotEmpty()) {
-                    bookmarkDao.upsertBookmarks(response.bookmarks.map { it.toBookmarkEntity() })
-                }
-                response.settings?.let { settings ->
-                    settingsDao.upsertSettings(settings.toSettingsEntity())
-                }
-            }
-
-            // Build and push local changes
-            val pendingNodes = nodeDao.getPendingChanges(userId, lastSyncHlc, deviceId)
-            val pendingDocs = documentDao.getPendingChanges(userId, lastSyncHlc, deviceId)
-            val pendingBookmarks = bookmarkDao.getPendingChanges(userId, lastSyncHlc, deviceId)
-            val pendingSettings = settingsDao.getPendingSettings(userId, lastSyncHlc, deviceId)
-
-            val pushPayload = SyncPushPayload(
-                deviceId = deviceId,
-                nodes = pendingNodes.map { it.toNodeSyncRecord() }.ifEmpty { null },
-                documents = pendingDocs.map { it.toDocumentSyncRecord() }.ifEmpty { null },
-                bookmarks = pendingBookmarks.map { it.toBookmarkSyncRecord() }.ifEmpty { null },
-                settings = pendingSettings?.toSettingsSyncRecord()
-            )
-
-            val pushResult = syncRepository.push(pushPayload)
-            pushResult.getOrThrow().let { response ->
-                // Apply conflict resolutions from server
-                if (response.conflicts.nodes.isNotEmpty()) {
-                    nodeDao.upsertNodes(response.conflicts.nodes.map { it.toNodeEntity() })
-                }
-                if (response.conflicts.documents.isNotEmpty()) {
-                    documentDao.upsertDocuments(response.conflicts.documents.map { it.toDocumentEntity() })
-                }
-                if (response.conflicts.bookmarks.isNotEmpty()) {
-                    bookmarkDao.upsertBookmarks(response.conflicts.bookmarks.map { it.toBookmarkEntity() })
-                }
-                response.conflicts.settings?.let { settings ->
-                    settingsDao.upsertSettings(settings.toSettingsEntity())
-                }
-
-                // Update last sync HLC
-                dataStore.edit { prefs ->
-                    prefs[SyncConstants.lastSyncHlcKey(userId)] = response.serverHlc
-                }
-            }
-
-            // Set idle status
-            reduce {
-                when (val current = state) {
-                    is DocumentListUiState.Success -> current.copy(syncStatus = SyncStatus.Idle)
-                    else -> DocumentListUiState.Success(syncStatus = SyncStatus.Idle)
-                }
-            }
-        } catch (_: Exception) {
-            reduce {
-                when (val current = state) {
-                    is DocumentListUiState.Success -> current.copy(syncStatus = SyncStatus.Error)
-                    else -> DocumentListUiState.Success(syncStatus = SyncStatus.Error)
-                }
+        }
+        val result = syncOrchestrator.fullSync()
+        reduce {
+            when (val s = state) {
+                is DocumentListUiState.Success -> s.copy(syncStatus = if (result.isSuccess) SyncStatus.Idle else SyncStatus.Error)
+                else -> DocumentListUiState.Success(syncStatus = if (result.isSuccess) SyncStatus.Idle else SyncStatus.Error)
             }
         }
     }
