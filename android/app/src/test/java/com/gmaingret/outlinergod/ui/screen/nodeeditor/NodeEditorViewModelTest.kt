@@ -712,11 +712,13 @@ class NodeEditorViewModelTest {
             val idleState = awaitState()
             assertEquals(SyncStatus.Idle, idleState.syncStatus)
 
-            // Verify a child ATTACH node was inserted under "n1"
+            // Verify a child attachment node was inserted under "n1"
+            // Since 23-01 the attachment data lives in dedicated columns, not encoded in content
             val inserted = nodeSlot.captured
             assertEquals("n1", inserted.parentId)
-            assertTrue("Content should use ATTACH format",
-                inserted.content.startsWith("ATTACH|image/jpeg|abc.jpg|"))
+            assertEquals("", inserted.content)
+            assertEquals("/api/files/abc.jpg", inserted.attachmentUrl)
+            assertEquals("image/jpeg", inserted.attachmentMime)
         }
     }
 
