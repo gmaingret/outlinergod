@@ -29,7 +29,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 20. Security fixes | 1/1 | Complete    | 2026-03-06 |
-| 21. Sync architecture | 2/2 | Complete   | 2026-03-07 |
+| 21. Sync architecture | 2/2 | Complete    | 2026-03-07 |
 | 22. Android performance | 0/? | Not started | — |
 | 23. Data model & structure | 0/? | Not started | — |
 | 24. Test coverage gaps | 0/? | Not started | — |
