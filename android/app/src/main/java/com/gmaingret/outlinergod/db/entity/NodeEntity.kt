@@ -28,4 +28,6 @@ data class NodeEntity(
     @ColumnInfo(name = "device_id") val deviceId: String = "",
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "updated_at") val updatedAt: Long,
+    @ColumnInfo(name = "attachment_url") val attachmentUrl: String? = null,
+    @ColumnInfo(name = "attachment_mime") val attachmentMime: String? = null,
 )

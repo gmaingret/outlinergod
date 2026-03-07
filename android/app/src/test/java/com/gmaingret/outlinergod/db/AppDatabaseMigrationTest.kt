@@ -49,7 +49,9 @@ class AppDatabaseMigrationTest {
         userId: String = "user1",
         documentId: String = "doc1",
         sortOrder: String = "a0",
-        deletedAt: Long? = null
+        deletedAt: Long? = null,
+        attachmentUrl: String? = null,
+        attachmentMime: String? = null,
     ) = NodeEntity(
         id = id,
         documentId = documentId,
@@ -59,13 +61,64 @@ class AppDatabaseMigrationTest {
         sortOrder = sortOrder,
         deletedAt = deletedAt,
         createdAt = System.currentTimeMillis(),
-        updatedAt = System.currentTimeMillis()
+        updatedAt = System.currentTimeMillis(),
+        attachmentUrl = attachmentUrl,
+        attachmentMime = attachmentMime,
     )
 
     @Test
-    fun databaseVersion_is2() {
+    fun databaseVersion_is3() {
         if (!::db.isInitialized) return
-        assertEquals(2, db.openHelper.readableDatabase.version)
+        assertEquals(3, db.openHelper.readableDatabase.version)
+    }
+
+    @Test
+    fun migration_2_3_addsAttachmentColumns() = runTest {
+        if (!::db.isInitialized) return@runTest
+        val node = makeNode(
+            id = "n_attach",
+            content = "",
+            attachmentUrl = "https://host/f.jpg",
+            attachmentMime = "image/png"
+        )
+        db.nodeDao().insertNode(node)
+        val results = db.nodeDao().getNodesByDocumentSync("doc1")
+        val found = results.first { it.id == "n_attach" }
+        assertEquals("https://host/f.jpg", found.attachmentUrl)
+        assertEquals("image/png", found.attachmentMime)
+    }
+
+    @Test
+    fun migration_2_3_parsesAttachContent() {
+        if (!::db.isInitialized) return
+        val rawDb = db.openHelper.writableDatabase
+        // Insert a row with the old ATTACH| content format using raw SQL
+        rawDb.execSQL(
+            """INSERT INTO nodes (id, document_id, user_id, content, content_hlc, note, note_hlc,
+               sort_order, sort_order_hlc, completed, completed_hlc, color, color_hlc,
+               collapsed, collapsed_hlc, deleted_hlc, device_id, created_at, updated_at)
+               VALUES ('n_old', 'doc1', 'user1', 'ATTACH|image/png|photo.jpg|https://host/file.jpg',
+               '', '', '', 'b0', '', 0, '', 0, '', 0, '', '', '', 1000, 1000)"""
+        )
+        // Run the MIGRATION_2_3 UPDATE SQL directly
+        rawDb.execSQL("""
+            UPDATE nodes SET
+              attachment_mime = SUBSTR(content, 8, INSTR(SUBSTR(content, 8), '|') - 1),
+              attachment_url  = SUBSTR(content,
+                  8 + INSTR(SUBSTR(content, 8), '|')
+                    + INSTR(SUBSTR(content, 8 + INSTR(SUBSTR(content, 8), '|')), '|')),
+              content = ''
+            WHERE content LIKE 'ATTACH|%'
+        """.trimIndent())
+        val cursor = rawDb.query("SELECT attachment_mime, attachment_url, content FROM nodes WHERE id='n_old'")
+        assertTrue("Expected one result row", cursor.moveToFirst())
+        val mime = cursor.getString(0)
+        val url = cursor.getString(1)
+        val content = cursor.getString(2)
+        cursor.close()
+        assertEquals("image/png", mime)
+        assertEquals("https://host/file.jpg", url)
+        assertEquals("", content)
     }
 
     @Test

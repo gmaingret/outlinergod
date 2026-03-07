@@ -22,8 +22,8 @@ import com.gmaingret.outlinergod.db.entity.SettingsEntity
         BookmarkEntity::class,
         SettingsEntity::class
     ],
-    version = 2,
-    exportSchema = false
+    version = 3,
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun nodeDao(): NodeDao
@@ -82,6 +82,34 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         /**
+         * Migration from version 2 to 3: adds attachment_url and attachment_mime columns.
+         *
+         * Any existing nodes with the old ATTACH|mime|filename|url pipe-delimited content
+         * are parsed via SQLite SUBSTR/INSTR and the values written to the new columns.
+         * The content field is cleared to "" for attachment nodes.
+         *
+         * Format: ATTACH|mime|filename|url (4 pipe-delimited segments, 3 pipes total)
+         *   - SUBSTR(content, 8) skips the "ATTACH|" prefix
+         *   - First INSTR finds the mime/filename boundary → extracts mime
+         *   - Second INSTR finds the filename/url boundary → extracts url
+         */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE nodes ADD COLUMN attachment_url TEXT")
+                db.execSQL("ALTER TABLE nodes ADD COLUMN attachment_mime TEXT")
+                db.execSQL("""
+                    UPDATE nodes SET
+                      attachment_mime = SUBSTR(content, 8, INSTR(SUBSTR(content, 8), '|') - 1),
+                      attachment_url  = SUBSTR(content,
+                          8 + INSTR(SUBSTR(content, 8), '|')
+                            + INSTR(SUBSTR(content, 8 + INSTR(SUBSTR(content, 8), '|')), '|')),
+                      content = ''
+                    WHERE content LIKE 'ATTACH|%'
+                """.trimIndent())
+            }
+        }
+
+        /**
          * Callback that sets up FTS4 on a brand-new database (version 2 fresh install).
          * Room does NOT run migrations when creating a database from scratch — the callback
          * ensures nodes_fts and its triggers exist on initial creation too.
@@ -95,7 +123,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun build(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "outlinergod.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .addCallback(FTS_CALLBACK)
                 .build()
 
@@ -108,7 +136,7 @@ abstract class AppDatabase : RoomDatabase() {
          */
         fun buildInMemory(context: Context): AppDatabase =
             Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .allowMainThreadQueries()
                 .build()
     }
