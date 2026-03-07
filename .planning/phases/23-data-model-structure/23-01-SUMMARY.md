@@ -125,6 +125,15 @@ completed: 2026-03-07
 - All attachment display logic is now type-safe (no regex at render time)
 - MIGRATION_2_3 handles existing installations with ATTACH| content rows
 
+## Self-Check: PASSED
+
+- `23-01-SUMMARY.md` — FOUND at `.planning/phases/23-data-model-structure/23-01-SUMMARY.md`
+- `c65c45d` (Task 1 commit) — FOUND in git log
+- `NodeEntity.kt` — FOUND; contains `attachment_url` column annotation
+- `AppDatabase.kt` — FOUND; contains `MIGRATION_2_3` companion val
+- `NodeEditorScreen.kt` — FOUND; contains `attachmentUrl != null` check
+- `AppDatabaseMigrationTest.kt` — FOUND; contains `databaseVersion_is3` test
+
 ---
 *Phase: 23-data-model-structure*
 *Completed: 2026-03-07*
