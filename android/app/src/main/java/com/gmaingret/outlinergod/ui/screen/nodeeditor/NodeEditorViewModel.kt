@@ -3,8 +3,6 @@ package com.gmaingret.outlinergod.ui.screen.nodeeditor
 import android.net.Uri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import com.gmaingret.outlinergod.sync.SyncConstants
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,20 +14,11 @@ import com.gmaingret.outlinergod.db.entity.NodeEntity
 import com.gmaingret.outlinergod.prototype.FractionalIndex
 import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.FileRepository
-import com.gmaingret.outlinergod.repository.SyncRepository
 import com.gmaingret.outlinergod.sync.HlcClock
+import com.gmaingret.outlinergod.sync.SyncOrchestrator
 import com.gmaingret.outlinergod.ui.common.SyncStatus
 import com.gmaingret.outlinergod.ui.mapper.FlatNode
 import com.gmaingret.outlinergod.ui.mapper.mapToFlatList
-import com.gmaingret.outlinergod.sync.toBookmarkSyncRecord
-import com.gmaingret.outlinergod.sync.toSettingsSyncRecord
-import com.gmaingret.outlinergod.sync.toDocumentSyncRecord
-import com.gmaingret.outlinergod.sync.toNodeSyncRecord
-import com.gmaingret.outlinergod.sync.toBookmarkEntity
-import com.gmaingret.outlinergod.sync.toDocumentEntity
-import com.gmaingret.outlinergod.sync.toNodeEntity
-import com.gmaingret.outlinergod.sync.toSettingsEntity
-import com.gmaingret.outlinergod.network.model.SyncPushPayload
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -48,7 +37,7 @@ class NodeEditorViewModel @Inject constructor(
     private val nodeDao: NodeDao,
     private val authRepository: AuthRepository,
     private val hlcClock: HlcClock,
-    private val syncRepository: SyncRepository,
+    private val syncOrchestrator: SyncOrchestrator,
     private val documentDao: DocumentDao,
     private val bookmarkDao: BookmarkDao,
     private val settingsDao: SettingsDao,
@@ -881,70 +870,9 @@ class NodeEditorViewModel @Inject constructor(
     private var inactivityTimerJob: Job? = null
 
     private fun triggerSync() = intent {
-        try {
-            reduce { state.copy(syncStatus = SyncStatus.Syncing) }
-
-            val deviceId = authRepository.getDeviceId().first()
-            val userId = authRepository.getUserId().filterNotNull().first()
-            val lastSyncHlc = dataStore.data.map { prefs ->
-                prefs[SyncConstants.lastSyncHlcKey(userId)] ?: "0"
-            }.first()
-
-            // Pull changes from server
-            val pullResult = syncRepository.pull(since = lastSyncHlc, deviceId = deviceId)
-            pullResult.getOrThrow().let { response ->
-                if (response.nodes.isNotEmpty()) {
-                    nodeDao.upsertNodes(response.nodes.map { it.toNodeEntity() })
-                }
-                if (response.documents.isNotEmpty()) {
-                    documentDao.upsertDocuments(response.documents.map { it.toDocumentEntity() })
-                }
-                if (response.bookmarks.isNotEmpty()) {
-                    bookmarkDao.upsertBookmarks(response.bookmarks.map { it.toBookmarkEntity() })
-                }
-                response.settings?.let { settings ->
-                    settingsDao.upsertSettings(settings.toSettingsEntity())
-                }
-            }
-
-            // Build and push local changes
-            val pendingNodes = nodeDao.getPendingChanges(userId, lastSyncHlc, deviceId)
-            val pendingDocs = documentDao.getPendingChanges(userId, lastSyncHlc, deviceId)
-            val pendingBookmarks = bookmarkDao.getPendingChanges(userId, lastSyncHlc, deviceId)
-            val pendingSettings = settingsDao.getPendingSettings(userId, lastSyncHlc, deviceId)
-
-            val pushPayload = SyncPushPayload(
-                deviceId = deviceId,
-                nodes = pendingNodes.map { it.toNodeSyncRecord() }.ifEmpty { null },
-                documents = pendingDocs.map { it.toDocumentSyncRecord() }.ifEmpty { null },
-                bookmarks = pendingBookmarks.map { it.toBookmarkSyncRecord() }.ifEmpty { null },
-                settings = pendingSettings?.toSettingsSyncRecord()
-            )
-
-            val pushResult = syncRepository.push(pushPayload)
-            pushResult.getOrThrow().let { response ->
-                if (response.conflicts.nodes.isNotEmpty()) {
-                    nodeDao.upsertNodes(response.conflicts.nodes.map { it.toNodeEntity() })
-                }
-                if (response.conflicts.documents.isNotEmpty()) {
-                    documentDao.upsertDocuments(response.conflicts.documents.map { it.toDocumentEntity() })
-                }
-                if (response.conflicts.bookmarks.isNotEmpty()) {
-                    bookmarkDao.upsertBookmarks(response.conflicts.bookmarks.map { it.toBookmarkEntity() })
-                }
-                response.conflicts.settings?.let { settings ->
-                    settingsDao.upsertSettings(settings.toSettingsEntity())
-                }
-
-                dataStore.edit { prefs ->
-                    prefs[SyncConstants.lastSyncHlcKey(userId)] = response.serverHlc
-                }
-            }
-
-            reduce { state.copy(syncStatus = SyncStatus.Idle) }
-        } catch (_: Exception) {
-            reduce { state.copy(syncStatus = SyncStatus.Error) }
-        }
+        reduce { state.copy(syncStatus = SyncStatus.Syncing) }
+        val result = syncOrchestrator.fullSync()
+        reduce { state.copy(syncStatus = if (result.isSuccess) SyncStatus.Idle else SyncStatus.Error) }
     }
 
     fun onScreenResumed() {
