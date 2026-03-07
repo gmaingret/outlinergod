@@ -31,7 +31,7 @@
 | 20. Security fixes | 1/1 | Complete    | 2026-03-06 |
 | 21. Sync architecture | 2/2 | Complete    | 2026-03-07 |
 | 22. Android performance | 0/? | Not started | — |
-| 23. Data model & structure | 0/? | Not started | — |
+| 23. Data model & structure | 0/4 | Not started | — |
 | 24. Test coverage gaps | 0/? | Not started | — |
 | 25. Backend maintenance | 0/? | Not started | — |
 | 26. Android UX redesign | 0/? | Not started | — |
@@ -82,6 +82,12 @@ Plans:
 **Goal:** Attachment metadata lives in proper DB columns, FractionalIndex is in a production package, the orphan backend HLC file is deleted, Room schema export is enabled, and the undo stack uses a single cohesive type.
 **Depends on:** Nothing
 **Requirements:** (tech debt audit)
+**Plans:** 4 plans
+Plans:
+- [ ] 23-01-PLAN.md — NodeEntity attachment columns + MIGRATION_2_3 + call site updates + migration tests
+- [ ] 23-02-PLAN.md — FractionalIndex move to util/ + delete backend/src/hlc.ts
+- [ ] 23-03-PLAN.md — UndoSnapshot unified data class in NodeEditorViewModel
+- [ ] 23-04-PLAN.md — exportSchema = true + schema JSON generation + commit
 **Success Criteria:**
   1. `NodeEntity` has `attachment_url: String?` and `attachment_mime: String?` columns; no node content starts with `"ATTACH|"`
   2. `FractionalIndex.kt` lives at `android/.../util/FractionalIndex.kt` — no production import from `prototype.*`
@@ -195,7 +201,7 @@ Plans:
 - [ ] 17-02-PLAN.md — DocumentListPage implementation + App.tsx wiring (Wave 1)
 
 #### Phase 18: Node Editor + Sync
-**Goal:** Users can open a document, read and edit all its nodes with inline formatting and keyboard shortcuts, zoom into subtrees, and have changes sync to the server.
+**Goal:** Users can open a document, read and edit all its nodes with formatting, keyboard shortcuts, zoom navigation, and data sync.
 **Depends on:** Phase 17
 **Requirements:** EDIT-01, EDIT-02, EDIT-03, EDIT-04, EDIT-05, EDIT-06, EDIT-07, SYNC-01, SYNC-02
 **Success Criteria** (what must be TRUE when this phase completes):
