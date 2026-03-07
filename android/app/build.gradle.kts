@@ -157,16 +157,3 @@ dependencies {
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
-
-// Workaround: Room 2.8.4's FieldBundle$$serializer (compiled without typeParametersSerializers()
-// added to GeneratedSerializer in kotlinx-serialization 1.7.0) crashes when reading an existing
-// schema JSON with serialization 1.7+ on the classpath.  Delete previous schema before KSP runs
-// so Room only writes a fresh schema; it cannot crash reading a file that does not exist.
-tasks.matching { it.name.startsWith("ksp") && it.name.endsWith("Kotlin") }.configureEach {
-    doFirst {
-        val schemasDir = file("$projectDir/schemas")
-        if (schemasDir.exists()) {
-            schemasDir.deleteRecursively()
-        }
-    }
-}
