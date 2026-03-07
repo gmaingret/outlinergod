@@ -4,8 +4,8 @@ milestone: v0.9
 milestone_name: — quality-hardening
 status: completed
 stopped_at: Completed 23-05-PLAN.md — doFirst hook removed from build.gradle.kts, Room schema 3.json committed, kspDebugKotlin UP-TO-DATE
-last_updated: "2026-03-07T22:22:24.057Z"
-last_activity: "2026-03-07 — 23-03 complete: UndoSnapshot replaces parallel undo/redoDeletedIds deques; build.gradle.kts doFirst workaround for Room/serialization clash"
+last_updated: "2026-03-07T22:25:43.245Z"
+last_activity: "2026-03-07 — 23-05 complete: destructive doFirst removed, 3.json committed to git, Phase 24 MigrationTestHelper unblocked"
 progress:
   total_phases: 26
   completed_phases: 19

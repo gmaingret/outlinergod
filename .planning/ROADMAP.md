@@ -31,7 +31,7 @@
 | 20. Security fixes | 1/1 | Complete    | 2026-03-06 |
 | 21. Sync architecture | 2/2 | Complete    | 2026-03-07 |
 | 22. Android performance | 0/? | Not started | — |
-| 23. Data model & structure | 5/5 | Complete   | 2026-03-07 |
+| 23. Data model & structure | 5/5 | Complete    | 2026-03-07 |
 | 24. Test coverage gaps | 0/? | Not started | — |
 | 25. Backend maintenance | 0/? | Not started | — |
 | 26. Android UX redesign | 0/? | Not started | — |
