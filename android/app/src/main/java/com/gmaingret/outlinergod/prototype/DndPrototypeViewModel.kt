@@ -1,5 +1,6 @@
 package com.gmaingret.outlinergod.prototype
 
+import com.gmaingret.outlinergod.util.FractionalIndex
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

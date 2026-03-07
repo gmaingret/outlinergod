@@ -11,7 +11,7 @@ import com.gmaingret.outlinergod.db.dao.DocumentDao
 import com.gmaingret.outlinergod.db.dao.NodeDao
 import com.gmaingret.outlinergod.db.dao.SettingsDao
 import com.gmaingret.outlinergod.db.entity.NodeEntity
-import com.gmaingret.outlinergod.prototype.FractionalIndex
+import com.gmaingret.outlinergod.util.FractionalIndex
 import com.gmaingret.outlinergod.repository.AuthRepository
 import com.gmaingret.outlinergod.repository.FileRepository
 import com.gmaingret.outlinergod.sync.HlcClock
@@ -31,6 +31,11 @@ import org.orbitmvi.orbit.viewmodel.container
 import java.util.UUID
 import javax.inject.Inject
 
+data class UndoSnapshot(
+    val nodes: List<FlatNode>,
+    val deletedNodeIds: List<String> = emptyList()
+)
+
 @HiltViewModel
 class NodeEditorViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
@@ -48,15 +53,12 @@ class NodeEditorViewModel @Inject constructor(
     override val container = container<NodeEditorUiState, NodeEditorSideEffect>(NodeEditorUiState())
 
     private var titleJob: Job? = null
-    private val undoStack = ArrayDeque<List<FlatNode>>()
+    private val undoStack = ArrayDeque<UndoSnapshot>()
     private val redoStack = ArrayDeque<List<FlatNode>>()
-    private val undoDeletedIds = ArrayDeque<List<String>>()
 
     private fun pushUndoSnapshot(current: List<FlatNode>) {
         if (undoStack.size >= 50) undoStack.removeFirst()
-        undoStack.addLast(current)
-        // Always push a parallel empty entry so undoDeletedIds stays aligned with undoStack
-        undoDeletedIds.addLast(emptyList())
+        undoStack.addLast(UndoSnapshot(current))
         redoStack.clear()
     }
 
@@ -471,12 +473,12 @@ class NodeEditorViewModel @Inject constructor(
 
     fun undo() = intent {
         if (undoStack.isEmpty()) return@intent
-        val snapshot = undoStack.removeLast()
-        val deletedIds = if (undoDeletedIds.isNotEmpty()) undoDeletedIds.removeLast() else emptyList()
+        val snap = undoStack.removeLast()
+        val deletedIds = snap.deletedNodeIds
         val current = state.flatNodes
         redoStack.addLast(current)
-        reduce { state.copy(flatNodes = snapshot, canUndo = undoStack.isNotEmpty(), canRedo = true) }
-        persistReorderedNodes(current, snapshot)
+        reduce { state.copy(flatNodes = snap.nodes, canUndo = undoStack.isNotEmpty(), canRedo = true) }
+        persistReorderedNodes(current, snap.nodes)
         // Restore soft-deleted nodes for this undo step (only if this was a delete op)
         if (deletedIds.isNotEmpty()) {
             val deviceId = authRepository.getDeviceId().first()
@@ -490,7 +492,7 @@ class NodeEditorViewModel @Inject constructor(
         if (redoStack.isEmpty()) return@intent
         val snapshot = redoStack.removeLast()
         val current = state.flatNodes
-        undoStack.addLast(current)
+        undoStack.addLast(UndoSnapshot(current))
         reduce { state.copy(flatNodes = snapshot, canUndo = true, canRedo = redoStack.isNotEmpty()) }
         persistReorderedNodes(current, snapshot)
     }
@@ -514,14 +516,11 @@ class NodeEditorViewModel @Inject constructor(
                 val lastSortOrder = siblings.maxByOrNull { it.entity.sortOrder }?.entity?.sortOrder
                 val newSortOrder = FractionalIndex.generateKeyBetween(lastSortOrder, null)
 
-                // Content encodes mimeType, filename, and URL for display
-                val attachContent = "ATTACH|${uploaded.mimeType}|${uploaded.filename}|${uploaded.url}"
-
                 val attachNode = NodeEntity(
                     id = UUID.randomUUID().toString(),
                     documentId = parentNode.entity.documentId,
                     userId = parentNode.entity.userId,
-                    content = attachContent,
+                    content = "",           // empty — attachment data is in dedicated columns
                     contentHlc = hlc,
                     note = "",
                     noteHlc = "",
@@ -529,6 +528,8 @@ class NodeEditorViewModel @Inject constructor(
                     parentIdHlc = hlc,
                     sortOrder = newSortOrder,
                     sortOrderHlc = hlc,
+                    attachmentUrl = uploaded.url,
+                    attachmentMime = uploaded.mimeType,
                     deviceId = deviceId,
                     createdAt = now,
                     updatedAt = now,
@@ -770,8 +771,7 @@ class NodeEditorViewModel @Inject constructor(
 
         // Push undo snapshot with deleted IDs so toolbar Undo can restore them
         if (undoStack.size >= 50) undoStack.removeFirst()
-        undoStack.addLast(flatNodes)
-        undoDeletedIds.addLast(idsToDelete)
+        undoStack.addLast(UndoSnapshot(flatNodes, idsToDelete))
         redoStack.clear()
 
         nodeDao.softDeleteNodes(idsToDelete, now, hlc, now, deviceId)

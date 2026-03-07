@@ -59,7 +59,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.gmaingret.outlinergod.db.entity.DocumentEntity
-import com.gmaingret.outlinergod.prototype.FractionalIndex
+import com.gmaingret.outlinergod.util.FractionalIndex
 import com.gmaingret.outlinergod.ui.common.SyncStatus
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
