@@ -481,11 +481,11 @@ private fun NodeRow(
             // Indentation
             Spacer(modifier = Modifier.width((flatNode.depth * 24).dp))
 
-            // Glyph: filled dot — tap = zoom in
+            // Glyph: filled dot — tap = zoom in (both leaf and parent nodes)
             Box(
                 modifier = Modifier
                     .size(32.dp)
-                    .clickable { onGlyphTap() },
+                    .clickable(onClick = onGlyphTap),
                 contentAlignment = Alignment.Center
             ) {
                 val color = MaterialTheme.colorScheme.onSurface
