@@ -20,6 +20,8 @@ android/local.properties
 android/captures/
 android/.navigation/
 android/keystore/
+android/.kotlin/
+*.hprof
 
 # Backend
 backend/node_modules/
